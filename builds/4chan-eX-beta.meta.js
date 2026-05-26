@@ -119,12 +119,15 @@
 // @grant        GM_addValueChangeListener
 // @grant        GM_openInTab
 // @grant        GM_xmlhttpRequest
+// @grant        GM_info
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
 // @grant        GM.listValues
 // @grant        GM.openInTab
 // @grant        GM.xmlHttpRequest
+// @grant        GM.info
+// @grant        unsafeWindow
 // @run-at       document-start
 // @updateURL    https://raw.githubusercontent.com/cercos/4chan-eX/main/builds/4chan-eX-beta.meta.js
 // @downloadURL  https://raw.githubusercontent.com/cercos/4chan-eX/main/builds/4chan-eX-beta.user.js
