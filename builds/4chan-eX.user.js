@@ -443,8 +443,10 @@ Config = (function() {
       'Show Page': [true, 'Show what page watched threads are on.'],
       'Show Unread Count': [true, 'Show number of unread posts in watched threads.'],
       'Show Site Prefix': [true, 'When multiple sites are shown in the thread watcher, add a prefix to board names to distinguish them.'],
+      'Show OP Thumbnails': [false, 'Show OP thumbnails in watched thread entries.'],
       'Require OP Quote Link': [false, 'For purposes of thread watcher highlighting, only consider posts with a quote link to the OP as replies to the OP.']
     },
+    'Thread Watcher Thumbnail Size': 40,
     filter: {
       general: '',
       postID: "# Highlight dubs on [s4s]:\n#/(\\d)\\1$/;highlight;top:no;boards:s4s",
@@ -469,8 +471,23 @@ Config = (function() {
     },
     'Custom CSS': true,
     'Custom CSS Editor Mode': 'ide',
-    'Settings Theme': 'dark',
-    'Custom CSS on Homepage': false,
+    'Open Filters Mode': 'remember',
+    'Generated Highlight Styles': false,
+    'Highlight Watched Color': '#00509b',
+    'Highlight Watched Opacity': '1',
+    'Highlight Your Post Color': '#059600',
+    'Highlight Your Post Opacity': '0.7',
+    'Highlight Quotes You Color': '#ad2c27',
+    'Highlight Quotes You Opacity': '0.8',
+    'Highlight Auto Text Color': true,
+    'Highlight Text Color': '#f2f2f2',
+    'Highlight Auto Greentext Color': true,
+    'Highlight Greentext Color': '#789922',
+    'Highlight Auto Title Color': true,
+    'Highlight Title Color': '#0f0c5d',
+    'Highlight Auto Link Color': true,
+    'Highlight Link Color': '#99c3ff',
+    'Custom CSS on Homepage': true,
     'Work around CORB Bug': true,
     'Enable Native Flash Embedding': true,
     'Thread Title': 'excerpt',
@@ -523,6 +540,7 @@ Config = (function() {
       'Open empty QR': ['q', 'Open QR without post number inserted.'],
       'Open QR': ['Shift+q', 'Open QR with post number inserted.'],
       'Open settings': ['Alt+o', 'Open Settings.'],
+      'Open filters': ['Shift+f', 'Open Settings directly to Filters.'],
       'Close': ['Esc', 'Close dialogs or notifications.'],
       'Spoiler tags': ['Ctrl+s', 'Insert spoiler tags.'],
       'Code tags': ['Alt+c', 'Insert code tags.'],
@@ -1986,6 +2004,40 @@ audio.controls-added {\n\
   padding: 8px 10px;\n\
   overscroll-behavior: contain;\n\
 }\n\
+.section-container,\n\
+.sections-list,\n\
+#fourchanx-settings.settings-layout-classic .sections-list,\n\
+#fourchanx-settings.settings-layout-classic .credits {\n\
+  scrollbar-width: thin;\n\
+  scrollbar-color: rgba(128, 128, 128, .55) rgba(128, 128, 128, .16);\n\
+}\n\
+.section-container::-webkit-scrollbar,\n\
+.sections-list::-webkit-scrollbar,\n\
+#fourchanx-settings.settings-layout-classic .sections-list::-webkit-scrollbar,\n\
+#fourchanx-settings.settings-layout-classic .credits::-webkit-scrollbar {\n\
+  width: 8px;\n\
+  height: 8px;\n\
+}\n\
+.section-container::-webkit-scrollbar-track,\n\
+.sections-list::-webkit-scrollbar-track,\n\
+#fourchanx-settings.settings-layout-classic .sections-list::-webkit-scrollbar-track,\n\
+#fourchanx-settings.settings-layout-classic .credits::-webkit-scrollbar-track {\n\
+  background: rgba(128, 128, 128, .16);\n\
+  border-radius: 999px;\n\
+}\n\
+.section-container::-webkit-scrollbar-thumb,\n\
+.sections-list::-webkit-scrollbar-thumb,\n\
+#fourchanx-settings.settings-layout-classic .sections-list::-webkit-scrollbar-thumb,\n\
+#fourchanx-settings.settings-layout-classic .credits::-webkit-scrollbar-thumb {\n\
+  background: rgba(128, 128, 128, .55);\n\
+  border-radius: 999px;\n\
+}\n\
+.section-container::-webkit-scrollbar-thumb:hover,\n\
+.sections-list::-webkit-scrollbar-thumb:hover,\n\
+#fourchanx-settings.settings-layout-classic .sections-list::-webkit-scrollbar-thumb:hover,\n\
+#fourchanx-settings.settings-layout-classic .credits::-webkit-scrollbar-thumb:hover {\n\
+  background: rgba(128, 128, 128, .72);\n\
+}\n\
 .sections-list {\n\
   display: -webkit-flex;\n\
   display: flex;\n\
@@ -2232,6 +2284,79 @@ div[data-checked=\"false\"] > .suboption-list {\n\
 .section-filters textarea {\n\
   height: 500px;\n\
 }\n\
+.section-filter .filter-stats,\n\
+.section-simple-filters .filter-stats,\n\
+.section-filters .filter-stats {\n\
+  border-top: 1px solid;\n\
+  font-size: 11px;\n\
+  line-height: 1.45;\n\
+  margin-top: 8px;\n\
+  padding-top: 8px;\n\
+}\n\
+.section-filters .filter-preview-group {\n\
+  margin: 0 0 12px;\n\
+}\n\
+.section-filters .filter-preview-heading {\n\
+  font-weight: 700;\n\
+  margin: 0 0 4px;\n\
+}\n\
+.section-filters .filter-preview-group:last-child {\n\
+  margin-bottom: 0;\n\
+}\n\
+.section-filter .filter-stats-summary,\n\
+.section-simple-filters .filter-stats-summary,\n\
+.section-filters .filter-stats-summary {\n\
+  font-weight: 700;\n\
+  margin: 0 0 6px;\n\
+}\n\
+.section-filter .filter-stats-empty,\n\
+.section-simple-filters .filter-stats-empty,\n\
+.section-filters .filter-stats-empty {\n\
+  opacity: .8;\n\
+}\n\
+.section-filter .filter-stat-row,\n\
+.section-simple-filters .filter-stat-row,\n\
+.section-filters .filter-stat-row {\n\
+  margin: 0 0 6px;\n\
+}\n\
+.section-filter .filter-stat,\n\
+.section-simple-filters .filter-stat,\n\
+.section-filters .filter-stat {\n\
+  margin: 0;\n\
+}\n\
+.section-filter .filter-stat > summary,\n\
+.section-simple-filters .filter-stat > summary,\n\
+.section-filters .filter-stat > summary {\n\
+  cursor: pointer;\n\
+  list-style-position: inside;\n\
+}\n\
+.section-filter .filter-stat-threads,\n\
+.section-simple-filters .filter-stat-threads,\n\
+.section-filters .filter-stat-threads {\n\
+  margin: 4px 0 0 18px;\n\
+  padding: 0;\n\
+}\n\
+.section-filter .filter-stat-threads > li,\n\
+.section-simple-filters .filter-stat-threads > li,\n\
+.section-filters .filter-stat-threads > li {\n\
+  list-style: disc;\n\
+  margin: 2px 0;\n\
+}\n\
+.section-filter .filter-stat-invalid,\n\
+.section-simple-filters .filter-stat-invalid,\n\
+.section-filters .filter-stat-invalid {\n\
+  color: #c33;\n\
+}\n\
+.section-filter .filter-stat-count,\n\
+.section-simple-filters .filter-stat-count,\n\
+.section-filters .filter-stat-count {\n\
+  font-weight: 700;\n\
+}\n\
+.section-filter .filter-stat-more,\n\
+.section-simple-filters .filter-stat-more,\n\
+.section-filters .filter-stat-more {\n\
+  opacity: .8;\n\
+}\n\
 .section-general a, .section-reading a, .section-media a, .section-posting a, .section-styling a, .section-filter a, .section-filters a, .section-simple-filters a, .section-advanced a {\n\
   text-decoration: underline;\n\
 }\n\
@@ -2344,10 +2469,337 @@ div[data-checked=\"false\"] > .suboption-list {\n\
   align-items: center;\n\
   gap: 8px;\n\
 }\n\
+.section-styling .generated-highlight-toggle {\n\
+  margin-top: 6px;\n\
+}\n\
+.section-styling .generated-highlight-grid {\n\
+  display: grid;\n\
+  grid-template-columns: repeat(3, minmax(180px, 1fr));\n\
+  gap: 8px 12px;\n\
+  margin-top: 8px;\n\
+}\n\
+.section-styling .generated-highlight-group {\n\
+  border: 1px solid rgba(128, 128, 128, .35);\n\
+  padding: 8px;\n\
+}\n\
+.section-styling .generated-highlight-group > h4 {\n\
+  margin: 0 0 6px;\n\
+  font-size: 12px;\n\
+  font-weight: 700;\n\
+}\n\
+.section-styling .generated-highlight-help {\n\
+  margin: 0 0 6px;\n\
+  font-size: 11px;\n\
+  line-height: 1.25;\n\
+  opacity: .86;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-group > label,\n\
+#fourchanx-settings .section-styling .generated-highlight-group > .generated-highlight-row {\n\
+  display: grid;\n\
+  align-items: center;\n\
+  column-gap: 10px;\n\
+  margin-top: 6px;\n\
+  width: 100%;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-group > label:first-of-type,\n\
+#fourchanx-settings .section-styling .generated-highlight-group > .generated-highlight-row:first-of-type {\n\
+  margin-top: 0;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-group > label:nth-of-type(1),\n\
+#fourchanx-settings .section-styling .generated-highlight-row-color {\n\
+  grid-template-columns: minmax(0, 1fr) auto;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-group > label:nth-of-type(2),\n\
+#fourchanx-settings .section-styling .generated-highlight-row-opacity {\n\
+  grid-template-columns: auto minmax(120px, 1fr) auto;\n\
+}\n\
+.section-styling .generated-highlight-label-text {\n\
+  white-space: nowrap;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-group > label:nth-of-type(2) {\n\
+  align-items: center;\n\
+}\n\
+.section-styling .generated-highlight-grid input[type=\"color\"] {\n\
+  -webkit-appearance: none;\n\
+  appearance: none;\n\
+  width: 34px;\n\
+  height: 24px;\n\
+  padding: 0;\n\
+  border: 1px solid rgba(255, 255, 255, .35);\n\
+  border-radius: 0;\n\
+  background: transparent;\n\
+  overflow: hidden;\n\
+  vertical-align: middle;\n\
+  cursor: pointer;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-group > .generated-highlight-row-color > input[type=\"color\"] {\n\
+  justify-self: start;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-group > label:nth-of-type(1) > input[type=\"color\"] {\n\
+  justify-self: start;\n\
+}\n\
+.section-styling .generated-highlight-grid input[type=\"color\"]::-webkit-color-swatch-wrapper {\n\
+  padding: 0;\n\
+  margin: 0;\n\
+  border: 0;\n\
+}\n\
+.section-styling .generated-highlight-grid input[type=\"color\"]::-webkit-color-swatch {\n\
+  border: none;\n\
+  border-radius: 0;\n\
+}\n\
+.section-styling .generated-highlight-grid input[type=\"color\"]::-webkit-color-swatch:focus,\n\
+.section-styling .generated-highlight-grid input[type=\"color\"]::-webkit-color-swatch-wrapper:focus {\n\
+  outline: none;\n\
+}\n\
+.section-styling .generated-highlight-grid input[type=\"color\"]::-moz-color-swatch {\n\
+  border: none;\n\
+  border-radius: 0;\n\
+}\n\
+.section-styling .generated-highlight-grid input[type=\"range\"] {\n\
+  width: 100%;\n\
+  min-width: 120px;\n\
+  margin: 0;\n\
+}\n\
+.section-styling .generated-highlight-value {\n\
+  min-width: 40px;\n\
+  opacity: .85;\n\
+}\n\
+.section-styling .generated-highlight-auto-row {\n\
+  display: grid;\n\
+  grid-template-columns: repeat(4, minmax(160px, 1fr));\n\
+  gap: 8px 12px;\n\
+  margin-top: 8px;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-auto-group {\n\
+  border: 1px solid rgba(128, 128, 128, .35);\n\
+  padding: 8px;\n\
+  transition: opacity .18s ease;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-auto-header {\n\
+  display: flex;\n\
+  align-items: flex-start;\n\
+  justify-content: space-between;\n\
+  gap: 8px;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-auto-header > h4 {\n\
+  margin: 0;\n\
+  font-size: 12px;\n\
+  font-weight: 700;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-auto-toggle {\n\
+  display: inline-flex;\n\
+  align-items: center;\n\
+  gap: 4px;\n\
+  font-size: 11px;\n\
+  white-space: nowrap;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-auto-toggle > input[type=\"checkbox\"] {\n\
+  margin: 0;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-auto-picker-row {\n\
+  display: grid;\n\
+  grid-template-columns: minmax(0, 1fr) auto;\n\
+  align-items: center;\n\
+  column-gap: 8px;\n\
+  margin-top: 8px;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-auto-picker-row > input[type=\"color\"] {\n\
+  justify-self: end;\n\
+}\n\
+#fourchanx-settings .section-styling .generated-highlight-auto-group.auto-color-hidden .generated-highlight-auto-picker-row {\n\
+  opacity: .45;\n\
+}\n\
+.section-styling .generated-highlight-preview {\n\
+  display: grid;\n\
+  grid-template-columns: repeat(2, minmax(220px, 1fr));\n\
+  gap: 12px;\n\
+  margin-top: 10px;\n\
+}\n\
+.section-styling .generated-highlight-preview-column {\n\
+  border: 1px solid rgba(128, 128, 128, .5);\n\
+  padding: 8px;\n\
+}\n\
+.section-styling .generated-highlight-preview-column > h4 {\n\
+  margin: 0 0 8px;\n\
+  font-size: 12px;\n\
+  font-weight: 700;\n\
+}\n\
+.section-styling .ghs-catalog-preview,\n\
+.section-styling .ghs-thread-preview {\n\
+  background: transparent;\n\
+}\n\
+.section-styling .ghs-catalog-grid {\n\
+  display: -webkit-flex;\n\
+  display: flex;\n\
+  -webkit-flex-wrap: nowrap;\n\
+  flex-wrap: nowrap;\n\
+  -webkit-align-items: stretch;\n\
+  align-items: stretch;\n\
+  gap: 10px;\n\
+}\n\
+.section-styling .ghs-catalog-thread,\n\
+.section-styling .ghs-thread-preview > div {\n\
+  border: 1px solid rgba(128, 128, 128, .28);\n\
+  margin-bottom: 8px;\n\
+  padding: 5px;\n\
+}\n\
+.section-styling .ghs-catalog-thread {\n\
+  -webkit-flex: 1 1 0;\n\
+  flex: 1 1 0;\n\
+  width: auto;\n\
+  min-width: 0;\n\
+  padding: 0;\n\
+  margin-bottom: 0;\n\
+  -moz-box-sizing: border-box;\n\
+  box-sizing: border-box;\n\
+}\n\
+.section-styling .ghs-catalog-thread:last-child,\n\
+.section-styling .ghs-thread-preview > div:last-child {\n\
+  margin-bottom: 0;\n\
+}\n\
+.section-styling .ghs-catalog-thread > .yourPost {\n\
+  display: block;\n\
+  padding: 0;\n\
+  min-height: 100%;\n\
+}\n\
+.section-styling .ghs-catalog-thread.ghs-watched-you {\n\
+  padding: 0;\n\
+}\n\
+.section-styling .ghs-catalog-thread.ghs-watched-you > .yourPost {\n\
+  display: block;\n\
+  min-height: 100%;\n\
+}\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-container,\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-post {\n\
+  min-height: 100%;\n\
+}\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-post {\n\
+  -moz-box-sizing: border-box;\n\
+  box-sizing: border-box;\n\
+  display: flex;\n\
+  flex-direction: column;\n\
+  gap: 4px;\n\
+  padding: 5px;\n\
+  font-size: 11px;\n\
+  line-height: 1.2;\n\
+}\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-link {\n\
+  display: block;\n\
+  width: 150px;\n\
+  max-width: 100%;\n\
+  margin: 0 auto;\n\
+  text-decoration: none;\n\
+}\n\
+.section-styling .ghs-catalog-thumb {\n\
+  display: block;\n\
+  width: 150px;\n\
+  max-width: 100%;\n\
+  aspect-ratio: 250 / 136;\n\
+  height: auto;\n\
+  object-fit: cover;\n\
+  border: 1px solid rgba(180, 200, 235, .55);\n\
+}\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-filename {\n\
+  margin-top: 3px;\n\
+  font-size: 10px;\n\
+  line-height: 1.15;\n\
+  opacity: .88;\n\
+  overflow: hidden;\n\
+  text-overflow: ellipsis;\n\
+  white-space: nowrap;\n\
+}\n\
+.section-styling .ghs-catalog-stats {\n\
+  font-size: 11px;\n\
+  font-weight: 700;\n\
+  text-align: center;\n\
+  margin: 0;\n\
+}\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-meta {\n\
+  margin: 0;\n\
+  font-size: 11px;\n\
+  line-height: 1.2;\n\
+}\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-meta .subject,\n\
+.section-styling .ghs-catalog-subject {\n\
+  display: block;\n\
+  font-weight: 700;\n\
+  line-height: 1.2;\n\
+  margin: 0 0 2px;\n\
+  word-break: break-word;\n\
+}\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-meta .nameBlock,\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-meta .dateTime,\n\
+.section-styling .ghs-catalog-thread .ghs-catalog-meta .postNum {\n\
+  display: block;\n\
+}\n\
+.section-styling .ghs-catalog-comment {\n\
+  margin: 0;\n\
+  padding: 0;\n\
+  border: 0;\n\
+  font-size: 11px;\n\
+  line-height: 1.25;\n\
+  overflow: hidden;\n\
+  display: -webkit-box;\n\
+  -webkit-line-clamp: 3;\n\
+  -webkit-box-orient: vertical;\n\
+}\n\
+.section-styling .ghs-thread-preview .reply,\n\
+.section-styling .ghs-thread-preview .op {\n\
+  border: none;\n\
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .22);\n\
+  padding: 4px;\n\
+}\n\
+.section-styling .ghs-thread-preview > div {\n\
+  border: none;\n\
+  background: transparent;\n\
+}\n\
+.section-styling .ghs-thread-preview .postContainer.replyContainer {\n\
+  position: relative;\n\
+  padding: 0 0 0 14px;\n\
+}\n\
+.section-styling .ghs-thread-preview .replacedSideArrows {\n\
+  position: absolute;\n\
+  left: 0;\n\
+  top: 6px;\n\
+  opacity: .7;\n\
+}\n\
+.section-styling .ghs-thread-preview .postContainer.replyContainer .post.reply {\n\
+  margin: 0;\n\
+  padding: 6px 8px;\n\
+  box-shadow: none;\n\
+}\n\
+.section-styling .ghs-thread-preview .postInfo.desktop {\n\
+  margin: 0;\n\
+  padding: 0;\n\
+  line-height: 1.25;\n\
+}\n\
+.section-styling .ghs-thread-preview .postInfo.desktop > input[type=\"checkbox\"] {\n\
+  vertical-align: middle;\n\
+}\n\
+.section-styling .ghs-thread-preview .postInfo.desktop .nameBlock .name {\n\
+  font-weight: 700;\n\
+}\n\
+.section-styling .ghs-thread-preview .postMessage {\n\
+  margin: 6px 0 0;\n\
+}\n\
+.section-styling .generated-highlight-disabled .generated-highlight-preview {\n\
+  opacity: .55;\n\
+}\n\
 .section-styling .custom-css-enable-controls,\n\
 .section-styling .settings-theme-controls,\n\
 .section-styling .site-theme-controls {\n\
   margin-top: 6px;\n\
+}\n\
+.section-styling .custom-css-editor .custom-css-enable-controls {\n\
+  margin-top: 8px;\n\
+  margin-bottom: 8px;\n\
+}\n\
+.section-styling .custom-css-editor .custom-css-note {\n\
+  margin: 6px 0;\n\
+  line-height: 1.35;\n\
+}\n\
+.section-styling .custom-css-editor .custom-css-controls {\n\
+  margin-top: 8px;\n\
 }\n\
 .section-styling fieldset > .settings-group-heading:first-of-type {\n\
   margin-top: 8px;\n\
@@ -3191,13 +3643,22 @@ textarea.copy-text-element {\n\
   padding-left: 3px;\n\
   white-space: nowrap;\n\
   min-width: 146px;\n\
+  --watcher-thumb-size: 40px;\n\
 }\n\
 #watched-threads {\n\
   overflow-x: hidden;\n\
   overflow-y: auto;\n\
 }\n\
 #thread-watcher .refresh {\n\
-  padding: 0px 3px;\n\
+  padding: 0px 4px;\n\
+  margin-right: 2px;\n\
+}\n\
+#thread-watcher .mark-read {\n\
+  padding: 0px 4px;\n\
+  margin-right: 2px;\n\
+}\n\
+#thread-watcher .mark-read.disabled {\n\
+  opacity: 0.45;\n\
 }\n\
 :root.fixed-watcher #thread-watcher {\n\
   position: fixed;\n\
@@ -3215,8 +3676,21 @@ textarea.copy-text-element {\n\
   padding-top: 3px;\n\
 }\n\
 #watched-threads > div {\n\
+  display: -webkit-flex;\n\
+  display: flex;\n\
+  -webkit-align-items: center;\n\
+  align-items: center;\n\
   padding-left: 3px;\n\
   padding-right: 3px;\n\
+}\n\
+#watched-threads > div.dragging {\n\
+  opacity: 0.45;\n\
+}\n\
+#watched-threads > div.drag-over[data-drop-before=\"true\"] {\n\
+  box-shadow: inset 0 2px 0 rgba(255, 0, 0, 0.6);\n\
+}\n\
+#watched-threads > div.drag-over[data-drop-before=\"false\"] {\n\
+  box-shadow: inset 0 -2px 0 rgba(255, 0, 0, 0.6);\n\
 }\n\
 #watched-threads .watcher-link {\n\
   max-width: 250px;\n\
@@ -3224,6 +3698,23 @@ textarea.copy-text-element {\n\
   display: inline-flex;\n\
   -webkit-flex-direction: row;\n\
   flex-direction: row;\n\
+  -webkit-align-items: center;\n\
+  align-items: center;\n\
+  margin-right: auto;\n\
+}\n\
+#watched-threads .watcher-thumb {\n\
+  width: 40px;\n\
+  height: 40px;\n\
+  width: var(--watcher-thumb-size);\n\
+  height: var(--watcher-thumb-size);\n\
+  -webkit-flex: 0 0 auto;\n\
+  flex: 0 0 auto;\n\
+  object-fit: cover;\n\
+  margin-right: 4px;\n\
+}\n\
+#watched-threads .watcher-thumb-missing {\n\
+  display: inline-block;\n\
+  background: rgba(128, 128, 128, 0.28);\n\
 }\n\
 #watched-threads .watcher-page,\n\
 #watched-threads .watcher-unread {\n\
@@ -3239,6 +3730,13 @@ textarea.copy-text-element {\n\
 }\n\
 #watched-threads .watcher-title:not(:first-child) {\n\
   margin-left: 2px;\n\
+}\n\
+#watched-threads .watcher-mark-read {\n\
+  margin-left: 4px;\n\
+}\n\
+#watched-threads .watcher-mark-read.disabled {\n\
+  opacity: 0.45;\n\
+  pointer-events: none;\n\
 }\n\
 .replies-quoting-you > a, #watcher-link.replies-quoting-you, .last-page > a > .watcher-page {\n\
   color: #F00;\n\
@@ -9077,7 +9575,7 @@ SW = {};
     },
     isThisPageLegit: function() {
       var ref, ref1;
-      return ((ref = location.hostname) === 'boards.4chan.org' || ref === 'boards.4channel.org') && d.doctype && !$('link[href*="favicon-status.ico"]', d.head) && ((ref1 = d.title) !== '4chan - Temporarily Offline' && ref1 !== '4chan - Error' && ref1 !== '504 Gateway Time-out' && ref1 !== 'MathJax Equation Source');
+      return (((ref = location.hostname) === 'boards.4chan.org' || ref === 'boards.4channel.org') || this.isBoardlessPage(location)) && d.doctype && !$('link[href*="favicon-status.ico"]', d.head) && ((ref1 = d.title) !== '4chan - Temporarily Offline' && ref1 !== '4chan - Error' && ref1 !== '504 Gateway Time-out' && ref1 !== 'MathJax Equation Source');
     },
     is404: function() {
       var ref;
@@ -9099,7 +9597,7 @@ SW = {};
       return ImageHost.test(url.hostname);
     },
     initAuxiliary: function() {
-      var addCustomCSS, customCSSStyle, match, pathname;
+      var match, pathname;
       switch (location.hostname) {
         case '4chan.org':
         case 'www.4chan.org':
@@ -9111,34 +9609,8 @@ SW = {};
             PassMessage.init();
           } else {
             $.addStyle(CSS.www);
-            customCSSStyle = null;
-            addCustomCSS = function() {
-              var css, ref, ref1;
-              if (!(Conf['Custom CSS'] && Conf['Custom CSS on Homepage'])) {
-                return;
-              }
-              css = CSS.sub(Conf['usercss']);
-              if ((customCSSStyle != null ? customCSSStyle.nodeName : void 0) === 'STYLE') {
-                customCSSStyle.textContent = css;
-              } else if (((ref = (customCSSStyle = $.id('custom-css'))) != null ? ref.nodeName : void 0) === 'STYLE') {
-                customCSSStyle.textContent = css;
-              } else if (((ref1 = (customCSSStyle = $.id('fourchanx-custom-css-home'))) != null ? ref1.nodeName : void 0) === 'STYLE') {
-                customCSSStyle.textContent = css;
-              } else {
-                customCSSStyle = $.addStyle(css, 'fourchanx-custom-css-home');
-              }
-              if (d.head) {
-                return $.add(d.head, customCSSStyle);
-              }
-            };
-            addCustomCSS();
-            $.ready(addCustomCSS);
-            $.on(window, 'load', addCustomCSS);
-            setTimeout(addCustomCSS, 250);
-            setTimeout(addCustomCSS, 1000);
             $.onExists(doc, 'body', function() {
-              doc.dataset.host = location.host;
-              return $.addClass(doc, "sw-" + g.SITE.software, 'www-view', 'yotsuba');
+              return doc.dataset.host = location.host;
             });
             Captcha.replace.init();
           }
@@ -11714,7 +12186,7 @@ Header = (function() {
       this.setBoardList();
       $.onExists(doc, g.SITE.selectors.boardList + " + *", Header.generateFullBoardList);
       Main.ready(function() {
-        var a, absbot, footer, i, len, ref;
+        var a, absbot, currentBoardID, footer, i, len, ref, ref1;
         if (g.SITE.software === 'yotsuba' && !(footer = $.id('boardNavDesktopFoot'))) {
           if (!(absbot = $.id('absbot'))) {
             return;
@@ -11729,10 +12201,11 @@ Header = (function() {
           });
         }
         if ((Header.bottomBoardList = $(g.SITE.selectors.boardListBottom))) {
-          ref = $$('a', Header.bottomBoardList);
-          for (i = 0, len = ref.length; i < len; i++) {
-            a = ref[i];
-            if (a.hostname === location.hostname && a.pathname.split('/')[1] === g.BOARD.ID) {
+          currentBoardID = (ref = g.BOARD) != null ? ref.ID : void 0;
+          ref1 = $$('a', Header.bottomBoardList);
+          for (i = 0, len = ref1.length; i < len; i++) {
+            a = ref1[i];
+            if (currentBoardID && a.hostname === location.hostname && a.pathname.split('/')[1] === currentBoardID) {
               a.className = 'current';
             }
           }
@@ -11787,7 +12260,8 @@ Header = (function() {
       return $.sync('boardnav', Header.generateBoardList);
     },
     generateFullBoardList: function() {
-      var a, fullBoardList, i, len, nodes, ref;
+      var a, currentBoardID, fullBoardList, i, len, nodes, ref, ref1;
+      currentBoardID = (ref = g.BOARD) != null ? ref.ID : void 0;
       if (g.SITE.transformBoardList) {
         nodes = g.SITE.transformBoardList();
       } else {
@@ -11795,10 +12269,10 @@ Header = (function() {
       }
       fullBoardList = $('.boardList', Header.boardList);
       $.add(fullBoardList, nodes);
-      ref = $$('a', fullBoardList);
-      for (i = 0, len = ref.length; i < len; i++) {
-        a = ref[i];
-        if (a.hostname === location.hostname && a.pathname.split('/')[1] === g.BOARD.ID) {
+      ref1 = $$('a', fullBoardList);
+      for (i = 0, len = ref1.length; i < len; i++) {
+        a = ref1[i];
+        if (currentBoardID && a.hostname === location.hostname && a.pathname.split('/')[1] === currentBoardID) {
           a.className = 'current';
         }
       }
@@ -11827,7 +12301,7 @@ Header = (function() {
       return CatalogLinks.setLinks(list);
     },
     mapCustomNavigation: function(t) {
-      var a, boardID, href, indexOptions, m, ref, ref1, text, url, urlIC;
+      var a, boardID, currentBoardID, href, indexOptions, m, ref, ref1, ref2, text, url, urlIC;
       if (/^[^\w@]/.test(t)) {
         return $.tn(t);
       }
@@ -11864,14 +12338,18 @@ Header = (function() {
         }
         return a;
       }
+      currentBoardID = (ref = g.BOARD) != null ? ref.ID : void 0;
       boardID = t.split('-')[0];
       if (boardID === 'current') {
-        if ((ref = location.hostname) === 'boards.4chan.org' || ref === 'boards.4channel.org') {
-          boardID = g.BOARD.ID;
+        if (!currentBoardID) {
+          return $.tn(text || '');
+        }
+        if ((ref1 = location.hostname) === 'boards.4chan.org' || ref1 === 'boards.4channel.org') {
+          boardID = currentBoardID;
         } else {
           a = $.el('a', {
-            href: "/" + g.BOARD.ID + "/",
-            textContent: text || decodeURIComponent(g.BOARD.ID),
+            href: "/" + currentBoardID + "/",
+            textContent: text || decodeURIComponent(currentBoardID),
             className: 'current'
           });
           if (/-nt/.test(t)) {
@@ -11890,7 +12368,7 @@ Header = (function() {
         }
       }
       a = (function() {
-        var ref1, urlV;
+        var ref2, urlV;
         if (boardID === '@') {
           return $.el('a', {
             href: 'https://twitter.com/4chan',
@@ -11903,18 +12381,18 @@ Header = (function() {
           textContent: boardID,
           title: BoardConfig.title(boardID)
         });
-        if (((ref1 = g.VIEW) === 'catalog' || ref1 === 'archive') && (urlV = Get.url(g.VIEW, {
+        if (((ref2 = g.VIEW) === 'catalog' || ref2 === 'archive') && (urlV = Get.url(g.VIEW, {
           siteID: '4chan.org',
           boardID: boardID
         }))) {
           a.href = urlV;
         }
-        if (a.hostname === location.hostname && boardID === g.BOARD.ID) {
+        if (a.hostname === location.hostname && boardID === currentBoardID) {
           a.className = 'current';
         }
         return a;
       })();
-      a.textContent = /-title/.test(t) || /-replace/.test(t) && a.hostname === location.hostname && boardID === g.BOARD.ID ? a.title || a.textContent : /-full/.test(t) ? ("/" + boardID + "/") + (a.title ? " - " + a.title : '') : text || boardID;
+      a.textContent = /-title/.test(t) || /-replace/.test(t) && a.hostname === location.hostname && boardID === currentBoardID ? a.title || a.textContent : /-full/.test(t) ? ("/" + boardID + "/") + (a.title ? " - " + a.title : '') : text || boardID;
       if (m = t.match(/-(index|catalog)/)) {
         urlIC = CatalogLinks[m[1]]({
           siteID: '4chan.org',
@@ -11932,7 +12410,7 @@ Header = (function() {
       }
       if (Conf['JSON Index'] && indexOptions) {
         a.dataset.indexOptions = indexOptions;
-        if (((ref1 = a.hostname) === 'boards.4chan.org' || ref1 === 'boards.4channel.org') && a.pathname.split('/')[2] === '') {
+        if (((ref2 = a.hostname) === 'boards.4chan.org' || ref2 === 'boards.4channel.org') && a.pathname.split('/')[2] === '') {
           a.href += (a.hash ? '/' : '#') + indexOptions;
         }
       }
@@ -13747,9 +14225,23 @@ Settings = (function() {
       });
       $.on(d, 'keydown', Settings.keydown);
       Settings.setupWindow(dialog);
-      Settings.applySettingsTheme(Conf['Settings Theme']);
+      Settings.applySettingsTheme('dark');
       $.add(d.body, dialog);
       return $.event('OpenSettings', null, dialog);
+    },
+    openFilters: function() {
+      var preferredMode, ref;
+      preferredMode = Conf['Open Filters Mode'];
+      if (preferredMode === 'simple' || preferredMode === 'advanced' || preferredMode === 'filtered') {
+        Settings.forcedFiltersMode = preferredMode;
+      } else {
+        delete Settings.forcedFiltersMode;
+      }
+      if (Settings.dialog) {
+        return (ref = $('.tab-filters', Settings.dialog)) != null ? ref.click() : void 0;
+      } else {
+        return Settings.open('Filters');
+      }
     },
     close: function() {
       var ref, ref1;
@@ -13769,7 +14261,9 @@ Settings = (function() {
       Settings.dragEnd();
       $.rm(Settings.dialog);
       delete Settings.dialog;
-      return delete Settings.searchQuery;
+      delete Settings.searchQuery;
+      delete Settings.filtersPreviewState;
+      return delete Settings.forcedFiltersMode;
     },
     keydown: function(e) {
       if (e.keyCode !== 27) {
@@ -13853,27 +14347,17 @@ Settings = (function() {
       }
       return false;
     },
-    codeMirrorThemeForSettings: function(theme) {
-      if (theme == null) {
-        theme = Conf['Settings Theme'];
-      }
-      if (Settings.settingsThemeIsDark(theme)) {
-        return 'material-darker';
-      } else {
-        return 'default';
-      }
+    codeMirrorThemeForSettings: function() {
+      return 'material-darker';
     },
-    refreshFancyCSSEditorTheme: function(theme) {
+    refreshFancyCSSEditorTheme: function() {
       var cm, textarea;
-      if (theme == null) {
-        theme = Conf['Settings Theme'];
-      }
       textarea = $('textarea[name=usercss]', Settings.dialog);
       cm = textarea != null ? textarea.fancyCssEditor : void 0;
       if (!cm) {
         return;
       }
-      cm.setOption('theme', Settings.codeMirrorThemeForSettings(theme));
+      cm.setOption('theme', Settings.codeMirrorThemeForSettings());
       return cm.refresh();
     },
     setDragHandle: function(win) {
@@ -14479,6 +14963,83 @@ Settings = (function() {
         }
       });
     },
+    addThreadWatcherFieldset: function(section) {
+      var conf, description, div, fs, input, inputs, items, name, ref, sizeDiv, sizeInput;
+      fs = $.el('fieldset', {innerHTML: "<legend>Thread Watcher</legend>"});
+      items = $.dict();
+      inputs = $.dict();
+      ref = Config.threadWatcher;
+      for (name in ref) {
+        conf = ref[name];
+        description = conf[1] || '';
+        div = $.el('div', {innerHTML: "<label><input type=\"checkbox\" name=\"" + E(name) + "\"><span class=\"setting-title\">" + E(name) + "</span></label><span class=\"description\">: <span class=\"setting-description\">" + E(description) + "</span></span>"});
+        div.dataset.name = name;
+        div.dataset.settingTitle = name;
+        div.dataset.settingDescription = description;
+        input = $('input', div);
+        $.on(input, 'change', $.cb.checked);
+        $.on(input, 'change', function() {
+          return this.parentNode.parentNode.dataset.checked = this.checked;
+        });
+        $.on(input, 'change', function() {
+          var ref1, ref2;
+          if (!ThreadWatcher.enabled) {
+            return;
+          }
+          if ((ref1 = this.name) === 'Current Board' || ref1 === 'Show Page' || ref1 === 'Show Unread Count' || ref1 === 'Show Site Prefix' || ref1 === 'Show OP Thumbnails') {
+            ThreadWatcher.refresh();
+          }
+          if ((ref2 = this.name) === 'Show Page' || ref2 === 'Show Unread Count' || ref2 === 'Auto Update Thread Watcher') {
+            ThreadWatcher.fetchAuto();
+          }
+          if (this.name === 'Show OP Thumbnails' && this.checked) {
+            return ThreadWatcher.fetchAllStatus();
+          }
+        });
+        items[name] = Conf[name];
+        inputs[name] = input;
+        $.add(fs, div);
+      }
+      sizeDiv = $.el('div', {innerHTML: "<label><span class=\"setting-title\">Thumbnail Size: </span><input type=\"number\" name=\"Thread Watcher Thumbnail Size\" min=\"16\" max=\"160\" step=\"1\"></label><span class=\"description\">: Set OP thumbnail size (16-160px).</span>"});
+      sizeDiv.dataset.name = 'Thread Watcher Thumbnail Size';
+      sizeDiv.dataset.settingTitle = 'Thread Watcher Thumbnail Size';
+      sizeDiv.dataset.settingDescription = 'Set OP thumbnail size (16-160px).';
+      sizeInput = $('input', sizeDiv);
+      $.on(sizeInput, 'change', function() {
+        var size;
+        size = parseInt(this.value, 10);
+        if (isNaN(size)) {
+          size = 40;
+        }
+        size = Math.max(16, Math.min(160, size));
+        this.value = size;
+        $.set(this.name, size);
+        Conf[this.name] = size;
+        if (!ThreadWatcher.enabled) {
+          return;
+        }
+        return ThreadWatcher.refresh();
+      });
+      items['Thread Watcher Thumbnail Size'] = Conf['Thread Watcher Thumbnail Size'];
+      inputs['Thread Watcher Thumbnail Size'] = sizeInput;
+      $.add(fs, sizeDiv);
+      $.add(section, fs);
+      $.get(items, function(items) {
+        var key, val;
+        for (key in items) {
+          val = items[key];
+          input = inputs[key];
+          switch (input.type) {
+            case 'checkbox':
+              input.checked = val;
+              input.parentNode.parentNode.dataset.checked = val;
+              break;
+            default:
+              input.value = val;
+          }
+        }
+      });
+    },
     main: function(section) {
       return Settings.general(section);
     },
@@ -14498,6 +15059,7 @@ Settings = (function() {
         includeJSONIndex: false,
         includeHiddenCount: true
       });
+      Settings.addThreadWatcherFieldset(section);
       return Settings.addSelectFieldset(section, 'Thread Title', [
         {
           name: 'Thread Title',
@@ -14590,7 +15152,7 @@ Settings = (function() {
         addCheckboxes(fs, group);
       }
       $.add(section, fs);
-      $.extend(section, {innerHTML: "<fieldset class=\"styling-theme\"><legend>Theme</legend><div class=\"settings-theme-controls\"><label>Settings Theme:<select name=\"Settings Theme\"><option value=\"dark\">Dark</option><option value=\"light\">Light</option><option value=\"site\">Site</option></select></label></div><div class=\"site-theme-controls\"><label>Site Style:<select class=\"site-style-mirror\"></select></label></div></fieldset><fieldset class=\"styling-controls\"><legend>Controls</legend><div class=\"custom-css-enable-controls\"><label><input type=\"checkbox\" name=\"Custom CSS\"> Enable Custom CSS</label><label><input type=\"checkbox\" name=\"Custom CSS on Homepage\"> Load Custom CSS on home page</label></div></fieldset><fieldset class=\"custom-css-editor\"><legend>Custom CSS</legend><div>For more information about customizing 4chan-eX&#039;s CSS, see the <a href=\"https://github.com/ccd0/4chan-eX/wiki/Styling-Guide\" target=\"_blank\">styling guide</a>.</div><div class=\"custom-css-controls\"><button id=\"apply-css\">Apply CSS</button><label>CSS Editor:<select name=\"Custom CSS Editor Mode\"><option value=\"ide\">Advanced</option><option value=\"basic\">Plain</option></select></label></div><textarea hidden name=\"usercss\" class=\"field\" spellcheck=\"false\"></textarea></fieldset><fieldset><legend>Time Formatting <span class=\"warning\" data-feature=\"Time Formatting\">is disabled.</span></legend><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></fieldset><fieldset><legend>Quote Backlinks formatting <span class=\"warning\" data-feature=\"Quote Backlinks\">is disabled.</span></legend><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></fieldset><fieldset><legend>File Info Formatting <span class=\"warning\" data-feature=\"File Info Formatting\">is disabled.</span></legend><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></fieldset><fieldset><legend>Unread Favicon <span class=\"warning\" data-feature=\"Unread Favicon\">is disabled.</span></legend><select name=\"favicon\"><option value=\"ferongr\">ferongr</option><option value=\"xat-\">xat-</option><option value=\"4chanJS\">4chanJS</option><option value=\"Mayhem\">Mayhem</option><option value=\"Original\">Original</option><option value=\"Metro\">Metro</option></select><span class=\"favicon-preview\"></span></fieldset><fieldset><legend>Known Banners</legend><div>List of known banners, used for click-to-change feature.</div><textarea hidden name=\"knownBanners\" class=\"field\" spellcheck=\"false\"></textarea></fieldset>"});
+      $.extend(section, {innerHTML: "<fieldset class=\"styling-theme\"><legend>Theme</legend><div class=\"site-theme-controls\"><label>Site Style:<select class=\"site-style-mirror\"></select></label></div></fieldset><fieldset class=\"generated-highlight-styles\"><legend>Highlight Styles</legend><div class=\"generated-highlight-toggle\"><label><input type=\"checkbox\" name=\"Generated Highlight Styles\"> Enable built-in highlight styling</label></div><div class=\"generated-highlight-grid\"><div class=\"generated-highlight-group\"><h4>Watched Catalog</h4><div class=\"generated-highlight-help\">Used for watched thread tiles in the catalog preview and catalog view.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Watched Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Watched Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Watched Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Your Post</h4><div class=\"generated-highlight-help\">Used for posts and threads that are marked as yours.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Your Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Your Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Your Post Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Quotes You</h4><div class=\"generated-highlight-help\">Used for posts that quote you (when quote highlighting is enabled).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Quotes You Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Quotes You Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Quotes You Opacity\"></span></label></div></div><div class=\"generated-highlight-auto-row\"><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Text Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Text Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Text Color\" data-auto-color-for=\"Highlight Auto Text Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Greentext Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Greentext Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Greentext Color\" data-auto-color-for=\"Highlight Auto Greentext Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Title Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Title Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Title Color\" data-auto-color-for=\"Highlight Auto Title Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Link Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Link Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Link Color\" data-auto-color-for=\"Highlight Auto Link Color\"></label></div></div><div class=\"generated-highlight-preview\"><div class=\"generated-highlight-preview-column ghs-catalog-preview\"><h4>Catalog Preview</h4><div class=\"ghs-catalog-grid\"><div class=\"ghs-catalog-thread watched ghs-watched-only\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-a/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">24</span> / <span class=\"file-count\">6</span> / <span class=\"page-count\">9</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Sample Catalog Title</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread sample preview.</blockquote></div></div></div><div class=\"ghs-catalog-thread watched ghs-watched-you\"><div class=\"yourPost\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-b/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">45</span> / <span class=\"file-count\">3</span> / <span class=\"page-count\">4</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Your Thread Title Sample</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread that you created.</blockquote></div></div></div></div></div></div><div class=\"generated-highlight-preview-column ghs-thread-preview highlight-you\"><h4>Thread Preview</h4><div class=\"postContainer replyContainer yourPost noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\">Your post sample in thread view.<br><a href=\"javascript:;\" class=\"quotelink\">&gt;&gt;108904436</a><br><span class=\"quote\">&gt;sample quote line</span><br><a href=\"javascript:;\">sample link</a></blockquote></div></div><div class=\"postContainer replyContainer quotesYou noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\"><a href=\"javascript:;\" class=\"quotelink you\">&gt;&gt;108900390<span class=\"qmark-you\">&nbsp;(You)</span><span class=\"qmark-op\">&nbsp;(OP)</span></a><br><span class=\"quote\">&gt;sample quote line</span><br>Reply quoting you sample.<br><a href=\"javascript:;\">sample link</a></blockquote></div></div></div></div></fieldset><fieldset class=\"custom-css-editor\"><legend>Custom CSS</legend><div class=\"custom-css-enable-controls\"><label><input type=\"checkbox\" name=\"Custom CSS\"> Enable Custom CSS</label><label><input type=\"checkbox\" name=\"Custom CSS on Homepage\"> Load Custom CSS on home page</label></div><div class=\"custom-css-note\">For more information about customizing 4chan-eX&#039;s CSS, see the <a href=\"https://github.com/ccd0/4chan-eX/wiki/Styling-Guide\" target=\"_blank\">styling guide</a>.</div><div class=\"custom-css-note\"><strong>Note:</strong> Custom CSS can override the classes and styles used by built-in Highlight Styles.</div><div class=\"custom-css-controls\"><button id=\"apply-css\">Apply CSS</button><label>CSS Editor:<select name=\"Custom CSS Editor Mode\"><option value=\"ide\">Advanced</option><option value=\"basic\">Plain</option></select></label></div><textarea hidden name=\"usercss\" class=\"field\" spellcheck=\"false\"></textarea></fieldset><fieldset><legend>Time Formatting <span class=\"warning\" data-feature=\"Time Formatting\">is disabled.</span></legend><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></fieldset><fieldset><legend>Quote Backlinks formatting <span class=\"warning\" data-feature=\"Quote Backlinks\">is disabled.</span></legend><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></fieldset><fieldset><legend>File Info Formatting <span class=\"warning\" data-feature=\"File Info Formatting\">is disabled.</span></legend><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></fieldset><fieldset><legend>Unread Favicon <span class=\"warning\" data-feature=\"Unread Favicon\">is disabled.</span></legend><select name=\"favicon\"><option value=\"ferongr\">ferongr</option><option value=\"xat-\">xat-</option><option value=\"4chanJS\">4chanJS</option><option value=\"Mayhem\">Mayhem</option><option value=\"Original\">Original</option><option value=\"Metro\">Metro</option></select><span class=\"favicon-preview\"></span></fieldset><fieldset><legend>Known Banners</legend><div>List of known banners, used for click-to-change feature.</div><textarea hidden name=\"knownBanners\" class=\"field\" spellcheck=\"false\"></textarea></fieldset>"});
       Settings.setupSiteStyleMirror(section);
       ref2 = $$('.warning', section);
       for (l = 0, len2 = ref2.length; l < len2; l++) {
@@ -14646,14 +15208,15 @@ Settings = (function() {
         inputs['usercss'].disabled = !Conf['Custom CSS'];
         applyCSS.disabled = !Conf['Custom CSS'];
         $.on(customCSS, 'change', Settings.togglecss);
-        return $.on(applyCSS, 'click', function() {
+        $.on(applyCSS, 'click', function() {
           Settings.flushCustomCSSEditor();
           return CustomCSS.update();
         });
       }
+      return Settings.refreshGeneratedHighlightStylesEditor();
     },
     setupSiteStyleMirror: function(section) {
-      var controls, dispatchChange, j, len, mirror, nativeSelect, option, options, ref, ref1, refreshSiteTheme;
+      var controls, dispatchChange, j, len, mirror, nativeSelect, option, options, ref, ref1;
       controls = $('.site-theme-controls', section);
       mirror = $('.site-style-mirror', section);
       nativeSelect = $.id('styleSelector');
@@ -14690,18 +15253,9 @@ Settings = (function() {
         })();
         return nativeSelect.dispatchEvent(event);
       };
-      refreshSiteTheme = function() {
-        if (Conf['Settings Theme'] !== 'site') {
-          return;
-        }
-        Settings.applySettingsTheme('site');
-        return Settings.refreshFancyCSSEditorTheme('site');
-      };
       return $.on(mirror, 'change', function() {
         nativeSelect.value = mirror.value;
-        dispatchChange();
-        setTimeout(refreshSiteTheme, 100);
-        return setTimeout(refreshSiteTheme, 500);
+        return dispatchChange();
       });
     },
     flushCustomCSSEditor: function() {
@@ -15288,7 +15842,7 @@ Settings = (function() {
       }
     },
     filters: function(section) {
-      var advancedPanel, advancedTab, openMode, simplePanel, simpleTab, tabs;
+      var advancedPanel, advancedTab, filteredPanel, filteredTab, openMode, previewPanel, previewState, simplePanel, simpleTab, tabs;
       tabs = $.el('div', {
         className: 'settings-subnav'
       });
@@ -15297,27 +15851,43 @@ Settings = (function() {
         textContent: 'Advanced',
         href: 'javascript:;'
       });
+      filteredTab = $.el('a', {
+        className: 'settings-subnav-tab',
+        textContent: 'Filtered',
+        href: 'javascript:;'
+      });
       simpleTab = $.el('a', {
         className: 'settings-subnav-tab',
         textContent: 'Simple',
         href: 'javascript:;'
       });
-      $.add(tabs, [simpleTab, advancedTab]);
+      $.add(tabs, [simpleTab, advancedTab, filteredTab]);
       advancedPanel = $.el('div');
       simplePanel = $.el('div');
-      Settings.filter(advancedPanel);
-      Settings.easyFilters(simplePanel);
+      filteredPanel = $.el('div');
+      previewPanel = $.el('div');
+      previewState = {
+        panel: previewPanel,
+        simpleTbody: null,
+        advancedType: null,
+        advancedTextarea: null
+      };
+      Settings.filtersPreviewState = previewState;
+      Settings.filter(advancedPanel, previewState);
+      Settings.easyFilters(simplePanel, previewState);
+      $.add(filteredPanel, previewPanel);
       advancedPanel.hidden = true;
       simplePanel.hidden = true;
-      $.add(section, [tabs, simplePanel, advancedPanel]);
+      filteredPanel.hidden = true;
+      $.add(section, [tabs, simplePanel, advancedPanel, filteredPanel]);
       openMode = function(mode) {
-        var isSimple;
-        isSimple = mode === 'simple';
-        simplePanel.hidden = !isSimple;
-        advancedPanel.hidden = isSimple;
+        simplePanel.hidden = mode !== 'simple';
+        advancedPanel.hidden = mode !== 'advanced';
+        filteredPanel.hidden = mode !== 'filtered';
         $.rmClass(simpleTab, 'settings-subnav-tab-selected');
         $.rmClass(advancedTab, 'settings-subnav-tab-selected');
-        $.addClass((isSimple ? simpleTab : advancedTab), 'settings-subnav-tab-selected');
+        $.rmClass(filteredTab, 'settings-subnav-tab-selected');
+        $.addClass((mode === 'simple' ? simpleTab : mode === 'advanced' ? advancedTab : filteredTab), 'settings-subnav-tab-selected');
         return $.set('settings.filtersMode', mode);
       };
       $.on(simpleTab, 'click', function() {
@@ -15326,32 +15896,41 @@ Settings = (function() {
       $.on(advancedTab, 'click', function() {
         return openMode('advanced');
       });
+      $.on(filteredTab, 'click', function() {
+        return openMode('filtered');
+      });
       return $.get('settings.filtersMode', 'simple', function(item) {
         var mode;
-        mode = item['settings.filtersMode'];
-        if (mode !== 'simple' && mode !== 'advanced') {
+        mode = Settings.forcedFiltersMode || item['settings.filtersMode'];
+        delete Settings.forcedFiltersMode;
+        if (mode !== 'simple' && mode !== 'advanced' && mode !== 'filtered') {
           mode = 'simple';
         }
         return openMode(mode);
       });
     },
-    filter: function(section) {
+    filter: function(section, previewState) {
       var select;
       $.extend(section, {innerHTML: "<select name=\"filter\"><option value=\"guide\">Guide</option><option value=\"general\">General</option><option value=\"postID\">Post number</option><option value=\"name\">Name</option><option value=\"uniqueID\">Unique ID</option><option value=\"tripcode\">Tripcode</option><option value=\"capcode\">Capcode</option><option value=\"pass\">Pass Date</option><option value=\"email\">Email</option><option value=\"subject\">Subject</option><option value=\"comment\">Comment</option><option value=\"flag\">Flag</option><option value=\"filename\">Filename</option><option value=\"dimensions\">Image dimensions</option><option value=\"filesize\">Filesize</option><option value=\"MD5\">Image MD5</option></select><div></div>"});
       select = $('select', section);
+      select.filterPreviewState = previewState;
       $.on(select, 'change', Settings.selectFilter);
       return Settings.selectFilter.call(select);
     },
     easyFilterTypes: [['General', 'general'], ['Post Number', 'postID'], ['Name', 'name'], ['Unique ID', 'uniqueID'], ['Tripcode', 'tripcode'], ['Capcode', 'capcode'], ['Pass Date', 'pass'], ['Email', 'email'], ['Subject', 'subject'], ['Comment', 'comment'], ['Flag', 'flag'], ['Filename', 'filename'], ['Dimensions', 'dimensions'], ['Filesize', 'filesize'], ['Image MD5', 'MD5']],
-    easyFilters: function(section) {
+    easyFilters: function(section, previewState) {
       var addButton, addRow, j, len, markDirty, rule, rules, save, saveButton, status, tbody;
       $.extend(section, {innerHTML: "<table class=\"easy-filters-table\"><thead><tr><th>On</th><th>Pattern</th><th>Boards</th><th>Type</th><th>Color</th><th>Auto</th><th>Hide</th><th>Del</th></tr></thead><tbody></tbody></table><div class=\"easy-filters-controls\"><button class=\"easy-filter-add\" type=\"button\">Add</button><button class=\"easy-filter-save\" type=\"button\">Save</button><span class=\"easy-filter-status\"></span></div>"});
       tbody = $('tbody', section);
       addButton = $('.easy-filter-add', section);
       saveButton = $('.easy-filter-save', section);
       status = $('.easy-filter-status', section);
+      if (previewState) {
+        previewState.simpleTbody = tbody;
+      }
       markDirty = function() {
-        return status.textContent = 'Unsaved changes.';
+        status.textContent = 'Unsaved changes.';
+        return Settings.refreshCombinedFilterPreview(previewState);
       };
       save = function() {
         var rules, serialized;
@@ -15359,7 +15938,8 @@ Settings = (function() {
         serialized = JSON.stringify(rules);
         $.set('easyFilters', serialized);
         Conf['easyFilters'] = serialized;
-        return status.textContent = "Saved " + rules.length + " rule" + (rules.length === 1 ? '' : 's') + ".";
+        status.textContent = "Saved " + rules.length + " rule" + (rules.length === 1 ? '' : 's') + ".";
+        return Settings.refreshCombinedFilterPreview(previewState);
       };
       addRow = function(rule) {
         var row;
@@ -15398,7 +15978,8 @@ Settings = (function() {
         return markDirty();
       });
       $.on(saveButton, 'click', save);
-      return status.textContent = "Loaded " + rules.length + " rule" + (rules.length === 1 ? '' : 's') + ".";
+      status.textContent = "Loaded " + rules.length + " rule" + (rules.length === 1 ? '' : 's') + ".";
+      return Settings.refreshCombinedFilterPreview(previewState);
     },
     parseEasyFilters: function() {
       var rules;
@@ -15513,9 +16094,240 @@ Settings = (function() {
       }
       return rules;
     },
+    easyFilterRuleFromRow: function(tr) {
+      var pattern, type;
+      pattern = $('.easy-filter-pattern', tr).value.trim();
+      if (!pattern) {
+        return null;
+      }
+      type = $('.easy-filter-type', tr).value;
+      return {
+        enabled: $('.easy-filter-enabled', tr).checked,
+        pattern: pattern,
+        boards: $('.easy-filter-boards', tr).value.trim(),
+        type: type in Config.filter ? type : 'general',
+        color: $('.easy-filter-color', tr).value.trim(),
+        auto: $('.easy-filter-auto', tr).checked,
+        hide: $('.easy-filter-hide', tr).checked
+      };
+    },
+    easyFilterRuleToLine: function(rule) {
+      var boards, color, flags, hide, line, match, options, type;
+      if (!(rule != null ? rule.enabled : void 0)) {
+        return null;
+      }
+      match = rule.pattern.trim();
+      if (!match) {
+        return null;
+      }
+      flags = rule.caseSensitive ? '' : 'i';
+      line = "/" + (Filter.escape(match)) + "/" + flags;
+      options = [];
+      if (typeof rule.boards === 'string' && (boards = rule.boards.trim())) {
+        options.push("boards:" + boards);
+      }
+      type = (function() {
+        if (rule.type in Config.filter) {
+          return rule.type;
+        } else {
+          switch (rule.field) {
+            case 'title':
+              return 'subject';
+            case 'body':
+              return 'comment';
+            case 'name':
+              return 'name';
+            default:
+              return 'general';
+          }
+        }
+      })();
+      options.push("type:" + (type === 'general' ? 'subject,name,comment' : type));
+      hide = rule.hide != null ? !!rule.hide : ['highlight', 'notify'].indexOf(rule.action) < 0;
+      if (!hide) {
+        if (typeof rule.color === 'string' && (color = rule.color.trim())) {
+          options.push("highlight:" + color);
+        } else {
+          options.push('highlight');
+        }
+        options.push("top:" + (rule.auto ? 'yes' : 'no'));
+      }
+      if (rule.action === 'notify') {
+        options.push('notify');
+      }
+      if (options.length) {
+        line += ";" + (options.join(';'));
+      }
+      return line;
+    },
+    renderEasyFilterPreview: function(tbody, panel) {
+      var activeRules, details, entries, entry, hidesThread, href, idx, j, k, l, len, len1, len2, li, lineText, link, list, match, matchCount, maxThreads, parsed, ref, ref1, ref2, ref3, ref4, result, row, rowNo, rule, ruleText, stat, stats, summary, summaryEl, summaryText, text, totalHidden, totalMatches, tr;
+      $.rmAll(panel);
+      if (!(((ref = g.BOARD) != null ? ref.threads : void 0) && ((ref1 = g.VIEW) === 'index' || ref1 === 'thread' || ref1 === 'catalog'))) {
+        $.add(panel, $.el('div', {
+          className: 'filter-stats-empty',
+          textContent: 'Thread match preview is available on board and catalog pages.'
+        }));
+        return;
+      }
+      entries = Settings.filterPreviewEntries();
+      if (!entries.length) {
+        $.add(panel, $.el('div', {
+          className: 'filter-stats-empty',
+          textContent: 'No loaded thread data to preview.'
+        }));
+        return;
+      }
+      stats = [];
+      totalMatches = 0;
+      totalHidden = 0;
+      activeRules = 0;
+      rowNo = 0;
+      ref2 = $$('tr', tbody);
+      for (j = 0, len = ref2.length; j < len; j++) {
+        tr = ref2[j];
+        rowNo++;
+        rule = Settings.easyFilterRuleFromRow(tr);
+        if (!rule) {
+          continue;
+        }
+        lineText = Settings.easyFilterRuleToLine(rule);
+        if (!lineText) {
+          stats.push({
+            rowNo: rowNo,
+            rule: rule,
+            disabled: true
+          });
+          continue;
+        }
+        activeRules++;
+        parsed = Settings.parseFilterPreviewLine('general', lineText);
+        if (parsed != null ? parsed.invalid : void 0) {
+          stats.push({
+            rowNo: rowNo,
+            rule: rule,
+            invalid: parsed.invalid
+          });
+          continue;
+        }
+        result = Settings.collectFilterPreviewMatches(parsed, entries);
+        totalMatches += result.matches.length;
+        totalHidden += result.hiddenThreadCount;
+        stats.push({
+          rowNo: rowNo,
+          rule: rule,
+          matches: result.matches,
+          hiddenThreadCount: result.hiddenThreadCount
+        });
+      }
+      if (!stats.length) {
+        $.add(panel, $.el('div', {
+          className: 'filter-stats-empty',
+          textContent: 'Add a pattern to preview thread matches.'
+        }));
+        return;
+      }
+      summary = $.el('div', {
+        className: 'filter-stats-summary',
+        textContent: activeRules + " active rule" + (activeRules === 1 ? '' : 's') + ", " + totalMatches + " matching thread" + (totalMatches === 1 ? '' : 's') + ", " + totalHidden + " hidden thread" + (totalHidden === 1 ? '' : 's') + "."
+      });
+      $.add(panel, summary);
+      maxThreads = 50;
+      for (k = 0, len1 = stats.length; k < len1; k++) {
+        stat = stats[k];
+        row = $.el('div', {
+          className: 'filter-stat-row'
+        });
+        ruleText = stat.rule.type + ": " + stat.rule.pattern;
+        if (ruleText.length > 120) {
+          ruleText = ruleText.slice(0, 117) + "...";
+        }
+        if (stat.disabled) {
+          $.add(row, [
+            $.el('span', {
+              className: 'filter-stat-count',
+              textContent: "Rule " + stat.rowNo + ": disabled"
+            }), $.tn(' '), $.el('code', {
+              textContent: ruleText
+            })
+          ]);
+          $.add(panel, row);
+          continue;
+        }
+        if (stat.invalid) {
+          $.add(row, $.el('div', {
+            className: 'filter-stat-invalid',
+            textContent: "Rule " + stat.rowNo + ": invalid regex (" + stat.invalid + ")"
+          }));
+          $.add(panel, row);
+          continue;
+        }
+        matchCount = stat.matches.length;
+        summaryText = "Rule " + stat.rowNo + ": " + matchCount + " matching thread" + (matchCount === 1 ? '' : 's');
+        if (stat.hiddenThreadCount) {
+          summaryText += ", " + stat.hiddenThreadCount + " hidden";
+        }
+        if (matchCount) {
+          details = $.el('details', {
+            className: 'filter-stat'
+          });
+          summaryEl = $.el('summary');
+          $.add(summaryEl, [
+            $.el('span', {
+              className: 'filter-stat-count',
+              textContent: summaryText
+            }), $.tn(' '), $.el('code', {
+              textContent: ruleText
+            })
+          ]);
+          $.add(details, summaryEl);
+          list = $.el('ul', {
+            className: 'filter-stat-threads'
+          });
+          ref3 = stat.matches;
+          for (idx = l = 0, len2 = ref3.length; l < len2; idx = ++l) {
+            match = ref3[idx];
+            if (!(idx < maxThreads)) {
+              continue;
+            }
+            entry = match.entry, hidesThread = match.hidesThread;
+            ref4 = Settings.filterPreviewThreadLink(entry), href = ref4.href, text = ref4.text;
+            link = $.el('a', {
+              href: href,
+              textContent: text
+            });
+            li = $.el('li');
+            $.add(li, link);
+            if (hidesThread) {
+              $.add(li, $.tn(' (hidden)'));
+            }
+            $.add(list, li);
+          }
+          if (stat.matches.length > maxThreads) {
+            $.add(list, $.el('li', {
+              className: 'filter-stat-more',
+              textContent: "...and " + (stat.matches.length - maxThreads) + " more."
+            }));
+          }
+          $.add(details, list);
+          $.add(row, details);
+        } else {
+          $.add(row, [
+            $.el('span', {
+              className: 'filter-stat-count',
+              textContent: summaryText
+            }), $.tn(' '), $.el('code', {
+              textContent: ruleText
+            })
+          ]);
+        }
+        $.add(panel, row);
+      }
+    },
     selectFilter: function() {
-      var div, filterTypes, name, ta;
+      var div, filterTypes, name, previewState, ta;
       div = this.nextElementSibling;
+      previewState = this.filterPreviewState;
       if ((name = this.value) !== 'guide') {
         if (!$.hasOwn(Config.filter, name)) {
           return;
@@ -15529,7 +16341,8 @@ Settings = (function() {
         $.on(ta, 'change', $.cb.value);
         $.get(name, Conf[name], function(item) {
           ta.value = item[name];
-          return $.add(div, ta);
+          $.add(div, ta);
+          return Settings.addFilterStats(name, ta, div, previewState);
         });
         return;
       }
@@ -15540,6 +16353,455 @@ Settings = (function() {
       });
       $.extend(div, {innerHTML: "<div class=\"warning\"><code>Filter</code> is disabled.</div><p>Use <a href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions\" target=\"_blank\">regular expressions</a>, one per line.<br>Lines starting with a <code>#</code> will be ignored.<br>For example, <code>/weeaboo/i</code> will filter posts containing the string `<code>weeaboo</code>`, case-insensitive.<br>MD5 and Unique ID filtering use exact string matching, not regular expressions.</p><ul>You can use these settings with each regular expression, separate them with semicolons:<li>Per boards, separate them with commas. It is global if not specified. Use <code>sfw</code> and <code>nsfw</code> to reference all worksafe or not-worksafe boards.<br>For example: <code>boards:a,jp;</code>.<br>To specify boards on a particular site, put the beginning of the domain and a slash character before the list.<br>Any initial <code>www.</code> should not be included, and all 4chan domains are considered <code>4chan.org</code>.<br>For example: <code>boards:4:a,jp,sama:a,z;</code>.<br>An asterisk can be used to specify all boards on a site.<br>For example: <code>boards:4:*;</code>.<br></li><li>Select boards to be excluded from the filter. The syntax is the same as for the <code>boards:</code> option above.<br>For example: <code>exclude:vg,v;</code>.</li><li>Filter OPs only along with their threads (`only`) or replies only (`no`).<br>For example: <code>op:only;</code> or <code>op:no;</code>.</li><li>Filter only posts with files (`only`) or only posts without files (`no`).<br>For example: <code>file:only;</code> or <code>file:no;</code>.</li><li>Overrule the `Show Stubs` setting if specified: create a stub (`yes`) or not (`no`).<br>For example: <code>stub:yes;</code> or <code>stub:no;</code>.</li><li>Highlight instead of hiding. You can specify a class name to use with a userstyle.<br>For example: <code>highlight;</code> or <code>highlight:wallpaper;</code>.</li><li>Highlighted OPs will have their threads put on top of the board index by default.<br>For example: <code>top:yes;</code> or <code>top:no;</code>.</li><li>Show a desktop notification instead of hiding.<br>For example: <code>notify;</code>.</li><li>Filters in the \"General\" section apply to multiple fields, by default <code>subject,name,filename,comment</code>.<br>The fields can be specified with the <code>type</code> option, separated by commas.<br>For example: <code>type:" + E.cat(filterTypes) + ";</code>.<br>Types can also be combined with a <code>+</code> sign; this indicates the filter applies to the given fields joined by newlines.<br>For example: <code>type:filename+filesize+dimensions;</code>.<br></li></ul>"});
       return $('.warning', div).hidden = Conf['Filter'];
+    },
+    addFilterStats: function(type, textarea, container, previewState) {
+      var panel, refresh, timer;
+      if (previewState) {
+        previewState.advancedType = type;
+        previewState.advancedTextarea = textarea;
+        refresh = function() {
+          return Settings.refreshCombinedFilterPreview(previewState);
+        };
+        $.on(textarea, 'input', refresh);
+        $.on(textarea, 'change', refresh);
+        refresh();
+        return;
+      }
+      if (!container) {
+        return;
+      }
+      panel = $.el('div', {
+        className: 'filter-stats'
+      });
+      $.add(container, panel);
+      timer = 0;
+      refresh = function() {
+        if (timer) {
+          clearTimeout(timer);
+        }
+        return timer = setTimeout((function() {
+          return Settings.renderFilterStats(type, textarea, panel);
+        }), 120);
+      };
+      $.on(textarea, 'input', refresh);
+      $.on(textarea, 'change', refresh);
+      return Settings.renderFilterStats(type, textarea, panel);
+    },
+    refreshCombinedFilterPreview: function(previewState) {
+      var advancedGroup, advancedLabel, advancedPanel, panel, simpleGroup, simplePanel;
+      if (previewState == null) {
+        previewState = Settings.filtersPreviewState;
+      }
+      panel = previewState != null ? previewState.panel : void 0;
+      if (!panel) {
+        return;
+      }
+      $.rmAll(panel);
+      if (!previewState.simpleTbody && !previewState.advancedTextarea) {
+        $.add(panel, $.el('div', {
+          className: 'filter-stats-empty',
+          textContent: 'No filters loaded yet.'
+        }));
+        return;
+      }
+      if (previewState.simpleTbody) {
+        simpleGroup = $.el('div', {
+          className: 'filter-preview-group'
+        });
+        $.add(simpleGroup, $.el('div', {
+          className: 'filter-preview-heading',
+          textContent: 'Simple Filters'
+        }));
+        simplePanel = $.el('div', {
+          className: 'filter-stats'
+        });
+        $.add(simpleGroup, simplePanel);
+        Settings.renderEasyFilterPreview(previewState.simpleTbody, simplePanel);
+        $.add(panel, simpleGroup);
+      }
+      if (previewState.advancedTextarea) {
+        advancedGroup = $.el('div', {
+          className: 'filter-preview-group'
+        });
+        advancedLabel = previewState.advancedType ? "Advanced Filters (" + previewState.advancedType + ")" : 'Advanced Filters';
+        $.add(advancedGroup, $.el('div', {
+          className: 'filter-preview-heading',
+          textContent: advancedLabel
+        }));
+        advancedPanel = $.el('div', {
+          className: 'filter-stats'
+        });
+        $.add(advancedGroup, advancedPanel);
+        Settings.renderFilterStats(previewState.advancedType, previewState.advancedTextarea, advancedPanel);
+        return $.add(panel, advancedGroup);
+      }
+    },
+    renderFilterStats: function(type, textarea, panel) {
+      var details, entries, entry, hidesThread, href, i, idx, j, k, l, len, len1, len2, li, line, lineText, lines, link, list, match, matchCount, maxThreads, parsed, ref, ref1, ref2, ref3, result, row, stat, stats, summary, summaryEl, summaryText, text, totalHidden, totalMatches, trimmed;
+      $.rmAll(panel);
+      if (!(((ref = g.BOARD) != null ? ref.threads : void 0) && ((ref1 = g.VIEW) === 'index' || ref1 === 'thread' || ref1 === 'catalog'))) {
+        $.add(panel, $.el('div', {
+          className: 'filter-stats-empty',
+          textContent: 'Thread match preview is available on board and catalog pages.'
+        }));
+        return;
+      }
+      entries = Settings.filterPreviewEntries();
+      if (!entries.length) {
+        $.add(panel, $.el('div', {
+          className: 'filter-stats-empty',
+          textContent: 'No loaded thread data to preview.'
+        }));
+        return;
+      }
+      lines = textarea.value.split('\n');
+      stats = [];
+      totalMatches = 0;
+      totalHidden = 0;
+      for (i = j = 0, len = lines.length; j < len; i = ++j) {
+        line = lines[i];
+        trimmed = line.trim();
+        if (!trimmed) {
+          continue;
+        }
+        parsed = Settings.parseFilterPreviewLine(type, line);
+        if (parsed != null ? parsed.skip : void 0) {
+          continue;
+        }
+        if (parsed != null ? parsed.invalid : void 0) {
+          stats.push({
+            lineNo: i + 1,
+            line: line,
+            invalid: parsed.invalid
+          });
+          continue;
+        }
+        result = Settings.collectFilterPreviewMatches(parsed, entries);
+        totalMatches += result.matches.length;
+        totalHidden += result.hiddenThreadCount;
+        stats.push({
+          lineNo: i + 1,
+          line: line,
+          matches: result.matches,
+          hiddenThreadCount: result.hiddenThreadCount
+        });
+      }
+      if (!stats.length) {
+        $.add(panel, $.el('div', {
+          className: 'filter-stats-empty',
+          textContent: 'No filter lines to preview.'
+        }));
+        return;
+      }
+      summary = $.el('div', {
+        className: 'filter-stats-summary',
+        textContent: stats.length + " line" + (stats.length === 1 ? '' : 's') + ", " + totalMatches + " matching thread" + (totalMatches === 1 ? '' : 's') + ", " + totalHidden + " hidden thread" + (totalHidden === 1 ? '' : 's') + "."
+      });
+      $.add(panel, summary);
+      maxThreads = 50;
+      for (k = 0, len1 = stats.length; k < len1; k++) {
+        stat = stats[k];
+        row = $.el('div', {
+          className: 'filter-stat-row'
+        });
+        if (stat.invalid) {
+          $.add(row, $.el('div', {
+            className: 'filter-stat-invalid',
+            textContent: "Line " + stat.lineNo + ": invalid regex (" + stat.invalid + ")"
+          }));
+          $.add(panel, row);
+          continue;
+        }
+        lineText = stat.line.trim();
+        if (lineText.length > 120) {
+          lineText = lineText.slice(0, 117) + "...";
+        }
+        matchCount = stat.matches.length;
+        summaryText = "Line " + stat.lineNo + ": " + matchCount + " matching thread" + (matchCount === 1 ? '' : 's');
+        if (stat.hiddenThreadCount) {
+          summaryText += ", " + stat.hiddenThreadCount + " hidden";
+        }
+        if (matchCount) {
+          details = $.el('details', {
+            className: 'filter-stat'
+          });
+          summaryEl = $.el('summary');
+          $.add(summaryEl, [
+            $.el('span', {
+              className: 'filter-stat-count',
+              textContent: summaryText
+            }), $.tn(' '), $.el('code', {
+              textContent: lineText
+            })
+          ]);
+          $.add(details, summaryEl);
+          list = $.el('ul', {
+            className: 'filter-stat-threads'
+          });
+          ref2 = stat.matches;
+          for (idx = l = 0, len2 = ref2.length; l < len2; idx = ++l) {
+            match = ref2[idx];
+            if (!(idx < maxThreads)) {
+              continue;
+            }
+            entry = match.entry, hidesThread = match.hidesThread;
+            ref3 = Settings.filterPreviewThreadLink(entry), href = ref3.href, text = ref3.text;
+            link = $.el('a', {
+              href: href,
+              textContent: text
+            });
+            li = $.el('li');
+            $.add(li, link);
+            if (hidesThread) {
+              $.add(li, $.tn(' (hidden)'));
+            }
+            $.add(list, li);
+          }
+          if (stat.matches.length > maxThreads) {
+            $.add(list, $.el('li', {
+              className: 'filter-stat-more',
+              textContent: "...and " + (stat.matches.length - maxThreads) + " more."
+            }));
+          }
+          $.add(details, list);
+          $.add(row, details);
+        } else {
+          $.add(row, [
+            $.el('span', {
+              className: 'filter-stat-count',
+              textContent: summaryText
+            }), $.tn(' '), $.el('code', {
+              textContent: lineText
+            })
+          ]);
+        }
+        $.add(panel, row);
+      }
+    },
+    parseFilterPreviewLine: function(key, line) {
+      var boards, err, excludes, file, filter, hide, hl, isstring, keys, mask, noti, op, ref, ref1, ref2, ref3, regexp, regexpMatch, types;
+      if (line[0] === '#') {
+        return {
+          skip: true
+        };
+      }
+      if (!(regexpMatch = line.match(/\/(.*)\/(\w*)/))) {
+        return {
+          skip: true
+        };
+      }
+      filter = line.replace(regexpMatch[0], '');
+      boards = Filter.parseBoards((ref = filter.match(/(?:^|;)\s*boards:([^;]+)/)) != null ? ref[1] : void 0);
+      excludes = Filter.parseBoards((ref1 = filter.match(/(?:^|;)\s*exclude:([^;]+)/)) != null ? ref1[1] : void 0);
+      isstring = key === 'uniqueID' || key === 'MD5';
+      regexp = regexpMatch[1];
+      if (!isstring) {
+        try {
+          regexp = RegExp(regexpMatch[1], regexpMatch[2]);
+        } catch (error) {
+          err = error;
+          return {
+            invalid: err.message
+          };
+        }
+      }
+      op = ((ref2 = filter.match(/(?:^|;)\s*op:(no|only)/)) != null ? ref2[1] : void 0) || '';
+      mask = $.getOwn({
+        'no': 1,
+        'only': 2
+      }, op) || 0;
+      file = ((ref3 = filter.match(/(?:^|;)\s*file:(no|only)/)) != null ? ref3[1] : void 0) || '';
+      mask = mask | ($.getOwn({
+        'no': 4,
+        'only': 8
+      }, file) || 0);
+      noti = /(?:^|;)\s*notify/.test(filter);
+      hl = /(?:^|;)\s*highlight/.test(filter);
+      hide = !(hl || noti);
+      keys = key === 'general' ? (types = filter.match(/(?:^|;)\s*type:([^;]*)/)) ? types[1].split(',') : ['subject', 'name', 'filename', 'comment'] : [key];
+      return {
+        regexp: regexp,
+        isstring: isstring,
+        boards: boards,
+        excludes: excludes,
+        mask: mask,
+        hide: hide,
+        keys: keys
+      };
+    },
+    collectFilterPreviewMatches: function(parsed, entries) {
+      var entry, hiddenThreadCount, hidesThread, j, k, len, len1, matches, post, ref, threadMatched;
+      matches = [];
+      hiddenThreadCount = 0;
+      for (j = 0, len = entries.length; j < len; j++) {
+        entry = entries[j];
+        threadMatched = false;
+        hidesThread = false;
+        ref = entry.posts;
+        for (k = 0, len1 = ref.length; k < len1; k++) {
+          post = ref[k];
+          if (!Settings.filterPreviewMatchesPost(parsed, post)) {
+            continue;
+          }
+          threadMatched = true;
+          if (parsed.hide && !post.isReply && !QuoteYou.isYou(post)) {
+            hidesThread = true;
+          }
+        }
+        if (threadMatched) {
+          matches.push({
+            entry: entry,
+            hidesThread: hidesThread
+          });
+          if (hidesThread) {
+            hiddenThreadCount++;
+          }
+        }
+      }
+      return {
+        matches: matches,
+        hiddenThreadCount: hiddenThreadCount
+      };
+    },
+    filterPreviewMatchesPost: function(parsed, post) {
+      var board, j, k, key, len, len1, mask, ref, ref1, site, value;
+      mask = (post.isReply ? 2 : 1);
+      mask = mask | (post.file ? 4 : 8);
+      board = post.siteID + "/" + post.boardID;
+      site = post.siteID + "/*";
+      if ((parsed.boards && !(parsed.boards[board] || parsed.boards[site])) || (parsed.excludes && (parsed.excludes[board] || parsed.excludes[site])) || (parsed.mask & mask)) {
+        return false;
+      }
+      ref = parsed.keys;
+      for (j = 0, len = ref.length; j < len; j++) {
+        key = ref[j];
+        ref1 = Filter.values(key, post);
+        for (k = 0, len1 = ref1.length; k < len1; k++) {
+          value = ref1[k];
+          if (parsed.isstring) {
+            if (parsed.regexp === value) {
+              return true;
+            }
+          } else {
+            parsed.regexp.lastIndex = 0;
+            if (parsed.regexp.test(value)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    },
+    filterPreviewEntries: function() {
+      var data, entries, parsed, posts, ref, ref1, ref10, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, thread, threadID;
+      entries = [];
+      if (g.VIEW === 'index' && (typeof Index !== "undefined" && Index !== null ? Index.parsedThreads : void 0)) {
+        ref = Index.parsedThreads;
+        for (threadID in ref) {
+          parsed = ref[threadID];
+          thread = ((ref1 = g.BOARD) != null ? (ref2 = ref1.threads) != null ? typeof ref2.get === "function" ? ref2.get(+threadID) : void 0 : void 0 : void 0) || ((ref3 = g.BOARD) != null ? (ref4 = ref3.threads) != null ? typeof ref4.get === "function" ? ref4.get(threadID) : void 0 : void 0 : void 0);
+          posts = [];
+          if (thread != null ? thread.posts : void 0) {
+            thread.posts.forEach(function(post) {
+              if (post.isClone || post.isFetchedQuote) {
+                return;
+              }
+              return posts.push(post);
+            });
+          }
+          if (!posts.length) {
+            posts.push(parsed);
+          }
+          entries.push({
+            id: +threadID,
+            boardID: parsed.boardID,
+            siteID: parsed.siteID,
+            thread: thread,
+            op: parsed,
+            posts: posts
+          });
+        }
+        return entries;
+      }
+      if (g.VIEW === 'catalog' && (typeof Filter !== "undefined" && Filter !== null ? Filter.catalogData : void 0)) {
+        ref5 = Filter.catalogData;
+        for (threadID in ref5) {
+          data = ref5[threadID];
+          parsed = g.SITE.Build.parseJSON(data, g.BOARD);
+          thread = ((ref6 = g.BOARD) != null ? (ref7 = ref6.threads) != null ? typeof ref7.get === "function" ? ref7.get(+threadID) : void 0 : void 0 : void 0) || ((ref8 = g.BOARD) != null ? (ref9 = ref8.threads) != null ? typeof ref9.get === "function" ? ref9.get(threadID) : void 0 : void 0 : void 0);
+          posts = [];
+          if (thread != null ? thread.posts : void 0) {
+            thread.posts.forEach(function(post) {
+              if (post.isClone || post.isFetchedQuote) {
+                return;
+              }
+              return posts.push(post);
+            });
+          }
+          if (!posts.length) {
+            posts.push(parsed);
+          }
+          entries.push({
+            id: +threadID,
+            boardID: parsed.boardID,
+            siteID: parsed.siteID,
+            thread: thread,
+            op: parsed,
+            posts: posts
+          });
+        }
+        return entries;
+      }
+      if ((ref10 = g.BOARD) != null ? ref10.threads : void 0) {
+        g.BOARD.threads.forEach(function(thread) {
+          if (!((thread != null ? thread.OP : void 0) && !thread.OP.isFetchedQuote)) {
+            return;
+          }
+          posts = [];
+          thread.posts.forEach(function(post) {
+            if (post.isClone || post.isFetchedQuote) {
+              return;
+            }
+            return posts.push(post);
+          });
+          if (!posts.length) {
+            posts.push(thread.OP);
+          }
+          return entries.push({
+            id: thread.ID,
+            boardID: thread.boardID,
+            siteID: thread.siteID,
+            thread: thread,
+            op: thread.OP,
+            posts: posts
+          });
+        });
+      }
+      return entries;
+    },
+    filterPreviewThreadLink: function(entry) {
+      var base, base1, boardID, href, id, op, ref, ref1, ref2, text, title;
+      id = entry.id, boardID = entry.boardID, op = entry.op;
+      href = (typeof (base = g.SITE.Build).postURL === "function" ? base.postURL(boardID, id, id) : void 0) || (typeof (base1 = g.SITE.Build).threadURL === "function" ? base1.threadURL(boardID, id) : void 0) || '';
+      if (!href) {
+        href = "#p" + id;
+      }
+      title = op.info.subject || op.info.comment || op.info.nameBlock || '';
+      if (!title && ((ref = op.info.commentHTML) != null ? ref.innerHTML : void 0)) {
+        title = ((ref1 = g.sites[op.siteID]) != null ? (ref2 = ref1.Build) != null ? typeof ref2.parseComment === "function" ? ref2.parseComment(op.info.commentHTML.innerHTML) : void 0 : void 0 : void 0) || '';
+      }
+      title = title.replace(/\s+/g, ' ').trim();
+      if (title.length > 90) {
+        title = title.slice(0, 87) + "...";
+      }
+      text = "/" + boardID + "/" + id;
+      if (title) {
+        text += " - " + title;
+      }
+      return {
+        href: href,
+        text: text
+      };
     },
     sauce: function(section) {
       var ta;
@@ -15823,6 +17085,143 @@ Settings = (function() {
       }
       return $.cb.checked.call(this);
     },
+    refreshGeneratedHighlightStylesEditor: function() {
+      var autoGroup, autoInput, autoName, colorInput, enabled, fieldset, input, isAuto, j, k, l, len, len1, len2, previewStyle, ref, ref1, ref2, ref3, section, settings, span;
+      section = $('.section-styling', Settings.dialog);
+      if (!section) {
+        return;
+      }
+      fieldset = $('.generated-highlight-styles', section);
+      if (!fieldset) {
+        return;
+      }
+      enabled = !!((ref = $('input[name="Generated Highlight Styles"]', section)) != null ? ref.checked : void 0);
+      settings = CustomCSS.generatedHighlightSettings();
+      ref1 = $$('.generated-highlight-value[data-generated-value]', fieldset);
+      for (j = 0, len = ref1.length; j < len; j++) {
+        span = ref1[j];
+        switch (span.dataset.generatedValue) {
+          case 'Highlight Watched Opacity':
+            span.textContent = settings.watchedOpacity;
+            break;
+          case 'Highlight Your Post Opacity':
+            span.textContent = settings.yourPostOpacity;
+            break;
+          case 'Highlight Quotes You Opacity':
+            span.textContent = settings.quotesYouOpacity;
+        }
+      }
+      ref2 = $$('input[type="color"], input[type="range"], .generated-highlight-auto-row input[type="checkbox"]', fieldset);
+      for (k = 0, len1 = ref2.length; k < len1; k++) {
+        input = ref2[k];
+        input.disabled = !enabled;
+      }
+      ref3 = $$('input[type="color"][data-auto-color-for]', fieldset);
+      for (l = 0, len2 = ref3.length; l < len2; l++) {
+        colorInput = ref3[l];
+        autoName = colorInput.dataset.autoColorFor;
+        autoInput = $("input[name='" + autoName + "']", fieldset);
+        isAuto = !!(autoInput != null ? autoInput.checked : void 0);
+        colorInput.disabled = !enabled || isAuto;
+        autoGroup = $.x('ancestor::div[contains(@class,"generated-highlight-auto-group")][1]', colorInput);
+        if (isAuto) {
+          if (autoGroup) {
+            $.addClass(autoGroup, 'auto-color-hidden');
+          }
+        } else {
+          if (autoGroup) {
+            $.rmClass(autoGroup, 'auto-color-hidden');
+          }
+        }
+      }
+      previewStyle = $('.generated-highlight-preview-style', fieldset);
+      if (!previewStyle) {
+        previewStyle = $.el('style', {
+          className: 'generated-highlight-preview-style'
+        });
+        $.add(fieldset, previewStyle);
+      }
+      previewStyle.textContent = CustomCSS.generatedHighlightPreviewCSS();
+      if (enabled) {
+        return $.rmClass(fieldset, 'generated-highlight-disabled');
+      } else {
+        return $.addClass(fieldset, 'generated-highlight-disabled');
+      }
+    },
+    generatedHighlightStylesChanged: function() {
+      Settings.refreshGeneratedHighlightStylesEditor();
+      return CustomCSS.updateGeneratedStyles();
+    },
+    syncManualHighlightColorFromAuto: function(autoName, manualName, derivedName) {
+      var autoInput, derived, manualInput, ref, section;
+      section = $('.section-styling', Settings.dialog);
+      if (!section) {
+        return;
+      }
+      autoInput = $("input[name='" + autoName + "']", section);
+      manualInput = $("input[name='" + manualName + "']", section);
+      if (!(autoInput && manualInput)) {
+        return;
+      }
+      if (autoInput.checked) {
+        return;
+      }
+      derived = (ref = CustomCSS.generatedHighlightSettings()) != null ? ref[derivedName] : void 0;
+      if (!/^#[\da-f]{6}$/i.test(derived)) {
+        return;
+      }
+      manualInput.value = derived;
+      return $.cb.value.call(manualInput);
+    },
+    'Generated Highlight Styles': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Watched Color': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Watched Opacity': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Your Post Color': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Your Post Opacity': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Quotes You Color': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Quotes You Opacity': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Auto Text Color': function() {
+      Settings.syncManualHighlightColorFromAuto('Highlight Auto Text Color', 'Highlight Text Color', 'yourPostTextColor');
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Text Color': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Auto Greentext Color': function() {
+      Settings.syncManualHighlightColorFromAuto('Highlight Auto Greentext Color', 'Highlight Greentext Color', 'yourPostQuoteColor');
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Greentext Color': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Auto Title Color': function() {
+      Settings.syncManualHighlightColorFromAuto('Highlight Auto Title Color', 'Highlight Title Color', 'yourPostSubjectColor');
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Title Color': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Auto Link Color': function() {
+      Settings.syncManualHighlightColorFromAuto('Highlight Auto Link Color', 'Highlight Link Color', 'yourPostLinkColor');
+      return Settings.generatedHighlightStylesChanged();
+    },
+    'Highlight Link Color': function() {
+      return Settings.generatedHighlightStylesChanged();
+    },
     getCSSSelectorNames: function(type) {
       var cache, classAttr, className, el, id, j, k, len, len1, list, names, now, ref, ref1;
       now = Date.now();
@@ -16008,10 +17407,6 @@ Settings = (function() {
       cm.refresh();
       return cm;
     },
-    'Settings Theme': function() {
-      Settings.applySettingsTheme(this.value);
-      return Settings.refreshFancyCSSEditorTheme(this.value);
-    },
     'Custom CSS Editor Mode': function() {
       var cm, fieldset, ref, textarea;
       fieldset = $.x('ancestor::fieldset[1]', this);
@@ -16050,8 +17445,8 @@ Settings = (function() {
       }
     },
     keybinds: function(section) {
-      var arr, input, inputs, items, key, ref, tbody, tr;
-      $.extend(section, {innerHTML: "<div class=\"warning\"><code>Keybinds</code> are disabled.</div><div>Allowed keys: <kbd>a-z</kbd>, <kbd>0-9</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>, <kbd>Alt</kbd>, <kbd>Meta</kbd>, <kbd>Enter</kbd>, <kbd>Esc</kbd>, <kbd>Up</kbd>, <kbd>Down</kbd>, <kbd>Right</kbd>, <kbd>Left</kbd>.</div><div>Press <kbd>Backspace</kbd> to disable a keybind.</div><table><tbody><tr><th>Actions</th><th>Keybinds</th></tr></tbody></table>"});
+      var arr, input, inputs, items, key, openFiltersMode, ref, tbody, tr;
+      $.extend(section, {innerHTML: "<div class=\"warning\"><code>Keybinds</code> are disabled.</div><div>Allowed keys: <kbd>a-z</kbd>, <kbd>0-9</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>, <kbd>Alt</kbd>, <kbd>Meta</kbd>, <kbd>Enter</kbd>, <kbd>Esc</kbd>, <kbd>Up</kbd>, <kbd>Down</kbd>, <kbd>Right</kbd>, <kbd>Left</kbd>.</div><div>Press <kbd>Backspace</kbd> to disable a keybind.</div><table><tbody><tr><th>Actions</th><th>Keybinds</th></tr></tbody></table><div><label>Open Filters keybind tab:<select class=\"field\" name=\"Open Filters Mode\" hidden><option value=\"remember\">Remember last used tab</option><option value=\"simple\">Always Simple</option><option value=\"advanced\">Always Advanced</option><option value=\"filtered\">Always Filtered</option></select></label></div>"});
       $('.warning', section).hidden = Conf['Keybinds'];
       tbody = $('tbody', section);
       items = $.dict();
@@ -16068,13 +17463,25 @@ Settings = (function() {
         $.on(input, 'keydown', Settings.keybind);
         $.add(tbody, tr);
       }
-      return $.get(items, function(items) {
+      $.get(items, function(items) {
         var val;
         for (key in items) {
           val = items[key];
           inputs[key].value = val;
         }
       });
+      if (openFiltersMode = $('select[name="Open Filters Mode"]', section)) {
+        $.on(openFiltersMode, 'change', $.cb.value);
+        $.get('Open Filters Mode', Conf['Open Filters Mode'], function(item) {
+          var mode;
+          mode = item['Open Filters Mode'];
+          if (mode !== 'remember' && mode !== 'simple' && mode !== 'advanced' && mode !== 'filtered') {
+            mode = 'remember';
+          }
+          return openFiltersMode.value = mode;
+        });
+        return openFiltersMode.hidden = false;
+      }
     },
     keybind: function(e) {
       var key;
@@ -20192,6 +21599,10 @@ Banner = (function() {
 
   Banner = {
     init: function() {
+      var ref;
+      if (!((ref = g.BOARD) != null ? ref.ID : void 0)) {
+        return;
+      }
       if (Conf['Custom Board Titles']) {
         this.db = new DataBoard('customTitles', null, true);
       }
@@ -20527,14 +21938,555 @@ CustomCSS = (function() {
   var CustomCSS;
 
   CustomCSS = {
+    generatedKeys: ['Generated Highlight Styles', 'Highlight Watched Color', 'Highlight Watched Opacity', 'Highlight Your Post Color', 'Highlight Your Post Opacity', 'Highlight Quotes You Color', 'Highlight Quotes You Opacity', 'Highlight Auto Text Color', 'Highlight Text Color', 'Highlight Auto Greentext Color', 'Highlight Greentext Color', 'Highlight Auto Title Color', 'Highlight Title Color', 'Highlight Auto Link Color', 'Highlight Link Color'],
     init: function() {
+      var i, key, len, ref, refresh;
+      ref = this.generatedKeys;
+      for (i = 0, len = ref.length; i < len; i++) {
+        key = ref[i];
+        $.sync(key, this.syncGenerated);
+      }
+      this.updateGeneratedStyles();
       if (!Conf['Custom CSS']) {
         return;
       }
-      return this.addStyle();
+      if (!(g.VIEW || Conf['Custom CSS on Homepage'])) {
+        return;
+      }
+      this.addStyle();
+      if (g.VIEW) {
+        return;
+      }
+      refresh = (function(_this) {
+        return function() {
+          _this.ensureStyle();
+          return $.queueTask(_this.ensureStyle.bind(_this));
+        };
+      })(this);
+      $.ready(refresh);
+      $.on(window, 'pageshow load', refresh);
+      return this.watchHomepageHead();
+    },
+    syncGenerated: function(value, key) {
+      Conf[key] = value;
+      return CustomCSS.updateGeneratedStyles();
     },
     addStyle: function() {
-      return this.style = $.addStyle(CSS.sub(Conf['usercss']), 'custom-css', '#fourchanx-css');
+      var anchor;
+      anchor = g.BOARD ? '#fourchanx-css' : 'head';
+      return this.style = $.addStyle(CSS.sub(Conf['usercss']), 'custom-css', anchor);
+    },
+    ensureStyle: function() {
+      var css, style;
+      style = $.id('custom-css');
+      if (!style) {
+        this.addStyle();
+        return;
+      }
+      css = CSS.sub(Conf['usercss']);
+      if (style.textContent !== css) {
+        style.textContent = css;
+      }
+      if (style.disabled) {
+        style.disabled = false;
+      }
+      this.style = style;
+      if (!d.head) {
+        return;
+      }
+      if (style.parentNode !== d.head || d.head.lastElementChild !== style) {
+        return $.add(d.head, style);
+      }
+    },
+    addGeneratedStyle: function() {
+      var anchor;
+      anchor = g.BOARD ? '#fourchanx-css' : 'head';
+      return this.generatedStyle = $.addStyle(CSS.sub(this.generatedHighlightCSS()), 'custom-generated-highlights', anchor);
+    },
+    rmGeneratedStyle: function() {
+      if (this.generatedStyle) {
+        $.rm(this.generatedStyle);
+        return delete this.generatedStyle;
+      }
+    },
+    updateGeneratedStyles: function() {
+      var css;
+      if (!(g.VIEW && Conf['Generated Highlight Styles'])) {
+        return this.rmGeneratedStyle();
+      }
+      css = CSS.sub(this.generatedHighlightCSS());
+      if (!this.generatedStyle) {
+        return this.addGeneratedStyle();
+      }
+      if (this.generatedStyle.textContent !== css) {
+        this.generatedStyle.textContent = css;
+      }
+      if (this.generatedStyle.disabled) {
+        return this.generatedStyle.disabled = false;
+      }
+    },
+    generatedHighlightSettings: function() {
+      var autoGreentextColor, autoLinkColor, autoTextColor, autoTitleColor, manualGreentextColor, manualLinkColor, manualTextColor, manualTitleColor, quotesYouAutoLinkColor, quotesYouBorderColor, quotesYouColor, quotesYouOpacity, quotesYouQuoteColor, referenceBackgroundRGB, watchedAutoLinkColor, watchedColor, watchedFillRGB, watchedOpacity, watchedQuoteColor, watchedSubjectColor, yourPostAutoLinkColor, yourPostBorderColor, yourPostColor, yourPostFillRGB, yourPostOpacity, yourPostQuoteColor, yourPostSubjectColor;
+      watchedColor = this.normalizeHexColor(Conf['Highlight Watched Color'], '#00509b');
+      yourPostColor = this.normalizeHexColor(Conf['Highlight Your Post Color'], '#059600');
+      quotesYouColor = this.normalizeHexColor(Conf['Highlight Quotes You Color'], '#ad2c27');
+      watchedOpacity = this.normalizeNumber(Conf['Highlight Watched Opacity'], 1, 0, 1);
+      yourPostOpacity = this.normalizeNumber(Conf['Highlight Your Post Opacity'], 0.7, 0, 1);
+      quotesYouOpacity = this.normalizeNumber(Conf['Highlight Quotes You Opacity'], 0.8, 0, 1);
+      autoTextColor = Conf['Highlight Auto Text Color'] !== false;
+      manualTextColor = this.normalizeHexColor(Conf['Highlight Text Color'], '#f2f2f2');
+      autoGreentextColor = Conf['Highlight Auto Greentext Color'] !== false;
+      manualGreentextColor = this.normalizeHexColor(Conf['Highlight Greentext Color'], '#789922');
+      autoTitleColor = Conf['Highlight Auto Title Color'] !== false;
+      manualTitleColor = this.normalizeHexColor(Conf['Highlight Title Color'], '#0f0c5d');
+      autoLinkColor = Conf['Highlight Auto Link Color'] !== false;
+      manualLinkColor = this.normalizeHexColor(Conf['Highlight Link Color'], '#99c3ff');
+      referenceBackgroundRGB = this.generatedHighlightReferenceBackground();
+      watchedFillRGB = this.blendedFillRGB(watchedColor, watchedOpacity, referenceBackgroundRGB);
+      yourPostFillRGB = this.blendedFillRGB(yourPostColor, yourPostOpacity, referenceBackgroundRGB);
+      yourPostBorderColor = this.autoBorderColor(yourPostColor, yourPostOpacity, referenceBackgroundRGB);
+      quotesYouBorderColor = this.autoBorderColor(quotesYouColor, quotesYouOpacity, referenceBackgroundRGB);
+      watchedQuoteColor = this.autoQuoteColor(watchedColor, watchedOpacity, referenceBackgroundRGB);
+      yourPostQuoteColor = this.autoQuoteColor(yourPostColor, yourPostOpacity, referenceBackgroundRGB);
+      quotesYouQuoteColor = this.autoQuoteColor(quotesYouColor, quotesYouOpacity, referenceBackgroundRGB);
+      watchedAutoLinkColor = this.autoLinkColor(watchedColor, watchedOpacity, referenceBackgroundRGB);
+      yourPostAutoLinkColor = this.autoLinkColor(yourPostColor, yourPostOpacity, referenceBackgroundRGB);
+      quotesYouAutoLinkColor = this.autoLinkColor(quotesYouColor, quotesYouOpacity, referenceBackgroundRGB);
+      watchedSubjectColor = this.autoTitleColor(watchedColor, watchedOpacity, referenceBackgroundRGB, 4.0);
+      yourPostSubjectColor = this.autoTitleColor(yourPostColor, yourPostOpacity, referenceBackgroundRGB, 4.0);
+      return {
+        watchedColor: watchedColor,
+        watchedOpacity: watchedOpacity,
+        yourPostColor: yourPostColor,
+        yourPostOpacity: yourPostOpacity,
+        quotesYouColor: quotesYouColor,
+        quotesYouOpacity: quotesYouOpacity,
+        referenceBackgroundRGB: referenceBackgroundRGB,
+        referenceBackgroundCSS: this.rgbCSS(referenceBackgroundRGB),
+        referenceTextColor: this.autoBaseTextColor(referenceBackgroundRGB),
+        yourPostBorderColor: yourPostBorderColor,
+        quotesYouBorderColor: quotesYouBorderColor,
+        watchedRGBA: this.toRGBA(watchedColor, watchedOpacity),
+        yourPostRGBA: this.toRGBA(yourPostColor, yourPostOpacity),
+        quotesYouRGBA: this.toRGBA(quotesYouColor, quotesYouOpacity),
+        yourPostBorderRGBA: this.toRGBA(yourPostBorderColor, 1),
+        quotesYouBorderRGBA: this.toRGBA(quotesYouBorderColor, 1),
+        watchedTextColor: autoTextColor ? this.autoTextColor(watchedColor, watchedOpacity, referenceBackgroundRGB) : manualTextColor,
+        yourPostTextColor: autoTextColor ? this.autoTextColor(yourPostColor, yourPostOpacity, referenceBackgroundRGB) : manualTextColor,
+        quotesYouTextColor: autoTextColor ? this.autoTextColor(quotesYouColor, quotesYouOpacity, referenceBackgroundRGB) : manualTextColor,
+        watchedQuoteColor: autoGreentextColor ? watchedQuoteColor : manualGreentextColor,
+        yourPostQuoteColor: autoGreentextColor ? yourPostQuoteColor : manualGreentextColor,
+        quotesYouQuoteColor: autoGreentextColor ? quotesYouQuoteColor : manualGreentextColor,
+        watchedSubjectColor: autoTitleColor ? watchedSubjectColor : manualTitleColor,
+        yourPostSubjectColor: autoTitleColor ? yourPostSubjectColor : manualTitleColor,
+        watchedLinkColor: autoLinkColor ? watchedAutoLinkColor : manualLinkColor,
+        yourPostLinkColor: autoLinkColor ? yourPostAutoLinkColor : manualLinkColor,
+        quotesYouLinkColor: autoLinkColor ? quotesYouAutoLinkColor : manualLinkColor
+      };
+    },
+    generatedHighlightCSS: function() {
+      var styles;
+      styles = this.generatedHighlightSettings();
+      return "/* Auto-generated Highlight Styles (4chan-eX) */\n:root .watched {\n  background: " + styles.watchedRGBA + " !important;\n  color: " + styles.watchedTextColor + " !important;\n}\n:root .watched a,\n:root .watched .quotelink,\n:root .watched .deadlink,\n:root .watched .postNum > a:last-child {\n  color: " + styles.watchedLinkColor + " !important;\n}\n:root .watched .postNum > a:first-child,\n:root .watched .name,\n:root .watched .dateTime,\n:root .watched .postNum {\n  color: inherit !important;\n}\n:root .watched .quote {\n  color: " + styles.watchedQuoteColor + " !important;\n}\n:root .watched .subject {\n  color: " + styles.watchedSubjectColor + " !important;\n}\n\n:root .watched:has(> .yourPost) {\n  background: " + styles.yourPostRGBA + " !important;\n}\n\n:root .watched > .yourPost {\n  background: " + styles.yourPostRGBA + " !important;\n}\n\n:root .watched:has(> .yourPost) > .yourPost {\n  background: transparent !important;\n}\n:root .watched:has(> .yourPost) .subject,\n:root .watched > .yourPost .subject {\n  color: " + styles.yourPostSubjectColor + " !important;\n}\n\n:root :not(.watched) > .yourPost:not(.opContainer) div.post {\n  background: " + styles.yourPostRGBA + " !important;\n  color: " + styles.yourPostTextColor + " !important;\n}\n:root :not(.watched) > .yourPost:not(.opContainer) div.post a,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .quotelink,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .deadlink,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a:last-child {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a:first-child,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .name,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .dateTime,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum {\n  color: inherit !important;\n}\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .quote {\n  color: " + styles.yourPostQuoteColor + " !important;\n}\n\n:root.highlight-own.highlight-own.highlight-own .yourPost > .op,\n:root.highlight-own.highlight-own.highlight-own .yourPost > .reply {\n  border-left: 3px dashed " + styles.yourPostBorderRGBA + " !important;\n}\n\n:root.highlight-you .replyContainer.quotesYou > .reply,\n:root.highlight-you .postContainer.quotesYou > .reply,\n:root.highlight-you .opContainer.quotesYou > .op {\n  background: " + styles.quotesYouRGBA + " !important;\n  color: " + styles.quotesYouTextColor + " !important;\n}\n:root.highlight-you.highlight-you.highlight-you .quotesYou > .op,\n:root.highlight-you.highlight-you.highlight-you .quotesYou > .reply {\n  border-left: 3px solid " + styles.quotesYouBorderRGBA + " !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply a,\n:root.highlight-you .postContainer.quotesYou > .reply a,\n:root.highlight-you .opContainer.quotesYou > .op a,\n:root.highlight-you .replyContainer.quotesYou > .reply .quotelink,\n:root.highlight-you .postContainer.quotesYou > .reply .quotelink,\n:root.highlight-you .opContainer.quotesYou > .op .quotelink,\n:root.highlight-you .replyContainer.quotesYou > .reply .deadlink,\n:root.highlight-you .postContainer.quotesYou > .reply .deadlink,\n:root.highlight-you .opContainer.quotesYou > .op .deadlink {\n  color: " + styles.quotesYouLinkColor + " !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply .postNum > a:first-child,\n:root.highlight-you .postContainer.quotesYou > .reply .postNum > a:first-child,\n:root.highlight-you .opContainer.quotesYou > .op .postNum > a:first-child,\n:root.highlight-you .replyContainer.quotesYou > .reply .name,\n:root.highlight-you .postContainer.quotesYou > .reply .name,\n:root.highlight-you .opContainer.quotesYou > .op .name,\n:root.highlight-you .replyContainer.quotesYou > .reply .dateTime,\n:root.highlight-you .postContainer.quotesYou > .reply .dateTime,\n:root.highlight-you .opContainer.quotesYou > .op .dateTime,\n:root.highlight-you .replyContainer.quotesYou > .reply .postNum,\n:root.highlight-you .postContainer.quotesYou > .reply .postNum,\n:root.highlight-you .opContainer.quotesYou > .op .postNum {\n  color: inherit !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply .quote,\n:root.highlight-you .postContainer.quotesYou > .reply .quote,\n:root.highlight-you .opContainer.quotesYou > .op .quote {\n  color: " + styles.quotesYouQuoteColor + " !important;\n}";
+    },
+    generatedHighlightPreviewCSS: function() {
+      var styles;
+      styles = this.generatedHighlightSettings();
+      return ".section-styling .ghs-catalog-preview,\n.section-styling .ghs-thread-preview {\n  background: transparent;\n  color: " + styles.referenceTextColor + ";\n}\n.section-styling .ghs-thread-preview > div {\n  background: transparent;\n}\n\n.section-styling .ghs-catalog-thread.watched {\n  background: " + styles.watchedRGBA + ";\n  color: " + styles.watchedTextColor + ";\n}\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-stats,\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-comment {\n  color: inherit !important;\n}\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-subject,\n.section-styling .ghs-catalog-thread.watched .subject {\n  color: " + styles.watchedSubjectColor + " !important;\n}\n\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you {\n  background: " + styles.yourPostRGBA + ";\n  color: " + styles.yourPostTextColor + " !important;\n}\n\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you > .yourPost {\n  background: transparent;\n  color: " + styles.yourPostTextColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-stats,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-comment {\n  color: " + styles.yourPostTextColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-subject,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .subject {\n  color: " + styles.yourPostSubjectColor + " !important;\n}\n\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply {\n  background: " + styles.yourPostRGBA + ";\n  color: " + styles.yourPostTextColor + ";\n  border-left: 3px dashed " + styles.yourPostBorderRGBA + " !important;\n}\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .quote {\n  color: " + styles.yourPostQuoteColor + " !important;\n}\n\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op {\n  background: " + styles.quotesYouRGBA + ";\n  color: " + styles.quotesYouTextColor + ";\n  border-left: 3px solid " + styles.quotesYouBorderRGBA + " !important;\n}\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .quote,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .quote,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .quote {\n  color: " + styles.quotesYouQuoteColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched a,\n.section-styling .ghs-catalog-thread.watched .quotelink,\n.section-styling .ghs-catalog-thread.watched .deadlink {\n  color: " + styles.watchedLinkColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you a,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .quotelink,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .deadlink {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply a,\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .quotelink,\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .deadlink {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply a,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply a,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op a,\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .deadlink,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .deadlink,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .deadlink {\n  color: " + styles.quotesYouLinkColor + " !important;\n}";
+    },
+    normalizeHexColor: function(color, fallback) {
+      if (typeof color !== 'string') {
+        return fallback;
+      }
+      color = color.trim().toLowerCase();
+      if (/^#[\da-f]{3}$/.test(color)) {
+        return '#' + color.slice(1).split('').map(function(x) {
+          return x + x;
+        }).join('');
+      }
+      if (/^#[\da-f]{6}$/.test(color)) {
+        return color;
+      }
+      return fallback;
+    },
+    normalizeNumber: function(value, fallback, min, max) {
+      var n;
+      n = parseFloat(value);
+      if (!isFinite(n)) {
+        n = fallback;
+      }
+      n = Math.max(min, Math.min(max, n));
+      return Math.round(n * 100) / 100;
+    },
+    toRGBA: function(hex, opacity) {
+      var b, g, r;
+      r = parseInt(hex.slice(1, 3), 16);
+      g = parseInt(hex.slice(3, 5), 16);
+      b = parseInt(hex.slice(5, 7), 16);
+      return "rgba(" + r + ", " + g + ", " + b + ", " + opacity + ")";
+    },
+    autoTextColor: function(hex, opacity, backgroundRGB) {
+      var dark, darkContrast, fill, light, lightContrast;
+      if (backgroundRGB == null) {
+        backgroundRGB = [0, 0, 0];
+      }
+      fill = this.blendedFillRGB(hex, opacity, backgroundRGB);
+      dark = {
+        r: 17,
+        g: 17,
+        b: 17
+      };
+      light = {
+        r: 242,
+        g: 242,
+        b: 242
+      };
+      darkContrast = this.contrastRatio(dark, fill);
+      lightContrast = this.contrastRatio(light, fill);
+      if (darkContrast >= lightContrast) {
+        return '#111';
+      } else {
+        return '#f2f2f2';
+      }
+    },
+    autoBorderColor: function(hex, opacity, backgroundRGB) {
+      var amount, base, border, fillLuma, i, len, minContrast, ref, target;
+      if (backgroundRGB == null) {
+        backgroundRGB = [0, 0, 0];
+      }
+      base = this.blendedFillRGB(hex, opacity, backgroundRGB);
+      fillLuma = this.luma(base.r, base.g, base.b);
+      target = fillLuma >= 145 ? {
+        r: 0,
+        g: 0,
+        b: 0
+      } : {
+        r: 255,
+        g: 255,
+        b: 255
+      };
+      border = this.mixRGB(base, target, 0.68);
+      minContrast = 2.0;
+      if (this.contrastRatio(border, base) < minContrast) {
+        ref = [0.78, 0.86, 0.94];
+        for (i = 0, len = ref.length; i < len; i++) {
+          amount = ref[i];
+          border = this.mixRGB(base, target, amount);
+          if (this.contrastRatio(border, base) >= minContrast) {
+            break;
+          }
+        }
+      }
+      return this.rgbToHex(border.r, border.g, border.b);
+    },
+    autoQuoteColor: function(hex, opacity, backgroundRGB) {
+      var amount, baseGreen, best, bestContrast, contrast, fill, fillLuma, i, len, minContrast, quote, steps, target;
+      if (backgroundRGB == null) {
+        backgroundRGB = [0, 0, 0];
+      }
+      fill = this.blendedFillRGB(hex, opacity, backgroundRGB);
+      baseGreen = {
+        r: 120,
+        g: 153,
+        b: 34
+      };
+      minContrast = 3.0;
+      if (this.contrastRatio(baseGreen, fill) >= minContrast) {
+        return this.rgbToHex(baseGreen.r, baseGreen.g, baseGreen.b);
+      }
+      fillLuma = this.luma(fill.r, fill.g, fill.b);
+      target = fillLuma >= 145 ? {
+        r: 0,
+        g: 0,
+        b: 0
+      } : {
+        r: 255,
+        g: 255,
+        b: 255
+      };
+      steps = [0.08, 0.16, 0.24, 0.32, 0.42, 0.54, 0.68];
+      best = baseGreen;
+      bestContrast = this.contrastRatio(baseGreen, fill);
+      for (i = 0, len = steps.length; i < len; i++) {
+        amount = steps[i];
+        quote = this.mixRGB(baseGreen, target, amount);
+        contrast = this.contrastRatio(quote, fill);
+        if (contrast > bestContrast) {
+          best = quote;
+          bestContrast = contrast;
+        }
+        if (contrast >= minContrast) {
+          return this.rgbToHex(quote.r, quote.g, quote.b);
+        }
+      }
+      return this.rgbToHex(best.r, best.g, best.b);
+    },
+    autoLinkColor: function(hex, opacity, backgroundRGB) {
+      var amount, baseBlue, best, bestContrast, contrast, fill, fillLuma, i, len, link, minContrast, steps, target;
+      if (backgroundRGB == null) {
+        backgroundRGB = [0, 0, 0];
+      }
+      fill = this.blendedFillRGB(hex, opacity, backgroundRGB);
+      baseBlue = {
+        r: 59,
+        g: 112,
+        b: 217
+      };
+      minContrast = 3.0;
+      if (this.contrastRatio(baseBlue, fill) >= minContrast) {
+        return this.rgbToHex(baseBlue.r, baseBlue.g, baseBlue.b);
+      }
+      fillLuma = this.luma(fill.r, fill.g, fill.b);
+      target = fillLuma >= 145 ? {
+        r: 0,
+        g: 0,
+        b: 0
+      } : {
+        r: 255,
+        g: 255,
+        b: 255
+      };
+      steps = [0.08, 0.16, 0.24, 0.32, 0.42, 0.54, 0.68];
+      best = baseBlue;
+      bestContrast = this.contrastRatio(baseBlue, fill);
+      for (i = 0, len = steps.length; i < len; i++) {
+        amount = steps[i];
+        link = this.mixRGB(baseBlue, target, amount);
+        contrast = this.contrastRatio(link, fill);
+        if (contrast > bestContrast) {
+          best = link;
+          bestContrast = contrast;
+        }
+        if (contrast >= minContrast) {
+          return this.rgbToHex(link.r, link.g, link.b);
+        }
+      }
+      return this.rgbToHex(best.r, best.g, best.b);
+    },
+    autoTitleColor: function(hex, opacity, backgroundRGB, minContrast) {
+      var dark, fill, fillLuma, light, pickFor, primary, primaryTarget, secondary, secondaryTarget, steps, winner;
+      if (backgroundRGB == null) {
+        backgroundRGB = [0, 0, 0];
+      }
+      if (minContrast == null) {
+        minContrast = 5.5;
+      }
+      fill = this.blendedFillRGB(hex, opacity, backgroundRGB);
+      fillLuma = this.luma(fill.r, fill.g, fill.b);
+      dark = {
+        r: 0,
+        g: 0,
+        b: 0
+      };
+      light = {
+        r: 255,
+        g: 255,
+        b: 255
+      };
+      primaryTarget = fillLuma > 110 ? dark : light;
+      secondaryTarget = primaryTarget === dark ? light : dark;
+      steps = [0.12, 0.2, 0.3, 0.42, 0.56, 0.7, 0.84, 0.92, 0.97];
+      pickFor = (function(_this) {
+        return function(target) {
+          var amount, best, bestContrast, contrast, i, len, shade, targetContrast;
+          best = fill;
+          bestContrast = 1;
+          for (i = 0, len = steps.length; i < len; i++) {
+            amount = steps[i];
+            shade = _this.mixRGB(fill, target, amount);
+            contrast = _this.contrastRatio(shade, fill);
+            if (contrast > bestContrast) {
+              best = shade;
+              bestContrast = contrast;
+            }
+            if (contrast >= minContrast) {
+              return {
+                done: true,
+                color: shade,
+                contrast: contrast
+              };
+            }
+          }
+          targetContrast = _this.contrastRatio(target, fill);
+          if (targetContrast > bestContrast) {
+            best = target;
+            bestContrast = targetContrast;
+          }
+          return {
+            done: false,
+            color: best,
+            contrast: bestContrast
+          };
+        };
+      })(this);
+      primary = pickFor(primaryTarget);
+      if (primary.done) {
+        return this.rgbToHex(primary.color.r, primary.color.g, primary.color.b);
+      }
+      secondary = pickFor(secondaryTarget);
+      winner = secondary.contrast > primary.contrast ? secondary : primary;
+      return this.rgbToHex(winner.color.r, winner.color.g, winner.color.b);
+    },
+    generatedHighlightReferenceBackground: function() {
+      var bg, color, node;
+      if (!(typeof d !== "undefined" && d !== null ? d.body : void 0)) {
+        return [18, 18, 18];
+      }
+      node = $('.post.reply, .post.op, .post') || d.body;
+      bg = {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 0
+      };
+      while (node) {
+        color = this.parseCSSColor(getComputedStyle(node).backgroundColor);
+        if (color) {
+          bg = this.compositeRGBA(color, bg);
+        }
+        if (bg.a >= 0.98) {
+          return [Math.round(bg.r), Math.round(bg.g), Math.round(bg.b)];
+        }
+        node = node.parentElement;
+      }
+      return [18, 18, 18];
+    },
+    compositeRGBA: function(fg, bg) {
+      var alpha;
+      alpha = fg.a + bg.a * (1 - fg.a);
+      if (!alpha) {
+        return {
+          r: 0,
+          g: 0,
+          b: 0,
+          a: 0
+        };
+      }
+      return {
+        r: (fg.r * fg.a + bg.r * bg.a * (1 - fg.a)) / alpha,
+        g: (fg.g * fg.a + bg.g * bg.a * (1 - fg.a)) / alpha,
+        b: (fg.b * fg.a + bg.b * bg.a * (1 - fg.a)) / alpha,
+        a: alpha
+      };
+    },
+    parseCSSColor: function(value) {
+      var a, b, g, match, r;
+      if (typeof value !== 'string') {
+        return null;
+      }
+      match = value.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*[,\/]\s*([\d.]+))?\s*\)$/i);
+      if (!match) {
+        return null;
+      }
+      r = Math.max(0, Math.min(255, parseFloat(match[1]) || 0));
+      g = Math.max(0, Math.min(255, parseFloat(match[2]) || 0));
+      b = Math.max(0, Math.min(255, parseFloat(match[3]) || 0));
+      a = Math.max(0, Math.min(1, match[4] != null ? parseFloat(match[4]) : 1));
+      return {
+        r: r,
+        g: g,
+        b: b,
+        a: a
+      };
+    },
+    hexToRGB: function(hex) {
+      var b, g, r;
+      r = parseInt(hex.slice(1, 3), 16);
+      g = parseInt(hex.slice(3, 5), 16);
+      b = parseInt(hex.slice(5, 7), 16);
+      return {
+        r: r,
+        g: g,
+        b: b
+      };
+    },
+    mixRGB: function(base, target, amount) {
+      var inv;
+      amount = Math.max(0, Math.min(1, amount));
+      inv = 1 - amount;
+      return {
+        r: Math.round(base.r * inv + target.r * amount),
+        g: Math.round(base.g * inv + target.g * amount),
+        b: Math.round(base.b * inv + target.b * amount)
+      };
+    },
+    blendedFillRGB: function(hex, opacity, backgroundRGB) {
+      var b, bgB, bgG, bgR, g, r, ref;
+      if (backgroundRGB == null) {
+        backgroundRGB = [0, 0, 0];
+      }
+      ref = this.hexToRGB(hex), r = ref.r, g = ref.g, b = ref.b;
+      bgR = backgroundRGB[0], bgG = backgroundRGB[1], bgB = backgroundRGB[2];
+      return {
+        r: Math.round(r * opacity + bgR * (1 - opacity)),
+        g: Math.round(g * opacity + bgG * (1 - opacity)),
+        b: Math.round(b * opacity + bgB * (1 - opacity))
+      };
+    },
+    rgbToHex: function(r, g, b) {
+      return '#' + [r, g, b].map(function(n) {
+        var hex;
+        hex = Math.max(0, Math.min(255, Math.round(n))).toString(16);
+        if (hex.length === 1) {
+          return "0" + hex;
+        } else {
+          return hex;
+        }
+      }).join('');
+    },
+    rgbCSS: function(arg) {
+      var b, g, r;
+      r = arg[0], g = arg[1], b = arg[2];
+      return "rgb(" + (Math.round(r)) + ", " + (Math.round(g)) + ", " + (Math.round(b)) + ")";
+    },
+    luma: function(r, g, b) {
+      return 0.299 * r + 0.587 * g + 0.114 * b;
+    },
+    autoBaseTextColor: function(arg) {
+      var b, g, r;
+      r = arg[0], g = arg[1], b = arg[2];
+      if (this.luma(r, g, b) >= 145) {
+        return '#111';
+      } else {
+        return '#f2f2f2';
+      }
+    },
+    contrastRatio: function(a, b) {
+      var hi, l1, l2, lo;
+      l1 = this.relativeLuminance(a.r, a.g, a.b);
+      l2 = this.relativeLuminance(b.r, b.g, b.b);
+      hi = Math.max(l1, l2);
+      lo = Math.min(l1, l2);
+      return (hi + 0.05) / (lo + 0.05);
+    },
+    relativeLuminance: function(r, g, b) {
+      var ref;
+      ref = [r, g, b].map(function(n) {
+        var c;
+        c = Math.max(0, Math.min(255, n)) / 255;
+        if (c <= 0.04045) {
+          return c / 12.92;
+        } else {
+          return Math.pow((c + 0.055) / 1.055, 2.4);
+        }
+      }), r = ref[0], g = ref[1], b = ref[2];
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    },
+    watchHomepageHead: function() {
+      if (this.headObserver) {
+        return;
+      }
+      return $.onExists(doc, 'head', (function(_this) {
+        return function() {
+          _this.ensureStyle();
+          _this.headObserver = new MutationObserver(function() {
+            return _this.ensureStyle();
+          });
+          return _this.headObserver.observe(d.head, {
+            childList: true
+          });
+        };
+      })(this));
     },
     rmStyle: function() {
       if (this.style) {
@@ -20543,10 +22495,17 @@ CustomCSS = (function() {
       }
     },
     update: function() {
+      this.updateGeneratedStyles();
+      if (!Conf['Custom CSS']) {
+        return;
+      }
       if (!this.style) {
         return this.addStyle();
       }
-      return this.style.textContent = CSS.sub(Conf['usercss']);
+      this.style.textContent = CSS.sub(Conf['usercss']);
+      if (!g.VIEW) {
+        return this.ensureStyle();
+      }
     }
   };
 
@@ -20977,7 +22936,8 @@ Flash = (function() {
 
   Flash = {
     init: function() {
-      if (g.BOARD.ID === 'f' && Conf['Enable Native Flash Embedding']) {
+      var ref;
+      if (((ref = g.BOARD) != null ? ref.ID : void 0) === 'f' && Conf['Enable Native Flash Embedding']) {
         return $.ready(Flash.initReady);
       }
     },
@@ -21338,6 +23298,9 @@ Keybinds = (function() {
           break;
         case Conf['Open settings']:
           Settings.open();
+          break;
+        case Conf['Open filters']:
+          Settings.openFilters();
           break;
         case Conf['Close']:
           if (Settings.dialog) {
@@ -22038,8 +24001,8 @@ PSA = (function() {
 
   PSA = {
     init: function() {
-      var announcement, el;
-      if (g.SITE.software === 'yotsuba' && g.BOARD.ID === 'qa') {
+      var announcement, el, ref;
+      if (g.SITE.software === 'yotsuba' && ((ref = g.BOARD) != null ? ref.ID : void 0) === 'qa') {
         announcement = {
           innerHTML: "Stay in touch with your <a href=\"https://www.4chan-eX.net/qa_friends.html\" target=\"_blank\" rel=\"noopener\">/qa/ friends</a>!"
         };
@@ -23740,16 +25703,19 @@ ThreadWatcher = (function() {
       });
       this.db = new DataBoard('watchedThreads', this.refresh, true);
       this.dbLM = new DataBoard('watcherLastModified', null, true);
-      this.dialog = UI.dialog('thread-watcher', {innerHTML: "<div class=\"move\">Thread Watcher <a class=\"refresh fa fa-refresh\" title=\"Check threads\" href=\"javascript:;\"></a><span id=\"watcher-status\"></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><a class=\"close\" href=\"javascript:;\">×</a></div><div id=\"watched-threads\"></div>"});
+      this.dialog = UI.dialog('thread-watcher', {innerHTML: "<div class=\"move\">Thread Watcher <a class=\"refresh fa fa-refresh\" title=\"Check threads\" href=\"javascript:;\"></a><a class=\"mark-read fa fa-check\" title=\"Mark all watched threads as read\" href=\"javascript:;\"></a><span id=\"watcher-status\"></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><a class=\"close\" href=\"javascript:;\">×</a></div><div id=\"watched-threads\"></div>"});
       this.status = $('#watcher-status', this.dialog);
       this.list = this.dialog.lastElementChild;
       this.refreshButton = $('.refresh', this.dialog);
+      this.markReadButton = $('.mark-read', this.dialog);
       this.closeButton = $('.move > .close', this.dialog);
       this.unreaddb = Unread.db || UnreadIndex.db || new DataBoard('lastReadPosts');
       this.unreadEnabled = Conf['Remember Last Read Post'];
+      this.applyLayout();
       $.on(d, 'QRPostSuccessful', this.cb.post);
       $.on(sc, 'click', this.toggleWatcher);
       $.on(this.refreshButton, 'click', this.buttonFetchAll);
+      $.on(this.markReadButton, 'click', this.cb.markAllRead);
       $.on(this.closeButton, 'click', this.toggleWatcher);
       this.menu.addHeaderMenuEntry();
       $.onExists(doc, 'body', this.addDialog);
@@ -23830,7 +25796,7 @@ ThreadWatcher = (function() {
       return toggler.title = (isWatched ? 'Unwatch' : 'Watch') + " Thread";
     },
     node: function() {
-      var boardID, data, siteID, threadID, toggler;
+      var boardID, data, ref, ref1, siteID, threadID, toggler;
       if (this.isReply) {
         return;
       }
@@ -23854,10 +25820,19 @@ ThreadWatcher = (function() {
       ThreadWatcher.setToggler(toggler, !!data);
       $.on(toggler, 'click', ThreadWatcher.cb.toggle);
       if (data && (data.excerpt == null)) {
-        return $.queueTask((function(_this) {
+        $.queueTask((function(_this) {
           return function() {
             return ThreadWatcher.update(siteID, boardID, threadID, {
               excerpt: Get.threadExcerpt(_this.thread)
+            });
+          };
+        })(this));
+      }
+      if (data && (data.thumbURL == null) && ((ref = this.thread.OP) != null ? (ref1 = ref.file) != null ? ref1.thumbURL : void 0 : void 0)) {
+        return $.queueTask((function(_this) {
+          return function() {
+            return ThreadWatcher.update(siteID, boardID, threadID, {
+              thumbURL: _this.thread.OP.file.thumbURL
             });
           };
         })(this));
@@ -23883,6 +25858,7 @@ ThreadWatcher = (function() {
       if (!Main.isThisPageLegit()) {
         return;
       }
+      ThreadWatcher.applyLayout();
       ThreadWatcher.build();
       return $.prepend(d.body, ThreadWatcher.dialog);
     },
@@ -23976,6 +25952,83 @@ ThreadWatcher = (function() {
         }
         return $.event('CloseMenu');
       },
+      markAllRead: function() {
+        var board, boardID, data, j, k, lastReadPost, len1, len2, ref, ref1, siteID, threadID;
+        if ($.hasClass(this, 'disabled')) {
+          return;
+        }
+        if (!ThreadWatcher.unreadEnabled) {
+          return;
+        }
+        ref = ThreadWatcher.getAll(true, true);
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          board = ref[j];
+          for (k = 0, len2 = board.length; k < len2; k++) {
+            ref1 = board[k], siteID = ref1.siteID, boardID = ref1.boardID, threadID = ref1.threadID, data = ref1.data;
+            if (!(data && typeof data === 'object')) {
+              continue;
+            }
+            if (!((data.unread || 0) > 0 || (data.quotingYou || 0) > (data.dismiss || 0))) {
+              continue;
+            }
+            lastReadPost = data.last || +threadID;
+            ThreadWatcher.unreaddb.set({
+              siteID: siteID,
+              boardID: boardID,
+              threadID: threadID,
+              val: lastReadPost
+            });
+            ThreadWatcher.update(siteID, boardID, threadID, {
+              unread: 0,
+              quotingYou: 0,
+              dismiss: 0
+            });
+          }
+        }
+        return $.event('CloseMenu');
+      },
+      markReadThread: function() {
+        var boardID, data, lastReadPost, ref, siteID, threadID;
+        if ($.hasClass(this, 'disabled')) {
+          return;
+        }
+        siteID = this.parentNode.dataset.siteID;
+        ref = this.parentNode.dataset.fullID.split('.'), boardID = ref[0], threadID = ref[1];
+        if (data = ThreadWatcher.db.get({
+          siteID: siteID,
+          boardID: boardID,
+          threadID: threadID
+        })) {
+          lastReadPost = data.last || +threadID;
+          ThreadWatcher.unreaddb.set({
+            siteID: siteID,
+            boardID: boardID,
+            threadID: threadID,
+            val: lastReadPost
+          });
+          return ThreadWatcher.update(siteID, boardID, +threadID, {
+            unread: 0,
+            quotingYou: 0,
+            dismiss: 0
+          });
+        }
+      },
+      setThumbnailSize: function() {
+        var size, value;
+        value = prompt('Thumbnail size (16-160):', ThreadWatcher.thumbnailSize());
+        if (value == null) {
+          return;
+        }
+        size = parseInt(value, 10);
+        if (isNaN(size)) {
+          return;
+        }
+        size = Math.max(16, Math.min(160, size));
+        $.set('Thread Watcher Thumbnail Size', size);
+        Conf['Thread Watcher Thumbnail Size'] = size;
+        ThreadWatcher.refresh();
+        return $.event('CloseMenu');
+      },
       toggle: function() {
         var thread;
         thread = Get.postFromNode(this).thread;
@@ -23986,6 +26039,49 @@ ThreadWatcher = (function() {
         siteID = this.parentNode.dataset.siteID;
         ref = this.parentNode.dataset.fullID.split('.'), boardID = ref[0], threadID = ref[1];
         return ThreadWatcher.rm(siteID, boardID, +threadID, void 0, true);
+      },
+      dragStart: function(e) {
+        var base;
+        if (typeof (base = e.target).closest === "function" ? base.closest('.fa-times, .watcher-mark-read') : void 0) {
+          return;
+        }
+        ThreadWatcher.draggingLine = this;
+        $.addClass(this, 'dragging');
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          return e.dataTransfer.setData('text/plain', ThreadWatcher.keyFromLine(this));
+        }
+      },
+      dragOver: function(e) {
+        var before;
+        if (!(ThreadWatcher.draggingLine && ThreadWatcher.draggingLine !== this)) {
+          return;
+        }
+        e.preventDefault();
+        before = ThreadWatcher.dropPosition(this, e).before;
+        $.addClass(this, 'drag-over');
+        return this.dataset.dropBefore = !!before;
+      },
+      dragLeave: function() {
+        $.rmClass(this, 'drag-over');
+        return delete this.dataset.dropBefore;
+      },
+      drop: function(e) {
+        var before, source, sourceKey, target, targetKey;
+        if (!(ThreadWatcher.draggingLine && ThreadWatcher.draggingLine !== this)) {
+          return;
+        }
+        e.preventDefault();
+        source = ThreadWatcher.draggingLine;
+        target = this;
+        before = ThreadWatcher.dropPosition(target, e).before;
+        sourceKey = ThreadWatcher.keyFromLine(source);
+        targetKey = ThreadWatcher.keyFromLine(target);
+        ThreadWatcher.reorderByKeys(sourceKey, targetKey, before);
+        return ThreadWatcher.clearDragState();
+      },
+      dragEnd: function() {
+        return ThreadWatcher.clearDragState();
       },
       post: function(e) {
         var boardID, cb, postID, ref, threadID;
@@ -24207,6 +26303,9 @@ ThreadWatcher = (function() {
           if (data.modified == null) {
             force = thread.force = true;
           }
+          if (ThreadWatcher.showThumbnails() && (data.thumbURL == null)) {
+            force = thread.force = true;
+          }
         }
       }
       ref = board[0], siteID = ref.siteID, boardID = ref.boardID;
@@ -24284,6 +26383,9 @@ ThreadWatcher = (function() {
               lastPage: lastPage
             });
           }
+          if (ThreadWatcher.showThumbnails() && (data.thumbURL == null)) {
+            ThreadWatcher.fetchStatus(thread);
+          }
           if (ThreadWatcher.trackRepliesState()) {
             if (modified !== data.modified || ((replies != null) && replies !== data.replies)) {
               (thread.newData || (thread.newData = {})).modified = modified;
@@ -24318,18 +26420,23 @@ ThreadWatcher = (function() {
       }, [thread], ThreadWatcher.parseStatus);
     },
     parseStatus: function(thread, isArchiveURL) {
-      var archiveURL, base, boardID, data, force, isArchived, isDead, j, last, lastReadPost, len1, match, newData, postObj, quotesYou, quotingYou, ref, ref1, ref2, ref3, regexp, replies, site, siteID, threadID, unread, youOP;
+      var archiveURL, base, boardID, data, force, isArchived, isDead, j, last, lastReadPost, len1, match, newData, postObj, quotesYou, quotingYou, ref, ref1, ref2, ref3, regexp, replies, site, siteID, threadID, thumbURL, unread, youOP;
       siteID = thread.siteID, boardID = thread.boardID, threadID = thread.threadID, data = thread.data, newData = thread.newData, force = thread.force;
       site = g.sites[siteID];
       if (this.status === 200 && this.response) {
         last = this.response.posts[this.response.posts.length - 1].no;
         replies = this.response.posts.length - 1;
         isDead = isArchived = !!(this.response.posts[0].archived || isArchiveURL);
+        thumbURL = ThreadWatcher.getOPThumbURL({
+          siteID: siteID,
+          boardID: boardID,
+          postObj: this.response.posts[0]
+        });
         if (isDead && Conf['Auto Prune']) {
           ThreadWatcher.rm(siteID, boardID, threadID);
           return;
         }
-        if (last === data.last && isDead === data.isDead && isArchived === data.isArchived) {
+        if (last === data.last && isDead === data.isDead && isArchived === data.isArchived && (!thumbURL || thumbURL === data.thumbURL)) {
           return;
         }
         lastReadPost = ThreadWatcher.unreaddb.get({
@@ -24392,6 +26499,9 @@ ThreadWatcher = (function() {
           }
         }
         newData || (newData = {});
+        if ((thumbURL != null) && thumbURL !== data.thumbURL) {
+          newData.thumbURL = thumbURL;
+        }
         $.extend(newData, {
           last: last,
           replies: replies,
@@ -24423,7 +26533,37 @@ ThreadWatcher = (function() {
         }
       }
     },
-    getAll: function(groupByBoard) {
+    getOPThumbURL: function(arg) {
+      var boardID, post, postObj, ref, ref1, ref2, ref3, ref4, site, siteID, thread;
+      siteID = arg.siteID, boardID = arg.boardID, thread = arg.thread, postObj = arg.postObj;
+      if (thread != null ? (ref = thread.OP) != null ? (ref1 = ref.file) != null ? ref1.thumbURL : void 0 : void 0 : void 0) {
+        return thread.OP.file.thumbURL;
+      }
+      if (!postObj) {
+        return;
+      }
+      site = g.sites[siteID];
+      if (site != null ? (ref2 = site.Build) != null ? ref2.parseJSON : void 0 : void 0) {
+        try {
+          post = site.Build.parseJSON(postObj, {
+            siteID: siteID,
+            boardID: boardID
+          });
+          if (post != null ? (ref3 = post.file) != null ? ref3.thumbURL : void 0 : void 0) {
+            return post.file.thumbURL;
+          }
+        } catch (error) {
+          null;
+        }
+      }
+      if ((postObj.tim != null) && (site != null ? (ref4 = site.urls) != null ? ref4.thumb : void 0 : void 0)) {
+        return site.urls.thumb({
+          siteID: siteID,
+          boardID: boardID
+        }, postObj.tim + "s.jpg");
+      }
+    },
+    getAll: function(groupByBoard, ignoreCurrentBoard) {
       var all, boardID, boards, cont, data, ref, ref1, siteID, threadID, threads;
       all = [];
       ref = ThreadWatcher.db.data;
@@ -24432,7 +26572,7 @@ ThreadWatcher = (function() {
         ref1 = boards.boards;
         for (boardID in ref1) {
           threads = ref1[boardID];
-          if (Conf['Current Board'] && (siteID !== g.SITE.ID || boardID !== g.BOARD.ID)) {
+          if (Conf['Current Board'] && !ignoreCurrentBoard && (siteID !== g.SITE.ID || boardID !== g.BOARD.ID)) {
             continue;
           }
           if (groupByBoard) {
@@ -24451,10 +26591,109 @@ ThreadWatcher = (function() {
           }
         }
       }
+      if (!groupByBoard) {
+        all.sort(ThreadWatcher.sortByOrder);
+      }
       return all;
     },
+    sortByOrder: function(a, b) {
+      var aOrder, bOrder;
+      aOrder = typeof a.data.order === 'number' ? a.data.order : Number.POSITIVE_INFINITY;
+      bOrder = typeof b.data.order === 'number' ? b.data.order : Number.POSITIVE_INFINITY;
+      return aOrder - bOrder || (a.siteID < b.siteID ? -1 : a.siteID > b.siteID ? 1 : 0) || (a.boardID < b.boardID ? -1 : a.boardID > b.boardID ? 1 : 0) || (+a.threadID - +b.threadID);
+    },
+    threadKey: function(arg) {
+      var boardID, siteID, threadID;
+      siteID = arg.siteID, boardID = arg.boardID, threadID = arg.threadID;
+      return siteID + "/" + boardID + "." + threadID;
+    },
+    keyFromLine: function(line) {
+      return line.dataset.siteID + "/" + line.dataset.fullID;
+    },
+    dropPosition: function(line, e) {
+      var before, rect;
+      rect = line.getBoundingClientRect();
+      before = e.clientY < rect.top + rect.height / 2;
+      return {
+        before: before
+      };
+    },
+    clearDragState: function() {
+      var j, len1, line, ref, results;
+      if (ThreadWatcher.draggingLine) {
+        $.rmClass(ThreadWatcher.draggingLine, 'dragging');
+      }
+      ThreadWatcher.draggingLine = null;
+      ref = $$('#watched-threads > div', ThreadWatcher.dialog);
+      results = [];
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        line = ref[j];
+        $.rmClass(line, 'drag-over');
+        results.push(delete line.dataset.dropBefore);
+      }
+      return results;
+    },
+    reorderByKeys: function(sourceKey, targetKey, before) {
+      var i, insertAt, j, k, key, len1, len2, source, sourceIndex, targetIndex, thread, threads;
+      if (sourceKey === targetKey) {
+        return;
+      }
+      threads = ThreadWatcher.getAll(false, true);
+      sourceIndex = -1;
+      targetIndex = -1;
+      for (i = j = 0, len1 = threads.length; j < len1; i = ++j) {
+        thread = threads[i];
+        key = ThreadWatcher.threadKey(thread);
+        if (key === sourceKey) {
+          sourceIndex = i;
+        }
+        if (key === targetKey) {
+          targetIndex = i;
+        }
+      }
+      if (sourceIndex < 0 || targetIndex < 0) {
+        return;
+      }
+      source = threads.splice(sourceIndex, 1)[0];
+      targetIndex = -1;
+      for (i = k = 0, len2 = threads.length; k < len2; i = ++k) {
+        thread = threads[i];
+        if (ThreadWatcher.threadKey(thread) === targetKey) {
+          targetIndex = i;
+          break;
+        }
+      }
+      if (targetIndex < 0) {
+        return;
+      }
+      insertAt = before ? targetIndex : targetIndex + 1;
+      threads.splice(insertAt, 0, source);
+      ThreadWatcher.persistOrder(threads);
+      return ThreadWatcher.refresh(true);
+    },
+    persistOrder: function(threads) {
+      var i, j, len1, order, results, thread;
+      results = [];
+      for (i = j = 0, len1 = threads.length; j < len1; i = ++j) {
+        thread = threads[i];
+        order = i + 1;
+        if (thread.data.order === order) {
+          continue;
+        }
+        thread.data.order = order;
+        results.push(ThreadWatcher.db.extend({
+          siteID: thread.siteID,
+          boardID: thread.boardID,
+          threadID: thread.threadID,
+          val: {
+            order: order
+          }
+        }));
+      }
+      return results;
+    },
     makeLine: function(siteID, boardID, threadID, data) {
-      var count, div, excerpt, fullID, isArchived, link, page, quotingYou, ref, title, x;
+      var count, div, excerpt, fullID, isArchived, link, markRead, nodes, page, quotingYou, ref, thumb, title, x;
       x = $.el('a', {
         className: 'fa fa-times',
         href: 'javascript:;'
@@ -24474,6 +26713,16 @@ ThreadWatcher = (function() {
         title: excerpt,
         className: 'watcher-link'
       });
+      if (ThreadWatcher.showThumbnails()) {
+        thumb = data.thumbURL ? $.el('img', {
+          src: data.thumbURL,
+          alt: '',
+          className: 'watcher-thumb'
+        }) : $.el('span', {
+          className: 'watcher-thumb watcher-thumb-missing'
+        });
+        $.add(link, thumb);
+      }
       if (Conf['Show Page'] && (data.page != null)) {
         page = $.el('span', {
           textContent: "[" + data.page + "]",
@@ -24493,10 +26742,23 @@ ThreadWatcher = (function() {
         className: 'watcher-title'
       });
       $.add(link, title);
+      markRead = $.el('a', {
+        className: 'watcher-mark-read fa fa-check',
+        href: 'javascript:;',
+        title: 'Mark this thread as read'
+      });
+      $.on(markRead, 'click', ThreadWatcher.cb.markReadThread);
+      markRead.classList.toggle('disabled', !ThreadWatcher.unreadEnabled || !((data.unread || 0) > 0 || (data.quotingYou || 0) > (data.dismiss || 0)));
       div = $.el('div');
       fullID = boardID + "." + threadID;
       div.dataset.fullID = fullID;
       div.dataset.siteID = siteID;
+      div.draggable = true;
+      $.on(div, 'dragstart', ThreadWatcher.cb.dragStart);
+      $.on(div, 'dragover', ThreadWatcher.cb.dragOver);
+      $.on(div, 'dragleave', ThreadWatcher.cb.dragLeave);
+      $.on(div, 'drop', ThreadWatcher.cb.drop);
+      $.on(div, 'dragend', ThreadWatcher.cb.dragEnd);
       if (g.VIEW === 'thread' && fullID === (g.BOARD + "." + g.THREADID)) {
         $.addClass(div, 'current');
       }
@@ -24523,7 +26785,8 @@ ThreadWatcher = (function() {
       if (quotingYou) {
         $.addClass(div, 'replies-quoting-you');
       }
-      $.add(div, [x, $.tn(' '), link]);
+      nodes = [x, $.tn(' '), link, $.tn(' '), markRead];
+      $.add(div, nodes);
       return div;
     },
     trackRepliesState: function() {
@@ -24559,7 +26822,7 @@ ThreadWatcher = (function() {
       return ThreadWatcher.prefixes = prefixes;
     },
     build: function() {
-      var boardID, data, j, len1, list, nodes, ref, siteID, thread, threadID, threads;
+      var boardID, data, j, len1, list, nodes, ref, ref1, ref2, siteID, thread, threadID, threads;
       nodes = [];
       threads = ThreadWatcher.getAll();
       ThreadWatcher.setPrefixes(threads);
@@ -24574,6 +26837,16 @@ ThreadWatcher = (function() {
             }
           });
         }
+        if ((data.thumbURL == null) && siteID === g.SITE.ID && (thread = g.threads.get(boardID + "." + threadID)) && ((ref1 = thread.OP) != null ? (ref2 = ref1.file) != null ? ref2.thumbURL : void 0 : void 0)) {
+          ThreadWatcher.db.extend({
+            boardID: boardID,
+            threadID: threadID,
+            val: {
+              thumbURL: thread.OP.file.thumbURL
+            }
+          });
+          data.thumbURL = thread.OP.file.thumbURL;
+        }
         nodes.push(ThreadWatcher.makeLine(siteID, boardID, threadID, data));
       }
       list = ThreadWatcher.list;
@@ -24582,6 +26855,7 @@ ThreadWatcher = (function() {
       return ThreadWatcher.refreshIcon();
     },
     refresh: function(manual) {
+      ThreadWatcher.applyLayout();
       ThreadWatcher.build();
       g.threads.forEach(function(thread) {
         var isWatched, j, len1, post, ref, toggler;
@@ -24606,12 +26880,32 @@ ThreadWatcher = (function() {
       }
     },
     refreshIcon: function() {
-      var className, j, len1, ref;
+      var className, hasUnread, j, len1, ref;
       ref = ['replies-unread', 'replies-quoting-you'];
       for (j = 0, len1 = ref.length; j < len1; j++) {
         className = ref[j];
         ThreadWatcher.shortcut.classList.toggle(className, !!$("." + className, ThreadWatcher.dialog));
       }
+      hasUnread = !!$('.replies-unread, .replies-quoting-you', ThreadWatcher.list);
+      ThreadWatcher.markReadButton.classList.toggle('disabled', !ThreadWatcher.unreadEnabled || !hasUnread);
+      ThreadWatcher.markReadButton.title = !ThreadWatcher.unreadEnabled ? 'Mark all read is unavailable because Remember Last Read Post is disabled.' : hasUnread ? 'Mark all watched threads as read' : 'No unread watched threads';
+    },
+    showThumbnails: function() {
+      return Conf['Show OP Thumbnails'];
+    },
+    thumbnailSize: function() {
+      var size;
+      size = parseInt(Conf['Thread Watcher Thumbnail Size'], 10);
+      if (isNaN(size)) {
+        size = 40;
+      }
+      return Math.max(16, Math.min(160, size));
+    },
+    applyLayout: function() {
+      if (!ThreadWatcher.dialog) {
+        return;
+      }
+      return ThreadWatcher.dialog.style.setProperty('--watcher-thumb-size', (ThreadWatcher.thumbnailSize()) + "px");
     },
     update: function(siteID, boardID, threadID, newData) {
       var data, j, key, len1, line, n, newLine, ref, ref1, val;
@@ -24708,7 +27002,7 @@ ThreadWatcher = (function() {
       }
     },
     add: function(thread, cb, manual) {
-      var boardID, data, siteID, threadID;
+      var boardID, data, ref, ref1, siteID, threadID;
       data = {};
       siteID = g.SITE.ID;
       boardID = thread.board.ID;
@@ -24726,15 +27020,29 @@ ThreadWatcher = (function() {
       if (thread.OP) {
         data.excerpt = Get.threadExcerpt(thread);
       }
+      if ((ref = thread.OP) != null ? (ref1 = ref.file) != null ? ref1.thumbURL : void 0 : void 0) {
+        data.thumbURL = thread.OP.file.thumbURL;
+      }
       return ThreadWatcher.addRaw(boardID, threadID, data, cb, manual);
     },
     addRaw: function(boardID, threadID, data, cb, manual) {
-      var oldData, thread;
+      var data2, j, len1, maxOrder, oldData, ref, thread;
       oldData = ThreadWatcher.db.get({
         boardID: boardID,
         threadID: threadID,
         defaultValue: $.dict()
       });
+      if (oldData.order != null) {
+        data.order = oldData.order;
+      } else {
+        maxOrder = 0;
+        ref = ThreadWatcher.getAll(false, true);
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          data2 = ref[j].data;
+          maxOrder = Math.max(maxOrder, data2.order || 0);
+        }
+        data.order = maxOrder + 1;
+      }
       delete oldData.last;
       delete oldData.modified;
       $.extend(oldData, data);
@@ -24753,7 +27061,7 @@ ThreadWatcher = (function() {
       };
       if (Conf['Show Page'] && !data.isDead) {
         return ThreadWatcher.fetchBoard([thread]);
-      } else if (ThreadWatcher.trackRepliesState()) {
+      } else if (ThreadWatcher.trackRepliesState() || ThreadWatcher.showThumbnails()) {
         return ThreadWatcher.fetchStatus(thread);
       }
     },
@@ -24824,6 +27132,16 @@ ThreadWatcher = (function() {
           }
         });
         entries.push({
+          text: 'Mark all read',
+          cb: ThreadWatcher.cb.markAllRead,
+          open: function() {
+            var disabled;
+            disabled = !ThreadWatcher.unreadEnabled || !$('.replies-unread, .replies-quoting-you', ThreadWatcher.list);
+            this.el.classList.toggle('disabled', disabled);
+            return true;
+          }
+        });
+        entries.push({
           text: 'Open dead threads',
           cb: ThreadWatcher.cb.openDeads,
           open: function() {
@@ -24853,6 +27171,14 @@ ThreadWatcher = (function() {
           cb: ThreadWatcher.cb.dismiss,
           open: function() {
             this.el.classList.toggle('disabled', !$.hasClass(ThreadWatcher.shortcut, 'replies-quoting-you'));
+            return true;
+          }
+        });
+        entries.push({
+          text: '',
+          cb: ThreadWatcher.cb.setThumbnailSize,
+          open: function() {
+            this.el.textContent = "Thumbnail size: " + (ThreadWatcher.thumbnailSize()) + "px";
             return true;
           }
         });
@@ -24892,12 +27218,19 @@ ThreadWatcher = (function() {
         }
         $.on(input, 'change', $.cb.checked);
         $.on(input, 'change', function() {
-          if (name === 'Current Board' || name === 'Show Page' || name === 'Show Unread Count' || name === 'Show Site Prefix') {
+          if (name === 'Current Board' || name === 'Show Page' || name === 'Show Unread Count' || name === 'Show Site Prefix' || name === 'Show OP Thumbnails') {
             return ThreadWatcher.refresh();
           }
         });
         if (name === 'Show Page' || name === 'Show Unread Count' || name === 'Auto Update Thread Watcher') {
           $.on(input, 'change', ThreadWatcher.fetchAuto);
+        }
+        if (name === 'Show OP Thumbnails') {
+          $.on(input, 'change', function() {
+            if (this.checked) {
+              return ThreadWatcher.fetchAllStatus();
+            }
+          });
         }
         return this.menu.addEntry(entry);
       }
@@ -31423,7 +33756,7 @@ Main = (function() {
       return r;
     },
     initFeatures: function() {
-      var base, err, feature, j, len, name, ref, ref1;
+      var base, err, feature, isBoardlessPage, j, len, name, ref, ref1;
       $.global(function() {
         document.documentElement.classList.add('js-enabled');
         return window.FCX = {};
@@ -31440,7 +33773,6 @@ Main = (function() {
         if (typeof (base = g.SITE).initAuxiliary === "function") {
           base.initAuxiliary();
         }
-        return;
       }
       if (g.VIEW === 'file') {
         $.asap((function() {
@@ -31470,9 +33802,13 @@ Main = (function() {
       g.threads = new SimpleDict();
       g.posts = new SimpleDict();
       $.onExists(doc, 'body', Main.initStyle);
+      isBoardlessPage = !g.BOARD;
       ref = Main.features;
       for (j = 0, len = ref.length; j < len; j++) {
         ref1 = ref[j], name = ref1[0], feature = ref1[1];
+        if (isBoardlessPage && name !== 'Custom CSS') {
+          continue;
+        }
         if (g.SITE.disabledFeatures && indexOf.call(g.SITE.disabledFeatures, name) >= 0) {
           continue;
         }
@@ -31498,7 +33834,11 @@ Main = (function() {
       }
       doc.dataset.host = location.host;
       $.addClass(doc, "sw-" + g.SITE.software);
-      $.addClass(doc, g.VIEW === 'thread' ? 'thread-view' : g.VIEW);
+      if (g.VIEW) {
+        $.addClass(doc, g.VIEW === "thread" ? "thread-view" : g.VIEW);
+      } else {
+        $.addClass(doc, "www-view");
+      }
       $.onExists(doc, '.ad-cnt, .adg-rects > .desktop', function(ad) {
         return $.onExists(ad, 'img, iframe', function() {
           return $.addClass(doc, 'ads-loaded');
@@ -31550,17 +33890,19 @@ Main = (function() {
         if (g.SITE.software === 'yotsuba') {
           $.rmClass(doc, style);
           style = null;
-          for (j = 0, len = styleSheets.length; j < len; j++) {
-            styleSheet = styleSheets[j];
-            if (styleSheet.href === (mainStyleSheet != null ? mainStyleSheet.href : void 0)) {
-              style = styleSheet.title.toLowerCase().replace('new', '').trim().replace(/\s+/g, '-');
-              if (style === '_special') {
-                style = styleSheet.href.match(/[a-z]*(?=[^\/]*$)/)[0];
+          if (styleSheets) {
+            for (j = 0, len = styleSheets.length; j < len; j++) {
+              styleSheet = styleSheets[j];
+              if (styleSheet.href === (mainStyleSheet != null ? mainStyleSheet.href : void 0)) {
+                style = styleSheet.title.toLowerCase().replace('new', '').trim().replace(/\s+/g, '-');
+                if (style === '_special') {
+                  style = styleSheet.href.match(/[a-z]*(?=[^\/]*$)/)[0];
+                }
+                if (indexOf.call(knownStyles, style) < 0) {
+                  style = null;
+                }
+                break;
               }
-              if (indexOf.call(knownStyles, style) < 0) {
-                style = null;
-              }
-              break;
             }
           }
           if (style) {
@@ -31575,7 +33917,7 @@ Main = (function() {
         $.add(d.body, div);
         bgColor = window.getComputedStyle(div).backgroundColor;
         $.rm(div);
-        rgb = bgColor.match(/[\d.]+/g);
+        rgb = bgColor.match(/[\d.]+/g) || ['0', '0', '0', '1'];
         if (!/^rgb\(/.test(bgColor)) {
           s = window.getComputedStyle(d.body);
           bgColor = s.backgroundColor + " " + s.backgroundImage + " " + s.backgroundRepeat + " " + s.backgroundPosition;
@@ -31967,7 +34309,7 @@ Main = (function() {
       }
       details = '';
       addDetails = function(text) {
-        if (!(encodeURIComponent(title + details + text + '\n').length > 8143)) {
+        if (!(encodeURIComponent(title + details + text + '\n').length > 8142)) {
           return details += text + '\n';
         }
       };
