@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX beta
-// @version      1.0.1
+// @version      1.0.6
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -233,7 +233,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1.0.1',
+  VERSION:   '1.0.6',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)
