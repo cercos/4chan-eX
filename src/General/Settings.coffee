@@ -806,6 +806,8 @@ Settings =
       $.on applyCSS,  'click',  ->
         Settings.flushCustomCSSEditor()
         CustomCSS.update()
+    if resetGeneratedHighlights = $('.reset-generated-highlights', section)
+      $.on resetGeneratedHighlights, 'click', Settings.resetGeneratedHighlightStyles
 
     Settings.refreshGeneratedHighlightStylesEditor()
 
@@ -2281,6 +2283,32 @@ Settings =
       $.rmClass fieldset, 'generated-highlight-disabled'
     else
       $.addClass fieldset, 'generated-highlight-disabled'
+
+  generatedHighlightDefaultValues: ->
+    defaults = $.dict()
+    for key in CustomCSS.generatedKeys
+      defaults[key] = Config[key]
+    defaults
+
+  resetGeneratedHighlightStyles: ->
+    section = $ '.section-styling', Settings.dialog
+    return unless section
+
+    defaults = Settings.generatedHighlightDefaultValues()
+    $.set defaults
+
+    for key, val of defaults
+      input = $("input[name='#{key}']", section)
+      continue unless input
+      if input.type is 'checkbox'
+        input.checked = !!val
+        $.cb.checked.call input
+      else
+        input.value = val
+        $.cb.value.call input
+      Settings[key].call input if key of Settings
+
+    Settings.generatedHighlightStylesChanged()
 
   generatedHighlightStylesChanged: ->
     Settings.refreshGeneratedHighlightStylesEditor()

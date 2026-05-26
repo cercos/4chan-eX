@@ -1107,6 +1107,13 @@ div[data-checked="false"] > .suboption-list {
 .section-styling .generated-highlight-toggle {
   margin-top: 6px;
 }
+.section-styling .generated-highlight-controls {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
 .section-styling .generated-highlight-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
