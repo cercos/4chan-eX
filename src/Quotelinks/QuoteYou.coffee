@@ -15,9 +15,15 @@ QuoteYou =
 
     if Conf['Highlight Own Posts']
       $.addClass doc, 'highlight-own'
+    $.sync 'Highlight Own Posts', (enabled) ->
+      Conf['Highlight Own Posts'] = enabled
+      doc.classList.toggle 'highlight-own', enabled
 
     if Conf['Highlight Posts Quoting You']
       $.addClass doc, 'highlight-you'
+    $.sync 'Highlight Posts Quoting You', (enabled) ->
+      Conf['Highlight Posts Quoting You'] = enabled
+      doc.classList.toggle 'highlight-you', enabled
 
     if Conf['Comment Expansion']
       ExpandComment.callbacks.push @node

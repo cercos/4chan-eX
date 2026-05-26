@@ -147,11 +147,10 @@ CustomCSS =
       }
       :root .watched a,
       :root .watched .quotelink,
-      :root .watched .deadlink,
-      :root .watched .postNum > a:last-child {
+      :root .watched .deadlink {
         color: #{styles.watchedLinkColor} !important;
       }
-      :root .watched .postNum > a:first-child,
+      :root .watched .postNum > a,
       :root .watched .name,
       :root .watched .dateTime,
       :root .watched .postNum {
@@ -186,11 +185,10 @@ CustomCSS =
       }
       :root :not(.watched) > .yourPost:not(.opContainer) div.post a,
       :root :not(.watched) > .yourPost:not(.opContainer) div.post .quotelink,
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .deadlink,
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a:last-child {
+      :root :not(.watched) > .yourPost:not(.opContainer) div.post .deadlink {
         color: #{styles.yourPostLinkColor} !important;
       }
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a:first-child,
+      :root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a,
       :root :not(.watched) > .yourPost:not(.opContainer) div.post .name,
       :root :not(.watched) > .yourPost:not(.opContainer) div.post .dateTime,
       :root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum {
@@ -226,9 +224,9 @@ CustomCSS =
       :root.highlight-you .opContainer.quotesYou > .op .deadlink {
         color: #{styles.quotesYouLinkColor} !important;
       }
-      :root.highlight-you .replyContainer.quotesYou > .reply .postNum > a:first-child,
-      :root.highlight-you .postContainer.quotesYou > .reply .postNum > a:first-child,
-      :root.highlight-you .opContainer.quotesYou > .op .postNum > a:first-child,
+      :root.highlight-you .replyContainer.quotesYou > .reply .postNum > a,
+      :root.highlight-you .postContainer.quotesYou > .reply .postNum > a,
+      :root.highlight-you .opContainer.quotesYou > .op .postNum > a,
       :root.highlight-you .replyContainer.quotesYou > .reply .name,
       :root.highlight-you .postContainer.quotesYou > .reply .name,
       :root.highlight-you .opContainer.quotesYou > .op .name,

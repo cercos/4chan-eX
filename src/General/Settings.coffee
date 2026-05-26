@@ -90,7 +90,10 @@ Settings =
     $.on dialog.firstElementChild, 'click', (e) -> e.stopPropagation()
     $.on d, 'keydown', Settings.keydown
     Settings.setupWindow dialog
-    Settings.applySettingsTheme 'dark'
+    Settings.applySettingsTheme Conf['Settings Theme']
+    Settings.themeObserver = new MutationObserver ->
+      Settings.applySettingsTheme Conf['Settings Theme']
+    Settings.themeObserver.observe doc, {attributes: true, attributeFilter: ['class']}
 
     $.add d.body, dialog
 
@@ -115,6 +118,8 @@ Settings =
     Settings.saveWindowState()
     Settings.resizeObserver?.disconnect()
     delete Settings.resizeObserver
+    Settings.themeObserver?.disconnect()
+    delete Settings.themeObserver
     Settings.clearDragHandle()
     $.off d, 'keydown', Settings.keydown
     Settings.dragEnd()
@@ -2310,6 +2315,9 @@ Settings =
     $.on textarea, 'scroll', ->
       pre.scrollTop  = textarea.scrollTop
       pre.scrollLeft = textarea.scrollLeft
+
+  'Settings Theme': ->
+    Settings.applySettingsTheme @value
 
   'CSS Highlight Theme': ->
     section = $.x 'ancestor::section[1]', @
