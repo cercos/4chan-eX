@@ -57,7 +57,16 @@ Settings =
     $.on $('.settings-search input', dialog), 'input', Settings.onSearchInput
 
     links = []
+    container = $('.section-container', dialog)
     for section in Settings.sections
+      section.el = $.el 'section',
+        className: "section-#{section.hyphenatedTitle}"
+        hidden: true
+      $.add section.el, $.el 'h2',
+        className: 'settings-section-header'
+        textContent: section.title
+      $.add container, section.el
+
       link = $.el 'a',
         className: "tab-#{section.hyphenatedTitle}"
         textContent: section.title
@@ -76,6 +85,7 @@ Settings =
 
     $.on $('.close', dialog), 'click', Settings.close
     $.on window, 'beforeunload', Settings.close
+    $.on dialog, 'mousedown', (e) -> Settings.overlayMousedownTarget = e.target
     $.on dialog, 'click', Settings.overlayClick
     $.on dialog.firstElementChild, 'click', (e) -> e.stopPropagation()
     $.on d, 'keydown', Settings.keydown
@@ -109,10 +119,14 @@ Settings =
     $.off d, 'keydown', Settings.keydown
     Settings.dragEnd()
     $.rm Settings.dialog
+    for section in Settings.sections
+      delete section.el
+      section.rendered = false
     delete Settings.dialog
     delete Settings.searchQuery
     delete Settings.filtersPreviewState
     delete Settings.forcedFiltersMode
+    delete Settings.overlayMousedownTarget
 
   keydown: (e) ->
     return unless e.keyCode is 27
@@ -122,7 +136,9 @@ Settings =
     Settings.searchQuery = @value.toLowerCase().trim()
     Settings.applySearch()
 
-  overlayClick: ->
+  overlayClick: (e) ->
+    return unless e.target is @
+    return unless Settings.overlayMousedownTarget is @
     Settings.close()
 
   setupWindow: (dialog) ->
@@ -174,16 +190,6 @@ Settings =
       return $.luma(rgb) < 100 if rgb
 
     false
-
-  codeMirrorThemeForSettings: ->
-    'material-darker'
-
-  refreshFancyCSSEditorTheme: ->
-    textarea = $('textarea[name=usercss]', Settings.dialog)
-    cm = textarea?.fancyCssEditor
-    return unless cm
-    cm.setOption 'theme', Settings.codeMirrorThemeForSettings()
-    cm.refresh()
 
   setDragHandle: (win) ->
     Settings.clearDragHandle()
@@ -289,59 +295,122 @@ Settings =
     if typeof title isnt 'string'
       {title, open} = title.detail
     hyphenatedTitle = title.toLowerCase().replace /\s+/g, '-'
-    Settings.sections.push {title, hyphenatedTitle, open}
+    Settings.sections.push {title, hyphenatedTitle, open, rendered: false}
 
   openSection: ->
     if selected = $ '.tab-selected', Settings.dialog
       $.rmClass selected, 'tab-selected'
     $.addClass $(".tab-#{@hyphenatedTitle}", Settings.dialog), 'tab-selected'
-    section = $ 'section', Settings.dialog
-    $.rmAll section
-    section.className = "section-#{@hyphenatedTitle}"
-    @open section, g
-    section.scrollTop = 0
+    for section in Settings.sections
+      section.el.hidden = section isnt @
+    unless @rendered
+      @open @el, g
+      @rendered = true
+      Settings.restoreSectionHeader @
+    @el.scrollTop = 0
     Settings.applySearch()
-    $.event 'OpenSettings', null, section
+    $.event 'OpenSettings', null, @el
+
+  restoreSectionHeader: (sectionObj) ->
+    el = sectionObj.el
+    return if $ '.settings-section-header', el
+    h2 = $.el 'h2',
+      className: 'settings-section-header'
+      textContent: sectionObj.title
+    el.insertBefore h2, el.firstChild
 
   applySearch: ->
     return unless Settings.dialog
-    section = $ 'section', Settings.dialog
-    return unless section
     query = Settings.searchQuery or ''
 
-    for el in $$ '.settings-search-hidden', section
-      $.rmClass el, 'settings-search-hidden'
-    for row in $$ 'div[data-name]', section
-      Settings.highlightSettingRow row, query
-    return unless query
+    win = Settings.dialog.firstElementChild
+    win.classList.toggle 'settings-searching', !!query
 
-    for row in $$ 'div[data-name]', section
-      haystack = "#{row.dataset.settingTitle} #{row.dataset.settingDescription} #{row.dataset.searchKeywords or ''}".toLowerCase()
-      hit = haystack.indexOf(query) >= 0
-      $.addClass row, 'settings-search-hidden' unless hit
+    activeSection = null
+    if selectedTab = $ '.tab-selected', Settings.dialog
+      for s in Settings.sections
+        if selectedTab.classList.contains "tab-#{s.hyphenatedTitle}"
+          activeSection = s
+          break
 
-    for heading in $$ '.settings-group-heading', section
-      hit = heading.textContent.toLowerCase().indexOf(query) >= 0
-      unless hit
-        node = heading.nextElementSibling
-        while node and not node.classList.contains('settings-group-heading')
-          if node.dataset.name and not node.classList.contains('settings-search-hidden')
-            hit = true
-            break
-          node = node.nextElementSibling
-      $.addClass heading, 'settings-search-hidden' unless hit
+    for sectionObj in Settings.sections
+      section = sectionObj.el
+      continue unless section
 
-    for fs in $$ 'fieldset', section
-      rows = $$ 'div[data-name]', fs
-      if rows.length
-        visible = $('div[data-name]:not(.settings-search-hidden)', fs)
-        $.addClass fs, 'settings-search-hidden' unless visible
+      if query and not sectionObj.rendered
+        sectionObj.open section, g
+        sectionObj.rendered = true
+        Settings.restoreSectionHeader sectionObj
+
+      for el in $$ '.settings-search-hidden', section
+        $.rmClass el, 'settings-search-hidden'
+
+      # Highlight matching text in the whole section (except previews)
+      Settings.highlightSettingRow section, query
+
+      if query
+        # Hide all elements initially
+        for el in $$ 'div[data-name], tr[data-name], .generated-highlight-group, .generated-highlight-auto-group, .generated-highlight-auto-row, fieldset, .settings-group-heading, table, thead, tbody, legend, h4', section
+          $.addClass el, 'settings-search-hidden'
+
+        hasMatch = false
+
+        # 1. Search Standard Setting Rows (divs or table rows)
+        for row in $$ 'div[data-name], tr[data-name]', section
+          haystack = "#{row.dataset.name or ''} #{row.dataset.settingTitle} #{row.dataset.settingDescription or ''} #{row.dataset.searchKeywords or ''}".toLowerCase()
+          if haystack.indexOf(query) >= 0
+            hasMatch = true
+            node = row
+            while node and node isnt section
+              node.classList.remove 'settings-search-hidden'
+              node = node.parentElement
+            child.classList.remove 'settings-search-hidden' for child in $$ '.settings-search-hidden', row
+
+        # 2. Search Styling Groups and headings (except previews)
+        for el in $$ '.generated-highlight-group, .generated-highlight-auto-group, legend, th, h4, .generated-highlight-help', section
+          continue if el.closest('.generated-highlight-preview') or el.closest('.custom-css-editor')
+          if el.textContent.toLowerCase().indexOf(query) >= 0
+            hasMatch = true
+            node = el
+            while node and node isnt section
+              node.classList.remove 'settings-search-hidden'
+              node = node.parentElement
+            child.classList.remove 'settings-search-hidden' for child in $$ '.settings-search-hidden', el
+
+        # 3. Search Headings
+        for heading in $$ '.settings-group-heading', section
+          hit = heading.textContent.toLowerCase().indexOf(query) >= 0
+          if hit
+            hasMatch = true
+            heading.classList.remove 'settings-search-hidden'
+            # Also show everything in this group until the next heading
+            node = heading.nextElementSibling
+            while node and not node.classList.contains('settings-group-heading')
+              node.classList.remove 'settings-search-hidden'
+              child.classList.remove 'settings-search-hidden' for child in $$ '.settings-search-hidden', node
+              node = node.nextElementSibling
+
+        # 4. Search Fieldsets (except previews)
+        for fs in $$ 'fieldset', section
+          isPreview = fs.classList.contains('generated-highlight-preview') or fs.classList.contains('custom-css-editor')
+          if not isPreview
+            matchTarget = $('legend', fs)?.textContent or fs.textContent
+            hit = matchTarget.toLowerCase().indexOf(query) >= 0
+            if hit
+              hasMatch = true
+              fs.classList.remove 'settings-search-hidden'
+              child.classList.remove 'settings-search-hidden' for child in $$ '.settings-search-hidden', fs
+
+        section.hidden = not hasMatch
       else
-        hit = fs.textContent.toLowerCase().indexOf(query) >= 0
-        $.addClass fs, 'settings-search-hidden' unless hit
+        section.hidden = sectionObj isnt activeSection
 
   highlightSettingRow: (row, query) ->
-    for el in $$ '.setting-title, .setting-description', row
+    # Highlight matching text in labels, legends, descriptions, and table headers
+    for el in $$ '.setting-title, .setting-description, legend, th, h4, .generated-highlight-help', row
+      # Skip highlighting inside previews
+      continue if el.closest('.generated-highlight-preview') or el.closest('.custom-css-editor')
+      
       raw = el.dataset.rawText
       unless raw?
         raw = el.textContent
@@ -785,13 +854,12 @@ Settings =
         input = inputs[key]
         continue unless input
         input[if input.type is 'checkbox' then 'checked' else 'value'] = val
-        if key is 'usercss' and input.fancyCssEditor and input.fancyCssEditor.getValue() isnt val
-          input.fancyCssEditor.setValue val
         if input.type is 'checkbox'
           input.parentNode.parentNode.dataset.checked = val
         input.hidden = false # XXX prevent Firefox from adding initialization to undo queue
         if key of Settings
           Settings[key].call input
+        input._cssHlUpdate?()
       return
 
     customCSS = inputs['Custom CSS']
@@ -810,6 +878,7 @@ Settings =
       $.on resetGeneratedHighlights, 'click', Settings.resetGeneratedHighlightStyles
 
     Settings.refreshGeneratedHighlightStylesEditor()
+    Settings.setupCSSHighlight inputs['usercss']
 
   setupSiteStyleMirror: (section) ->
     controls = $('.site-theme-controls', section)
@@ -845,9 +914,6 @@ Settings =
   flushCustomCSSEditor: ->
     textarea = $('textarea[name=usercss]', Settings.dialog)
     return unless textarea
-    if cm = textarea.fancyCssEditor
-      clearTimeout textarea.fancyCssSaveTimer if textarea.fancyCssSaveTimer
-      textarea.value = cm.getValue()
     Conf['usercss'] = textarea.value
     $.set 'usercss', textarea.value
 
@@ -2228,6 +2294,47 @@ Settings =
       img[i].src = icon
     return
 
+  setupCSSHighlight: (textarea) ->
+    return unless textarea
+    wrap = $.el 'div', className: 'css-hl-wrap'
+    pre  = $.el 'pre', className: 'css-hl-pre'
+    wrap.hidden = true
+    textarea.parentNode.insertBefore wrap, textarea
+    wrap.appendChild pre
+    wrap.appendChild textarea
+    update = ->
+      pre.innerHTML = Settings.hlCSS textarea.value
+      wrap.hidden = false
+    textarea._cssHlUpdate = update
+    $.on textarea, 'input', update
+    $.on textarea, 'scroll', ->
+      pre.scrollTop  = textarea.scrollTop
+      pre.scrollLeft = textarea.scrollLeft
+
+  'CSS Highlight Theme': ->
+    section = $.x 'ancestor::section[1]', @
+    wrap = $ '.css-hl-wrap', section
+    return unless wrap
+    wrap.className = 'css-hl-wrap'
+    wrap.classList.add "chl-theme-#{@value}" unless @value is 'auto'
+
+  hlCSS: (raw) ->
+    try
+      if window.PR?.prettyPrintOne
+        escaped = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        return window.PR.prettyPrintOne escaped, 'css', false
+    catch
+    Settings.hlCSSFallback raw
+
+  hlCSSFallback: (raw) ->
+    esc = (s) -> s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    raw.replace(
+      /(\/\*[\s\S]*?\*\/)|("[^"\\]*(?:\\.[^"\\]*)*")|('[^'\\]*(?:\\.[^'\\]*)*')|(@[\w-]+)|(#[0-9a-fA-F]{3,8}(?![0-9a-fA-F\w]))|(-?[0-9]*\.?[0-9]+(?:px|em|rem|vw|vh|vmin|vmax|%|s|ms|deg|fr|ch|ex|pt|cm|mm)?\b)|([\w-]+)(?=\s*:)|([\s\S])/g
+      (m, comment, dStr, sStr, atRule, hex, num, prop) ->
+        cls = if comment then 'c' else if dStr or sStr then 's' else if atRule then 'a' else if hex then 'l' else if num then 'n' else if prop then 'p' else null
+        if cls then "<span class=\"chl-#{cls}\">#{esc m}</span>" else esc m
+    )
+
   togglecss: ->
     section = $.x 'ancestor::section[1]', @
     if (customCSSHome = $('input[name="Custom CSS on Homepage"]', section))
@@ -2238,7 +2345,6 @@ Settings =
       CustomCSS.rmStyle()
     else
       CustomCSS.addStyle()
-    textarea.fancyCssEditor?.setOption 'readOnly', !@checked
     editorFieldset?.classList.toggle 'custom-css-disabled', !@checked
     $.cb.checked.call @
 
@@ -2375,154 +2481,6 @@ Settings =
   'Highlight Link Color': ->
     Settings.generatedHighlightStylesChanged()
 
-  getCSSSelectorNames: (type) ->
-    now = Date.now()
-    cache = Settings.cssSelectorHintCache
-    if cache?.type is type and now - cache.time < 15000
-      return cache.names
-    names = $.dict()
-    for el in $$ '[class], [id]', d.body
-      if type is '.'
-        classAttr = if typeof el.className is 'string' then el.className else el.getAttribute('class') or ''
-        for className in classAttr.split(/\s+/) when className and className.length < 80
-          names[className] = true
-      else if (id = el.id) and id.length < 80
-        names[id] = true
-    list = Object.keys(names).sort()
-    Settings.cssSelectorHintCache =
-      type: type
-      names: list
-      time: now
-    list
-
-  customCSSHint: (cm, options={}) ->
-    return {list: [], from: cm.getCursor(), to: cm.getCursor()} unless (cmLib = window.CodeMirror)
-    cursor = cm.getCursor()
-    token = cm.getTokenAt cursor
-    result = cmLib.hint.css(cm, options) or {list: []}
-    list = result.list.slice()
-    from = result.from
-    to = result.to
-
-    if /^([.#])[\w-]*$/.test(token.string)
-      type = token.string[0]
-      prefix = token.string[1..].toLowerCase()
-      selectorList = Settings.getCSSSelectorNames(type)
-      for name in selectorList when name.toLowerCase().indexOf(prefix) is 0
-        list.unshift
-          text: type + name
-          className: 'cm-hint-selector'
-      from = cmLib.Pos cursor.line, token.start
-      to = cmLib.Pos cursor.line, token.end
-
-    seen = $.dict()
-    deduped = []
-    for item in list
-      text = (if typeof item is 'string' then item else item.text)
-      continue unless text
-      continue if seen[text]
-      seen[text] = true
-      deduped.push item
-
-    {
-      list: deduped
-      from: from or cmLib.Pos(cursor.line, token.start)
-      to: to or cmLib.Pos(cursor.line, token.end)
-    }
-
-  setupFancyCSSEditor: (textarea) ->
-    return textarea.fancyCssEditor if textarea.fancyCssEditor
-    return unless (cmLib = window.CodeMirror)?.fromTextArea
-    textarea.fancyCssReady = false
-
-    cm = cmLib.fromTextArea textarea,
-      mode: 'css'
-      theme: Settings.codeMirrorThemeForSettings()
-      lineNumbers: true
-      lineWrapping: false
-      matchBrackets: true
-      autoCloseBrackets: true
-      extraKeys:
-        'Ctrl-Space': (cm) ->
-          cm.showHint
-            hint: Settings.customCSSHint
-            completeSingle: false
-        'Cmd-Space': (cm) ->
-          cm.showHint
-            hint: Settings.customCSSHint
-            completeSingle: false
-
-    cm.setOption 'readOnly', textarea.disabled
-    textarea.fancyCssEditor = cm
-    wrapper = cm.getWrapperElement()
-    $.addClass wrapper, 'custom-css-codemirror'
-    if window.ResizeObserver
-      textarea.fancyCssResizeObserver = new window.ResizeObserver ->
-        cm.refresh()
-      textarea.fancyCssResizeObserver.observe wrapper
-
-    saveValue = ->
-      return unless textarea.fancyCssReady
-      textarea.value = cm.getValue()
-      $.cb.value.call textarea
-    debouncedSave = ->
-      clearTimeout textarea.fancyCssSaveTimer if textarea.fancyCssSaveTimer
-      textarea.fancyCssSaveTimer = setTimeout(saveValue, 220)
-
-    maybeHint = (_cm, change) ->
-      return unless change.origin in ['+input', 'paste']
-      text = change.text?.join('')
-      return unless text and /[.#\w-]$/.test(text)
-      return if cm.state.completionActive
-      cm.showHint
-        hint: Settings.customCSSHint
-        completeSingle: false
-
-    onWheel = (e) ->
-      return unless $.hasClass(textarea.parentNode, 'use-fancy-css-editor')
-      return if cm.hasFocus()
-      e.preventDefault()
-      if (container = $.x 'ancestor::div[contains(@class, "section-container")][1]', wrapper)
-        container.scrollTop += e.deltaY
-
-    cm.on 'change', debouncedSave
-    cm.on 'blur', saveValue
-    cm.on 'inputRead', maybeHint
-    wrapper.addEventListener 'wheel', onWheel, false
-
-    initialValue = textarea.value or Conf['usercss'] or ''
-    if cm.getValue() isnt initialValue
-      cm.setValue initialValue
-    textarea.value = initialValue
-    textarea.fancyCssReady = true
-    cm.refresh()
-    cm
-
-  'Custom CSS Editor Mode': ->
-    fieldset = $.x 'ancestor::fieldset[1]', @
-    textarea = $('textarea[name=usercss]', fieldset)
-    return unless textarea
-    if @value is 'ide'
-      cm = Settings.setupFancyCSSEditor textarea
-      if textarea.value and cm?.getValue() isnt textarea.value
-        cm.setValue textarea.value
-      textarea.hidden = true
-      $.addClass fieldset, 'use-fancy-css-editor'
-      cm?.refresh()
-      cm?.scrollTo 0, 0
-    else
-      if cm = textarea.fancyCssEditor
-        clearTimeout textarea.fancyCssSaveTimer if textarea.fancyCssSaveTimer
-        textarea.fancyCssResizeObserver?.disconnect()
-        textarea.value = cm.getValue()
-        $.cb.value.call textarea
-        cm.toTextArea()
-        delete textarea.fancyCssEditor
-        delete textarea.fancyCssReady
-        delete textarea.fancyCssResizeObserver
-      textarea.hidden = false
-      $.rmClass fieldset, 'use-fancy-css-editor'
-
   keybinds: (section) ->
     $.extend section, `<%= readHTML('Keybinds.html') %>`
     $('.warning', section).hidden = Conf['Keybinds']
@@ -2532,7 +2490,9 @@ Settings =
     inputs = $.dict()
     for key, arr of Config.hotkeys
       tr = $.el 'tr',
-        `<%= html('<td>${arr[1]}</td><td><input class="field"></td>') %>`
+        `<%= html('<td class="setting-title">${arr[1]}</td><td><input class="field"></td>') %>`
+      tr.dataset.name = key
+      tr.dataset.settingTitle = arr[1]
       input = $ 'input', tr
       input.name = key
       input.spellcheck = false

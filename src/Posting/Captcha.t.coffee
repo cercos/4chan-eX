@@ -24,6 +24,7 @@ Captcha.t =
     return unless @isEnabled
     @patchFormatter()
     stacked = !!Conf['Stacked TCaptcha']
+    autoLoad = !!Conf['Auto-load captcha']
 
     if !@nodes.container
       @nodes.container = $.el 'div', className: 'captcha-container'
@@ -39,15 +40,24 @@ Captcha.t =
             type: 'warning',
             content: '' + err
           }})
+        if @stacked is '1' and @autoLoad is '1'
+          raf = window.requestAnimationFrame or setTimeout
+          raf ->
+            btn = document.querySelector '#t-load'
+            btn.click() if btn
       ,
         boardID: Captcha.t.currentThread.boardID
         threadID: Captcha.t.currentThread.threadID
         stacked: if stacked then '1' else '0'
+        autoLoad: if autoLoad then '1' else '0'
     else
       $.global ->
         window.TCaptcha4chanXPatch?(@stacked is '1')
+        if @stacked is '1' and @autoLoad is '1'
+          document.querySelector('#t-load')?.click()
       ,
         stacked: if stacked then '1' else '0'
+        autoLoad: if autoLoad then '1' else '0'
 
     if focus
       $('#t-resp').focus()

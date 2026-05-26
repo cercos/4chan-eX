@@ -589,7 +589,8 @@ audio.controls-added {
 .settings-titlebar {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  border-bottom: 1px solid;
+  border-bottom: 1px solid rgba(128, 128, 128, .25);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   display: -webkit-flex;
   display: flex;
   -webkit-align-items: center;
@@ -611,7 +612,8 @@ audio.controls-added {
 #fourchanx-settings > .settings-body > nav {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  border-right: 1px solid;
+  border-right: 1px solid rgba(128, 128, 128, .25);
+  border-right: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   padding: 8px;
   display: -webkit-flex;
   display: flex;
@@ -781,6 +783,33 @@ audio.controls-added {
   font-size: 11px;
   margin: 6px 0;
 }
+
+.settings-section-header {
+  display: none;
+  font-size: 1.4em;
+  margin: 10px 0;
+  padding-bottom: 5px;
+  border-bottom: 2px solid;
+}
+#fourchanx-settings.settings-searching .settings-section-header {
+  display: block;
+  background-color: rgba(128, 128, 128, .1);
+  padding: 5px 10px;
+  margin: 15px -10px 10px;
+  border-bottom: 1px solid rgba(128, 128, 128, .3);
+  font-weight: bold;
+}
+#fourchanx-settings.settings-searching .generated-highlight-preview,
+#fourchanx-settings.settings-searching .custom-css-editor {
+  display: none !important;
+}
+#fourchanx-settings.settings-searching .suboption-list,
+#fourchanx-settings.settings-searching table {
+  display: table !important;
+}
+#fourchanx-settings.settings-searching .suboption-list {
+  display: block !important;
+}
 .settings-search-hidden {
   display: none !important;
 }
@@ -856,15 +885,6 @@ div[data-checked="false"] > .suboption-list {
 .suboption-list {
   position: relative;
 }
-.suboption-list::before {
-  content: "";
-  display: inline-block;
-  position: absolute;
-  left: .7em;
-  width: 0;
-  height: 100%;
-  border-left: 1px solid;
-}
 .suboption-list > div {
   position: relative;
   padding-left: 1.4em;
@@ -874,10 +894,23 @@ div[data-checked="false"] > .suboption-list {
   display: inline-block;
   position: absolute;
   left: .7em;
-  width: .7em;
+  top: 0;
+  width: 0;
+  height: 100%;
+  border-left: 1px solid rgba(128, 128, 128, .5);
+}
+.suboption-list > div:last-of-type::before {
   height: .6em;
-  border-left: 1px solid;
-  border-bottom: 1px solid;
+}
+.suboption-list > div::after {
+  content: "";
+  display: inline-block;
+  position: absolute;
+  left: .7em;
+  top: .6em;
+  width: .7em;
+  height: 0;
+  border-bottom: 1px solid rgba(128, 128, 128, .5);
 }
 #fourchanx-settings .suboption-list > div:last-of-type {
   background-color: transparent;
@@ -1465,12 +1498,9 @@ div[data-checked="false"] > .suboption-list {
   margin-left: 0;
 }
 .section-styling .custom-css-disabled .custom-css-controls,
-.section-styling .custom-css-disabled textarea[name="usercss"],
-.section-styling .custom-css-disabled .custom-css-codemirror {
+.section-styling .custom-css-disabled .css-hl-wrap,
+.section-styling .custom-css-disabled textarea[name="usercss"] {
   opacity: .55;
-}
-.section-styling .custom-css-disabled .CodeMirror {
-  cursor: default;
 }
 .section-styling textarea[name="usercss"] {
   -moz-box-sizing: border-box;
@@ -1479,15 +1509,68 @@ div[data-checked="false"] > .suboption-list {
   margin-top: 6px;
   max-width: 100%;
 }
-#fourchanx-settings.settings-theme-dark textarea {
+.section-styling .css-hl-wrap {
+  position: relative;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  height: 450px;
+  margin-top: 6px;
+  max-width: 100%;
+  overflow: hidden;
+}
+.section-styling .css-hl-pre {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  margin: 0;
+  padding: 4px 6px;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre;
+  word-wrap: normal;
+  tab-size: 2;
+  pointer-events: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+.section-styling .css-hl-wrap textarea[name="usercss"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 4px 6px;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  background: transparent !important;
+  color: transparent !important;
+  caret-color: inherit;
+  resize: none;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow: auto;
+  z-index: 1;
+  border: 1px solid transparent !important;
+}
+#fourchanx-settings.settings-theme-dark textarea,
+#fourchanx-settings.settings-theme-dark .field {
   background: #212121;
   color: #eff;
   border-color: rgba(255, 255, 255, .28);
 }
-#fourchanx-settings.settings-theme-light textarea {
+#fourchanx-settings.settings-theme-light textarea,
+#fourchanx-settings.settings-theme-light .field {
   background: #fff;
   color: #111;
-  border-color: rgba(0, 0, 0, .35);
+  border-color: rgba(0, 0, 0, .28);
 }
 :root.yotsuba-b #fourchanx-settings.settings-theme-site textarea,
 :root.tomorrow #fourchanx-settings.settings-theme-site textarea,
@@ -1495,6 +1578,13 @@ div[data-checked="false"] > .suboption-list {
   background: #212121;
   color: #eff;
   border-color: rgba(255, 255, 255, .28);
+}
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .field,
+:root.tomorrow #fourchanx-settings.settings-theme-site .field,
+:root.spooky #fourchanx-settings.settings-theme-site .field {
+  background: #2a2a2a;
+  color: #ddd;
+  border-color: rgba(255, 255, 255, .22);
 }
 :root.yotsuba #fourchanx-settings.settings-theme-site textarea,
 :root.futaba #fourchanx-settings.settings-theme-site textarea,
@@ -1504,327 +1594,235 @@ div[data-checked="false"] > .suboption-list {
   color: #111;
   border-color: rgba(0, 0, 0, .35);
 }
-.section-styling .custom-css-codemirror {
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  height: 450px;
-  min-height: 180px;
-  width: 100%;
-  max-width: 100%;
-  margin-top: 6px;
-  border: 1px solid rgba(128, 128, 128, .4);
-  resize: vertical;
-  overflow: hidden;
-}
-.section-styling fieldset:not(.use-fancy-css-editor) .custom-css-codemirror {
-  display: none;
-}
-.section-styling .custom-css-codemirror .CodeMirror-hints {
-  font-size: 12px;
-}
-.section-styling .custom-css-codemirror .cm-hint-selector {
-  font-weight: 700;
-}
-.section-styling .CodeMirror {
-  font-family: monospace;
-  height: 450px;
-  min-height: 180px;
-  width: 100%;
-  max-width: 100%;
-  color: #000;
-  direction: ltr;
-  position: relative;
-  overflow: hidden;
-  background: #fff;
-}
-.section-styling .CodeMirror.custom-css-codemirror {
-  height: 450px;
-}
-.section-styling .CodeMirror-lines {
-  padding: 4px 0;
-  cursor: text;
-  min-height: 1px;
-}
-.section-styling .CodeMirror pre.CodeMirror-line,
-.section-styling .CodeMirror pre.CodeMirror-line-like {
-  padding: 0 4px;
-  margin: 0;
-  border-width: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-  white-space: pre;
-  word-wrap: normal;
-  line-height: inherit;
-  color: inherit;
-  position: relative;
-  overflow: visible;
-}
-.section-styling .CodeMirror-scroll {
-  overflow: scroll !important;
-  margin-bottom: -50px;
-  margin-right: -50px;
-  padding-bottom: 50px;
-  height: 100%;
-  max-width: 100%;
-  outline: 0;
-  position: relative;
-  z-index: 0;
-}
-.section-styling .CodeMirror-scroll,
-.section-styling .CodeMirror-sizer,
-.section-styling .CodeMirror-gutter,
-.section-styling .CodeMirror-gutters,
-.section-styling .CodeMirror-linenumber {
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-}
-.section-styling .CodeMirror-sizer {
-  position: relative;
-  border-right: 50px solid transparent;
-}
-.section-styling .CodeMirror-vscrollbar,
-.section-styling .CodeMirror-hscrollbar,
-.section-styling .CodeMirror-scrollbar-filler,
-.section-styling .CodeMirror-gutter-filler {
-  position: absolute;
-  z-index: 6;
-  display: none;
-  outline: none;
-}
-.section-styling .CodeMirror-vscrollbar {
-  right: 0;
-  top: 0;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-.section-styling .CodeMirror-hscrollbar {
-  bottom: 0;
-  left: 0;
-  overflow-x: scroll;
-  overflow-y: hidden;
-}
-.section-styling .CodeMirror-scrollbar-filler {
-  right: 0;
-  bottom: 0;
-}
-.section-styling .CodeMirror-gutter-filler {
-  left: 0;
-  bottom: 0;
-}
-.section-styling .CodeMirror-measure {
-  position: absolute;
-  width: 100%;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-}
-.section-styling .CodeMirror-measure pre {
-  position: static;
-}
-.section-styling .CodeMirror-code {
-  outline: none;
-}
-.section-styling .CodeMirror-linebackground {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 0;
-}
-.section-styling .CodeMirror-linewidget {
-  position: relative;
-  z-index: 2;
-  padding: .1px;
-}
-.section-styling div.CodeMirror-cursors {
-  visibility: hidden;
-  position: relative;
-  z-index: 3;
-}
-.section-styling .CodeMirror-focused div.CodeMirror-cursors {
-  visibility: visible;
-}
-.section-styling .CodeMirror-gutters {
-  border-right: 1px solid #ddd;
-  background-color: #f7f7f7;
-  white-space: nowrap;
-  position: absolute;
-  left: 0;
-  top: 0;
-  min-height: 100%;
-  z-index: 3;
-}
-.section-styling .CodeMirror-gutter {
-  white-space: normal;
-  height: 100%;
-  display: inline-block;
-  vertical-align: top;
-  margin-bottom: -50px;
-}
-.section-styling .CodeMirror-gutter-wrapper {
-  position: absolute;
-  z-index: 4;
-  background: none !important;
-  border: none !important;
-}
-.section-styling .CodeMirror-gutter-background {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 4;
-}
-.section-styling .CodeMirror-gutter-elt {
-  position: absolute;
-  cursor: default;
-  z-index: 4;
-}
-.section-styling .CodeMirror-linenumber {
-  padding: 0 3px 0 5px;
-  min-width: 20px;
-  text-align: right;
-  color: #999;
-  white-space: nowrap;
-}
-.section-styling .CodeMirror-selected {
-  background: #d9d9d9;
-}
-.section-styling .CodeMirror-focused .CodeMirror-selected {
-  background: #d7d4f0;
-}
-.section-styling .CodeMirror-cursor {
-  border-left: 1px solid #000;
-  border-right: none;
-  width: 0;
-  position: absolute;
-  pointer-events: none;
-}
-.section-styling .CodeMirror-focused .CodeMirror-cursor {
-  visibility: visible;
-}
-.section-styling .cm-s-default.CodeMirror {
+:root.yotsuba #fourchanx-settings.settings-theme-site .field,
+:root.futaba #fourchanx-settings.settings-theme-site .field,
+:root.burichan #fourchanx-settings.settings-theme-site .field,
+:root.photon #fourchanx-settings.settings-theme-site .field {
   background: #fff;
   color: #111;
+  border-color: rgba(0, 0, 0, .28);
 }
-.section-styling .cm-s-default .CodeMirror-gutters {
-  background: #f7f7f7;
-  color: #777;
-  border-right: 1px solid #ddd;
-}
-.section-styling .cm-s-default .CodeMirror-linenumber {
-  color: #777;
-}
-.section-styling .cm-s-default .CodeMirror-cursor {
-  border-left: 1px solid #111;
-}
-.section-styling .cm-s-default .cm-keyword,
-.section-styling .cm-s-default .cm-property,
-.section-styling .cm-s-default .cm-attribute {
-  color: #7b1fa2;
-}
-.section-styling .cm-s-default .cm-operator {
-  color: #006d8f;
-}
-.section-styling .cm-s-default .cm-number,
-.section-styling .cm-s-default .cm-tag,
-.section-styling .cm-s-default .cm-variable {
-  color: #c62828;
-}
-.section-styling .cm-s-default .cm-def {
-  color: #1565c0;
-}
-.section-styling .cm-s-default .cm-string {
-  color: #2e7d32;
-}
-.section-styling .cm-s-default .cm-comment {
-  color: #6d6d6d;
-}
-.section-styling .cm-s-default .cm-builtin,
-.section-styling .cm-s-default .cm-meta {
-  color: #a05a00;
-}
-.section-styling .cm-s-default .cm-error {
-  color: #fff;
-  background-color: #c62828;
-}
-.section-styling .cm-s-material-darker.CodeMirror {
+/* CSS Highlight Editor — pre background matches textarea background per theme */
+#fourchanx-settings.settings-theme-dark .css-hl-pre {
   background: #212121;
   color: #eff;
+  border-color: rgba(255, 255, 255, .28);
 }
-.section-styling .cm-s-material-darker .CodeMirror-gutters {
-  background: #212121;
-  color: #545454;
-  border: none;
+#fourchanx-settings.settings-theme-dark .css-hl-wrap {
+  color: #eff;
 }
-.section-styling .cm-s-material-darker .CodeMirror-linenumber {
-  color: #545454;
-}
-.section-styling .cm-s-material-darker .CodeMirror-cursor {
-  border-left: 1px solid #fc0;
-}
-.section-styling .cm-s-material-darker div.CodeMirror-selected {
-  background: rgba(97, 97, 97, .2);
-}
-.section-styling .cm-s-material-darker .cm-keyword,
-.section-styling .cm-s-material-darker .cm-property,
-.section-styling .cm-s-material-darker .cm-attribute {
-  color: #c792ea;
-}
-.section-styling .cm-s-material-darker .cm-operator {
-  color: #89ddff;
-}
-.section-styling .cm-s-material-darker .cm-number,
-.section-styling .cm-s-material-darker .cm-tag,
-.section-styling .cm-s-material-darker .cm-variable {
-  color: #ff5370;
-}
-.section-styling .cm-s-material-darker .cm-def {
-  color: #82aaff;
-}
-.section-styling .cm-s-material-darker .cm-string {
-  color: #c3e88d;
-}
-.section-styling .cm-s-material-darker .cm-comment {
-  color: #6d6d6d;
-}
-.section-styling .cm-s-material-darker .cm-builtin,
-.section-styling .cm-s-material-darker .cm-meta {
-  color: #ffcb6b;
-}
-.section-styling .cm-s-material-darker .cm-error {
-  color: #fff;
-  background-color: #ff5370;
-}
-.CodeMirror-hints {
-  position: absolute;
-  z-index: 10;
-  overflow: hidden;
-  list-style: none;
-  margin: 0;
-  padding: 2px;
-  box-shadow: 2px 3px 5px rgba(0, 0, 0, .2);
-  border-radius: 3px;
-  border: 1px solid silver;
+#fourchanx-settings.settings-theme-light .css-hl-pre {
   background: #fff;
-  font-size: 90%;
-  font-family: monospace;
-  max-height: 20em;
-  overflow-y: auto;
-  box-sizing: border-box;
+  color: #111;
+  border-color: rgba(0, 0, 0, .28);
 }
-.CodeMirror-hint {
-  margin: 0;
-  padding: 0 4px;
-  border-radius: 2px;
-  white-space: pre;
-  color: #000;
-  cursor: pointer;
+#fourchanx-settings.settings-theme-light .css-hl-wrap {
+  color: #111;
 }
-li.CodeMirror-hint-active {
-  background: #08f;
-  color: #fff;
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre {
+  background: #212121;
+  color: #eff;
+  border-color: rgba(255, 255, 255, .28);
 }
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-wrap,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-wrap,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-wrap {
+  color: #eff;
+}
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre {
+  background: #fff;
+  color: #111;
+  border-color: rgba(0, 0, 0, .35);
+}
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-wrap,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-wrap,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-wrap,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-wrap {
+  color: #111;
+}
+/* Syntax token colors — dark themes */
+#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-c,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,
+#fourchanx-settings.settings-theme-dark .css-hl-pre .com,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .com,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .com,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .com {
+  color: #6a9955;
+  font-style: italic;
+}
+#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-s,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,
+#fourchanx-settings.settings-theme-dark .css-hl-pre .str,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .str,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .str,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .str {
+  color: #ce9178;
+}
+#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-a,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,
+#fourchanx-settings.settings-theme-dark .css-hl-pre .kwd,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .kwd {
+  color: #c586c0;
+}
+#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-l,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,
+#fourchanx-settings.settings-theme-dark .css-hl-pre .lit,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .lit,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .lit,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .lit {
+  color: #4ec9b0;
+}
+#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-n,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n {
+  color: #b5cea8;
+}
+#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-p,
+:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,
+:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,
+:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p {
+  color: #9cdcfe;
+}
+/* Syntax token colors — light themes */
+#fourchanx-settings.settings-theme-light .css-hl-pre .chl-c,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,
+#fourchanx-settings.settings-theme-light .css-hl-pre .com,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .com,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .com,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .com,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .com {
+  color: #008000;
+  font-style: italic;
+}
+#fourchanx-settings.settings-theme-light .css-hl-pre .chl-s,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,
+#fourchanx-settings.settings-theme-light .css-hl-pre .str,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .str,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .str,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .str,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .str {
+  color: #a31515;
+}
+#fourchanx-settings.settings-theme-light .css-hl-pre .chl-a,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,
+#fourchanx-settings.settings-theme-light .css-hl-pre .kwd,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .kwd {
+  color: #800080;
+}
+#fourchanx-settings.settings-theme-light .css-hl-pre .chl-l,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,
+#fourchanx-settings.settings-theme-light .css-hl-pre .lit,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .lit,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .lit,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .lit,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .lit {
+  color: #098658;
+}
+#fourchanx-settings.settings-theme-light .css-hl-pre .chl-n,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n {
+  color: #098658;
+}
+#fourchanx-settings.settings-theme-light .css-hl-pre .chl-p,
+:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,
+:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,
+:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,
+:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p {
+  color: #001080;
+}
+/* Named highlight themes — override auto-adaptive rules */
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre {
+  background: #1e1e1e; color: #d4d4d4; border-color: rgba(255,255,255,.2);
+}
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark { color: #d4d4d4; }
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .chl-c,
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .com { color: #6a9955; font-style: italic; }
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .chl-s,
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .str { color: #ce9178; }
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .chl-a,
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .kwd { color: #c586c0; }
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .chl-l,
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .lit { color: #4ec9b0; }
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .chl-n { color: #b5cea8; }
+#fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre .chl-p { color: #9cdcfe; }
+
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre {
+  background: #272822; color: #f8f8f2; border-color: rgba(255,255,255,.15);
+}
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai { color: #f8f8f2; }
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .chl-c,
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .com { color: #75715e; font-style: italic; }
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .chl-s,
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .str { color: #e6db74; }
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .chl-a,
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .kwd { color: #f92672; }
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .chl-l,
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .lit { color: #ae81ff; }
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .chl-n { color: #ae81ff; }
+#fourchanx-settings .css-hl-wrap.chl-theme-monokai .css-hl-pre .chl-p { color: #66d9ef; }
+
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre {
+  background: #ffffff; color: #24292e; border-color: rgba(0,0,0,.25);
+}
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light { color: #24292e; }
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .chl-c,
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .com { color: #6a737d; font-style: italic; }
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .chl-s,
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .str { color: #032f62; }
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .chl-a,
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .kwd { color: #d73a49; }
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .chl-l,
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .lit { color: #005cc5; }
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .chl-n { color: #005cc5; }
+#fourchanx-settings .css-hl-wrap.chl-theme-github-light .css-hl-pre .chl-p { color: #6f42c1; }
+
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre {
+  background: #282a36; color: #f8f8f2; border-color: rgba(255,255,255,.15);
+}
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula { color: #f8f8f2; }
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .chl-c,
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .com { color: #6272a4; font-style: italic; }
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .chl-s,
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .str { color: #f1fa8c; }
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .chl-a,
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .kwd { color: #ff79c6; }
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .chl-l,
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .lit { color: #bd93f9; }
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .chl-n { color: #bd93f9; }
+#fourchanx-settings .css-hl-wrap.chl-theme-dracula .css-hl-pre .chl-p { color: #8be9fd; }
 .section-advanced .archive-cell {
   min-width: 160px;
   text-align: center;
@@ -1851,7 +1849,8 @@ li.CodeMirror-hint-active {
   font-family: monospace;
 }
 #fourchanx-settings fieldset {
-  border: 1px solid;
+  border: 1px solid rgba(128, 128, 128, .3);
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
   border-radius: 3px;
   padding: 0.5em 0.75em 0.85em;
   margin: 0 0 8px;

@@ -789,7 +789,6 @@ Config =
     werk:  false
 
   'Custom CSS': true
-  'Custom CSS Editor Mode': 'ide'
   'Open Filters Mode': 'remember'
   'Generated Highlight Styles': false
   'Highlight Watched Color': '#00509b'
@@ -807,6 +806,7 @@ Config =
   'Highlight Auto Link Color': true
   'Highlight Link Color': '#99c3ff'
   'Custom CSS on Homepage': true
+  'CSS Highlight Theme': 'auto'
   'Work around CORB Bug': true
   'Enable Native Flash Embedding': true
   'Thread Title': 'excerpt'

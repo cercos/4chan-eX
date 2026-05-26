@@ -185,15 +185,6 @@ ThreadWatcher =
           quotingYou: 0
           dismiss: 0
     setThumbnailSize: ->
-      value = prompt 'Thumbnail size (16-160):', ThreadWatcher.thumbnailSize()
-      return unless value?
-      size = parseInt(value, 10)
-      return if isNaN(size)
-      size = Math.max(16, Math.min(160, size))
-      $.set 'Thread Watcher Thumbnail Size', size
-      Conf['Thread Watcher Thumbnail Size'] = size
-      ThreadWatcher.refresh()
-      $.event 'CloseMenu'
     toggle: ->
       {thread} = Get.postFromNode @
       ThreadWatcher.toggle thread, true
@@ -885,10 +876,19 @@ ThreadWatcher =
           true
 
       entries.push
-        text: ''
-        cb: ThreadWatcher.cb.setThumbnailSize
+        text: 'Thumbnail size'
         open: ->
-          @el.textContent = "Thumbnail size: #{ThreadWatcher.thumbnailSize()}px"
+          @el.innerHTML = "Thumbnail size: <input type='number' value='#{ThreadWatcher.thumbnailSize()}' min='16' max='160' class='field'>px"
+          input = $ 'input', @el
+          $.on input, 'click', (e) -> e.stopPropagation()
+          $.on input, 'change', ->
+            size = parseInt(@value, 10)
+            size = 40 if isNaN(size)
+            size = Math.max(16, Math.min(160, size))
+            @value = size
+            $.set 'Thread Watcher Thumbnail Size', size
+            Conf['Thread Watcher Thumbnail Size'] = size
+            ThreadWatcher.refresh()
           true
 
       for {text, title, cb, open} in entries
@@ -897,7 +897,7 @@ ThreadWatcher =
             textContent: text
             href: 'javascript:;'
         entry.el.title = title if title
-        $.on entry.el, 'click', cb
+        $.on entry.el, 'click', cb if cb
         entry.open = open.bind(entry)
         @menu.addEntry entry
 

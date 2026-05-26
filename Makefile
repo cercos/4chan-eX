@@ -15,7 +15,7 @@ else
 endif
 CP = $(call CAT,$<,$@)
 
-npgoals := clean cleanrel cleanweb cleanfull withtests archives $(foreach i,1 2 3 4,bump$(i)) tag tagcommit beta stable web update updatehard
+npgoals := clean cleanrel cleanweb cleanfull withtests archives $(foreach i,1 2 3 4,bump$(i)) tag tagcommit beta stable web update updatehard minify
 ifneq "$(filter $(npgoals),$(MAKECMDGOALS))" ""
 .NOTPARALLEL :
 endif
@@ -204,21 +204,11 @@ index.html : test.html
 tmp/.jshintrc : src/meta/jshint.json tmp/declaration.js src/globals/globals.js $(template_deps) | tmp
 	$(template) $< $@
 
-jshint_ignore_dests := \
- tmp/General-CM0codemirror.min.js.js \
- tmp/General-CM1cssmode.min.js.js \
- tmp/General-CM2showhint.min.js.js \
- tmp/General-CM3csshint.min.js.js \
- tmp/General-CM4closebrackets.min.js.js \
- tmp/General-CM5matchbrackets.min.js.js
-
 .events/jshint : $(dests) tmp/.jshintrc
 	$(BIN)jshint $(call QUOTE, \
-	 $(filter-out $(jshint_ignore_dests), \
-	  $(if $(filter-out $(dests),$?), \
-	   $(dests), \
-	   $(filter $(dests),$?) \
-	  ) \
+	 $(if $(filter-out $(dests),$?), \
+	  $(dests), \
+	  $(filter $(dests),$?) \
 	 ) \
 	)
 	echo -> $@
@@ -260,7 +250,7 @@ distready : dist $(wildcard dist/* dist/*/*)
 
 .SECONDARY :
 
-.PHONY: default all distready script crx release jshint install push $(npgoals)
+.PHONY: default all distready script crx release jshint install minify push $(npgoals)
 
 script : $(script)
 
@@ -271,6 +261,11 @@ release : $(release)
 jshint : .events/jshint
 
 install : .events/install
+
+minify :
+	$(RM) testbuilds/crx/script.js testbuilds/crx-beta/script.js testbuilds/crx-noupdate/script.js
+	$(MAKE) script
+	node tools/minify.js
 
 push : .events2/push-git .events2/push-web .events2/push-store
 

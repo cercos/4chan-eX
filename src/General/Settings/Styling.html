@@ -195,13 +195,16 @@
   <div class="custom-css-note">For more information about customizing 4chan-eX&#039;s CSS, see the <a href="<%= meta.cssGuide %>" target="_blank">styling guide</a>.</div>
   <div class="custom-css-note"><strong>Note:</strong> Custom CSS can override the classes and styles used by built-in Highlight Styles.</div>
   <div class="custom-css-controls">
-    <button id="apply-css">Apply CSS</button>
-    <label>CSS Editor:
-      <select name="Custom CSS Editor Mode">
-        <option value="ide">Advanced</option>
-        <option value="basic">Plain</option>
+    <label>Theme:
+      <select name="CSS Highlight Theme">
+        <option value="auto">Auto</option>
+        <option value="vscode-dark">VS Code Dark</option>
+        <option value="monokai">Monokai</option>
+        <option value="github-light">GitHub Light</option>
+        <option value="dracula">Dracula</option>
       </select>
     </label>
+    <button id="apply-css">Apply CSS</button>
   </div>
   <textarea hidden name="usercss" class="field" spellcheck="false"></textarea>
 </fieldset>
