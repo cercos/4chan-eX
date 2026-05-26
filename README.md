@@ -1,4 +1,4 @@
-![screenshot](img/readme/screenshot-01.png)
+![screenshot](img/readme/screenshot-04.png)
 # 4chan-eX
 4chan-eX is a script that adds various features to anonymous imageboards. It was originally developed for 4chan but has no affiliation with it.
 
@@ -8,10 +8,10 @@ This repository is a fork of [4chan X](https://github.com/ccd0/4chan-x).
 While this fork includes new settings and behavior changes, most existing 4chan X settings should still import directly, or map closely enough to be migrated with minimal manual adjustment.
 
 ## Screenshots
-| | |
-|---|---|
+| |                                               |
+|---|-----------------------------------------------|
 | ![Screenshot 1](img/readme/screenshot-01.png) | ![Screenshot 2](img/readme/screenshot-02.png) |
-| ![Screenshot 3](img/readme/screenshot-03.png) | ![Screenshot 4](img/readme/screenshot-04.png) |
+| ![Screenshot 3](img/readme/screenshot-03.png) | ![Screenshot 4](img/readme/screenshot-01.png) |
 | ![Screenshot 5](img/readme/screenshot-05.png) | ![Screenshot 6](img/readme/screenshot-06.png) |
 
 It was previously developed by [aeosynth](https://github.com/aeosynth/4chan-eX), [Mayhem](https://github.com/MayhemYDG/4chan-eX), [ihavenoface](https://github.com/ihavenoface/4chan-eX), [Zixaphir](https://github.com/zixaphir/appchan-x), [Seaweed](https://github.com/seaweedchan/4chan-eX), and [Spittie](https://github.com/Spittie/4chan-eX), with contributions from many others.
