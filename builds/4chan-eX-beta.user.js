@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX beta
-// @version      1
+// @version      1.0.1
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -126,8 +126,8 @@
 // @grant        GM.openInTab
 // @grant        GM.xmlHttpRequest
 // @run-at       document-start
-// @updateURL    https://www.4chan-eX.net/builds/4chan-eX-beta.meta.js
-// @downloadURL  https://www.4chan-eX.net/builds/4chan-eX-beta.user.js
+// @updateURL    https://raw.githubusercontent.com/cercos/4chan-eX/main/builds/4chan-eX-beta.meta.js
+// @downloadURL  https://raw.githubusercontent.com/cercos/4chan-eX/main/builds/4chan-eX-beta.user.js
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAACVBMVEUAAGcAAABmzDNZt9VtAAAAAXRSTlMAQObYZgAAAF5JREFUeNrtkTESABAQxPD/R6tsE2dUGYUtFJvLDKf93KevHJAjpBorAQWSBIKqFASC4G0pCAkm4GfaEvgYXl0T6HBaE97f0vmnfYHbZOMLZCx9ISdKWwjOWZSC8GYm4SUGwfYgqI4AAAAASUVORK5CYII=
 // ==/UserScript==
 
@@ -230,7 +230,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1',
+  VERSION:   '1.0.1',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)

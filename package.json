@@ -6,7 +6,7 @@
     "path": "4chan-eX",
     "fork": "cercos",
     "page": "https://www.4chan-eX.net/",
-    "downloads": "https://www.4chan-eX.net/builds/",
+    "downloads": "https://raw.githubusercontent.com/cercos/4chan-eX/main/builds/",
     "oldVersions": "https://raw.githubusercontent.com/cercos/4chan-eX/",
     "faq": "https://github.com/cercos/4chan-eX/wiki/Frequently-Asked-Questions",
     "captchaFAQ": "https://github.com/cercos/4chan-eX/wiki/Captcha-FAQ",
