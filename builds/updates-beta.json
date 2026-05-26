@@ -1,0 +1,12 @@
+{
+  "addons": {
+    "4chan-eX@4chan-eX.net": {
+      "updates": [
+        {
+          "version": "1",
+          "update_link": "https://www.4chan-eX.net/builds/4chan-eX-beta.crx"
+        }
+      ]
+    }
+  }
+}
