@@ -158,6 +158,11 @@ Config =
         'Embed supported services. Note: Some services don\'t work on HTTPS.'
         1
       ]
+      'Convert X to xcancel': [
+        false
+        'Rewrite twitter.com / x.com links to xcancel.com so clicks open the privacy front-end instead.'
+        1
+      ]
       'Auto-embed': [
         false
         'Auto-embed Linkify Embeds.'

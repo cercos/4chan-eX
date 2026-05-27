@@ -38,13 +38,22 @@ Embedding =
       return
 
   process: (link, post) ->
-    return unless Conf['Embedding'] or Conf['Link Title'] or Conf['Cover Preview']
     return if $.x 'ancestor::pre', link
     if data = Embedding.services link
+      Embedding.convertToXcancel link, data.uid if data.key is 'Twitter' and Conf['Convert X to xcancel']
+      return unless Conf['Embedding'] or Conf['Link Title'] or Conf['Cover Preview']
       data.post = post
       Embedding.embed data if Conf['Embedding'] and g.VIEW isnt 'archive'
       Embedding.title data if Conf['Link Title']
       Embedding.preview data if Conf['Cover Preview'] and g.VIEW isnt 'archive'
+
+  convertToXcancel: (link, uid) ->
+    newHref = "https://xcancel.com/#{uid}"
+    return if link.href is newHref
+    oldText = link.textContent
+    link.href = newHref
+    if /^\w+:\/\/(?:www\.|mobile\.)?(?:twitter\.com|x\.com)/i.test oldText
+      link.textContent = oldText.replace /^(\w+:\/\/)(?:www\.|mobile\.)?(?:twitter\.com|x\.com)/i, '$1xcancel.com'
 
   services: (link) ->
     {href} = link
@@ -480,26 +489,94 @@ Embedding =
         el
     ,
       key: 'Twitter'
-      regExp: /^\w+:\/\/(?:www\.|mobile\.)?twitter\.com\/(\w+\/status\/\d+)/
-      style: 'border: none; width: 550px; height: 250px; overflow: hidden; resize: both;'
+      regExp: /^\w+:\/\/(?:www\.|mobile\.)?(?:twitter\.com|x\.com|xcancel\.com)\/(\w+\/status\/\d+)/
+      style: 'border: 1px solid var(--reply-border-color, rgba(128,128,128,0.4)); width: 550px; max-height: 80vh; overflow: auto; resize: both; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px;'
       el: (a) ->
-        el = $.el 'iframe'
-        $.on el, 'load', ->
-          @contentWindow.postMessage {element: 't', query: 'height'}, 'https://twitframe.com'
-        onMessage = (e) ->
-          if e.source is el.contentWindow and e.origin is 'https://twitframe.com'
-            $.off window, 'message', onMessage
-            (cont or el).style.height = "#{+$.minmax(e.data.height, 250, 0.8 * doc.clientHeight)}px"
-        $.on window, 'message', onMessage
-        el.src = "https://twitframe.com/show?url=https://twitter.com/#{a.dataset.uid}"
-        if $.engine is 'gecko'
-          # XXX https://bugzilla.mozilla.org/show_bug.cgi?id=680823
-          el.style.cssText = 'border: none; width: 100%; height: 100%;'
-          cont = $.el 'div'
-          $.add cont, el
-          cont
-        else
-          el
+        container = $.el 'div', className: 'twitter-embed'
+        container.textContent = 'Loading tweet…'
+
+        renderTweet = (tweet) ->
+          container.textContent = ''
+
+          header = $.el 'div'
+          header.style.cssText = 'display: flex; align-items: center; gap: 8px;'
+          if tweet.author?.avatar_url
+            avatar = $.el 'img', src: tweet.author.avatar_url, alt: ''
+            avatar.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;'
+            $.add header, avatar
+          meta = $.el 'div'
+          meta.style.cssText = 'min-width: 0; flex: 1;'
+          name = $.el 'div', textContent: (tweet.author?.name or '')
+          name.style.fontWeight = 'bold'
+          handle = $.el 'a',
+            href: "https://twitter.com/#{tweet.author?.screen_name or ''}"
+            textContent: "@#{tweet.author?.screen_name or ''}"
+            target: '_blank'
+            rel: 'noreferrer'
+          handle.style.cssText = 'opacity: 0.7; font-size: 0.9em;'
+          $.add meta, [name, handle]
+          $.add header, meta
+          $.add container, header
+
+          if tweet.text
+            text = $.el 'div'
+            text.style.cssText = 'white-space: pre-wrap; word-wrap: break-word;'
+            re = /(https?:\/\/\S+)/g
+            lastIndex = 0
+            while (m = re.exec(tweet.text))
+              if m.index > lastIndex
+                $.add text, $.tn(tweet.text.substring(lastIndex, m.index))
+              link = $.el 'a',
+                href: m[1]
+                textContent: m[1]
+                target: '_blank'
+                rel: 'noreferrer'
+              $.add text, link
+              lastIndex = re.lastIndex
+            if lastIndex < tweet.text.length
+              $.add text, $.tn(tweet.text.substring(lastIndex))
+            $.add container, text
+
+          if tweet.media?.videos?.length
+            for video in tweet.media.videos
+              v = $.el 'video',
+                controls: true
+                preload: 'metadata'
+              v.style.cssText = 'max-width: 100%; max-height: 60vh;'
+              v.poster = video.thumbnail_url if video.thumbnail_url
+              source = $.el 'source',
+                src: video.url
+                type: video.content_type or 'video/mp4'
+              $.add v, source
+              $.add container, v
+          else if tweet.media?.photos?.length
+            photos = tweet.media.photos
+            grid = $.el 'div'
+            cols = if photos.length > 1 then 'repeat(2, 1fr)' else '1fr'
+            grid.style.cssText = "display: grid; gap: 4px; grid-template-columns: #{cols};"
+            for photo in photos
+              link = $.el 'a', href: photo.url, target: '_blank', rel: 'noreferrer'
+              img = $.el 'img', src: photo.url, alt: ''
+              img.style.cssText = 'width: 100%; height: auto; max-height: 60vh; object-fit: contain;'
+              $.add link, img
+              $.add grid, link
+            $.add container, grid
+
+          stats = $.el 'div'
+          stats.style.cssText = 'display: flex; gap: 12px; opacity: 0.7; font-size: 0.85em;'
+          stats.textContent = "#{tweet.replies or 0} replies · #{tweet.retweets or 0} retweets · #{tweet.likes or 0} likes"
+          $.add container, stats
+          return
+
+        $.ajax "https://api.fxtwitter.com/#{a.dataset.uid}",
+          responseType: 'json'
+          onloadend: ->
+            tweet = @response?.tweet
+            if tweet
+              renderTweet tweet
+            else
+              container.textContent = 'Failed to load tweet.'
+        container
     ,
       key: 'VidLii'
       regExp:  /^\w+:\/\/(?:www\.)?vidlii\.com\/watch\?v=(\w{11})/

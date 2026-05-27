@@ -651,16 +651,27 @@ do ->
 # http://wiki.greasespot.net/Main_Page
 # https://tampermonkey.net/documentation.php
 
-if GM?.deleteValue? and window.BroadcastChannel and not GM_addValueChangeListener?
+if GM?.deleteValue?
 
-  $.syncChannel = new BroadcastChannel(g.NAMESPACE + 'sync')
+  # FireMonkey exposes GM_addValueChangeListener but not the matching
+  # sync GM_setValue/GM_getValue/GM_deleteValue. Always prefer the
+  # async GM.* API when GM.deleteValue is available — gating on the
+  # legacy listener used to drop us into the GM_* branch which then
+  # bare-referenced GM_setValue and threw ReferenceError at
+  # document-start, killing the script on FireMonkey. (ccd0/4chan-x#3300)
+  if window.BroadcastChannel
+    $.syncChannel = new BroadcastChannel(g.NAMESPACE + 'sync')
 
-  $.on $.syncChannel, 'message', (e) ->
-    for key, val of e.data when (cb = $.syncing[key])
-      cb $.dict.json(JSON.stringify(val)), key
+    $.on $.syncChannel, 'message', (e) ->
+      for key, val of e.data when (cb = $.syncing[key])
+        cb $.dict.json(JSON.stringify(val)), key
 
-  $.sync = (key, cb) ->
-    $.syncing[key] = cb
+    $.sync = (key, cb) ->
+      $.syncing[key] = cb
+  else
+    $.sync = (key, cb) ->
+      $.syncing[key] = cb
+    $.cantSync = true
 
   $.forceSync = ->
 
@@ -670,7 +681,7 @@ if GM?.deleteValue? and window.BroadcastChannel and not GM_addValueChangeListene
     Promise.all(GM.deleteValue(g.NAMESPACE + key) for key in keys).then ->
       items = $.dict()
       items[key] = undefined for key in keys
-      $.syncChannel.postMessage items
+      $.syncChannel?.postMessage items
       cb?()
 
   $.get = $.oneItemSugar (items, cb) ->
@@ -683,7 +694,7 @@ if GM?.deleteValue? and window.BroadcastChannel and not GM_addValueChangeListene
   $.set = $.oneItemSugar (items, cb) ->
     $.securityCheck items
     Promise.all(GM.setValue(g.NAMESPACE + key, JSON.stringify(val)) for key, val of items).then ->
-      $.syncChannel.postMessage items
+      $.syncChannel?.postMessage items
       cb?()
 
   $.clear = (cb) ->

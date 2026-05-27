@@ -555,9 +555,6 @@ Settings =
         Settings.addCheckboxes root, Config.Index, items, inputs
 
     # Unsupported options
-    if $.engine isnt 'gecko'
-      if (el = $('div[data-name="Remember QR Size"]', section))
-        el.hidden = true
     if $.perProtocolSettings or location.protocol isnt 'https:'
       if (el = $('div[data-name="Redirect to HTTPS"]', section))
         el.hidden = true
@@ -1001,6 +998,49 @@ Settings =
     Conf['usercss'] = textarea.value
     $.set 'usercss', textarea.value
 
+  exportGroupOrder: [
+    'General Settings'
+    'Custom CSS'
+    'Board Navigation'
+    'Watched Threads'
+    'Hidden'
+    'Filters'
+    'Keybinds'
+    'Sauces'
+    'Archives'
+    'QR Personas'
+  ]
+
+  exportGroupKeys: ->
+    groups = $.dict()
+    groups['Custom CSS']       = ['usercss', 'Custom CSS']
+    groups['Board Navigation'] = ['boardnav']
+    groups['Watched Threads']  = ['watchedThreads', 'watcherBackup']
+    groups['Hidden']           = ['hiddenThreads', 'hiddenPosts']
+    groups['Filters']          = (k for k of Config.filter).concat ['easyFilters']
+    groups['Keybinds']         = (k for k of Config.hotkeys)
+    groups['Sauces']           = ['sauces']
+    groups['Archives']         = ['selectedArchives']
+    groups['QR Personas']      = ['QR.personas']
+    groups
+
+  groupForKey: (key, keysByGroup) ->
+    for name, keys of keysByGroup when key in keys
+      return name
+    'General Settings'
+
+  groupsPresentIn: (conf) ->
+    keysByGroup = Settings.exportGroupKeys()
+    present = $.dict()
+    for key of conf
+      present[Settings.groupForKey key, keysByGroup] = true
+    present
+
+  groupFilenameTag: (groups) ->
+    return '' unless groups?.length
+    return '' if groups.length is Settings.exportGroupOrder.length
+    '-' + (groups.map (g) -> g.toLowerCase().replace /[^a-z0-9]+/g, '-').join('-')
+
   export: ->
     Settings.flushCustomCSSEditor()
     # Make sure to export the most recent data, but don't overwrite existing `Conf` object.
@@ -1021,13 +1061,27 @@ Settings =
         'Remove Thread Excerpt'
       ]
         delete Conf2[key]
-      (Settings.downloadExport {version: g.VERSION, date: Date.now(), Conf: Conf2})
+      Settings.openImpExpPicker
+        title:    'Export Settings'
+        action:   'Export'
+        conf:     Conf2
+        onConfirm: (checked) -> Settings.doExport checked, Conf2
+
+  doExport: (checkedGroups, conf) ->
+    keysByGroup = Settings.exportGroupKeys()
+    out = $.dict()
+    for key, val of conf
+      name = Settings.groupForKey key, keysByGroup
+      out[key] = val if checkedGroups[name]
+    groups = (name for name in Settings.exportGroupOrder when checkedGroups[name])
+    Settings.downloadExport {version: g.VERSION, date: Date.now(), groups: groups, Conf: out}
 
   downloadExport: (data) ->
     blob = new Blob [JSON.stringify(data, null, 2)], {type: 'application/json'}
     url = URL.createObjectURL blob
+    tag = Settings.groupFilenameTag data.groups
     a = $.el 'a',
-      download: "<%= meta.name %> v#{g.VERSION}-#{data.date}.json"
+      download: "<%= meta.name %> v#{g.VERSION}-#{data.date}#{tag}.json"
       href: url
     p = $ '.imp-exp-result', Settings.dialog
     $.rmAll p
@@ -1040,23 +1094,143 @@ Settings =
   onImport: ->
     return if not (file = @files[0])
     @value = null
-    output = $('.imp-exp-result')
-    unless confirm 'Your current settings will be entirely overwritten, are you sure?'
-      output.textContent = 'Import aborted.'
-      return
-
+    output = $('.imp-exp-result', Settings.dialog)
     reader = new FileReader()
     reader.onload = (e) ->
       try
-        Settings.loadSettings $.dict.json(e.target.result), (err) ->
-          if err
-            output.textContent = 'Import failed due to an error.'
-          else if confirm 'Import successful. Reload now?'
-            window.location.reload()
+        data = $.dict.json e.target.result
+        unless data?.Conf
+          output.textContent = 'Import failed: file is not a valid settings export.' if output
+          return
+        Settings.openImpExpPicker
+          title:    'Import Settings'
+          action:   'Import'
+          conf:     data.Conf
+          onConfirm: (checked) -> Settings.doImport data, checked
       catch err
-        output.textContent = 'Import failed due to an error.'
+        output.textContent = 'Import failed due to an error.' if output
         c.error err.stack
     reader.readAsText file
+
+  doImport: (data, checkedGroups) ->
+    output = $('.imp-exp-result', Settings.dialog)
+    keysByGroup = Settings.exportGroupKeys()
+    filtered = $.dict()
+    for key, val of data.Conf
+      name = Settings.groupForKey key, keysByGroup
+      filtered[key] = val if checkedGroups[name]
+    selected = $.extend $.dict(), data
+    selected.Conf = filtered
+    # Run version upgrade on the filtered subset only.
+    if selected.version and selected.version isnt g.VERSION
+      # loadletter migration assumes full settings dump; skip when only some
+      # groups are selected to avoid corrupting partial imports.
+      isLoadletter = selected.version.split('.')[0] is '2' and "Disable 4chan's extension" of filtered
+      if isLoadletter
+        selected = Settings.convertFrom.loadletter selected
+      else
+        Settings.upgrade selected.Conf, selected.version
+    $.set selected.Conf, (err) ->
+      if err
+        output.textContent = 'Import failed due to an error.' if output
+      else if confirm 'Import successful. Reload now?'
+        window.location.reload()
+
+  openImpExpPicker: ({title, action, conf, onConfirm}) ->
+    return unless Settings.dialog
+    Settings.closeImpExpPicker()
+    presentGroups = Settings.groupsPresentIn conf
+
+    overlay = $.el 'div',
+      className: 'imp-exp-picker-overlay'
+    picker = $.el 'div',
+      className: 'imp-exp-picker dialog'
+    $.add overlay, picker
+
+    $.add picker, $.el 'h3',
+      className: 'imp-exp-picker-title'
+      textContent: title
+
+    list = $.el 'div',
+      className: 'imp-exp-picker-list'
+    checkboxes = $.dict()
+    hasAny = false
+    for name in Settings.exportGroupOrder when presentGroups[name]
+      hasAny = true
+      input = $.el 'input',
+        type: 'checkbox'
+        checked: true
+        name: 'fcx-impexp-group'
+        autocomplete: 'off'
+      label = $.el 'label'
+      $.add label, input
+      $.add label, $.tn " #{name}"
+      checkboxes[name] = input
+      row = $.el 'div', className: 'imp-exp-picker-row'
+      $.add row, label
+      $.add list, row
+
+    if hasAny
+      toggleRow = $.el 'div', className: 'imp-exp-picker-row imp-exp-picker-toggle'
+      toggleInput = $.el 'input',
+        type: 'checkbox'
+        checked: true
+        name: 'fcx-impexp-toggle'
+        autocomplete: 'off'
+      toggleLabel = $.el 'label'
+      $.add toggleLabel, toggleInput
+      $.add toggleLabel, $.tn ' Check all'
+      $.add toggleRow, toggleLabel
+      $.prepend list, toggleRow
+      syncToggle = ->
+        total = 0
+        on_ = 0
+        for _, input of checkboxes
+          total++
+          on_++ if input.checked
+        toggleInput.checked = on_ is total
+        toggleInput.indeterminate = on_ > 0 and on_ < total
+      $.on toggleInput, 'change', ->
+        target = @checked
+        @indeterminate = false
+        input.checked = target for _, input of checkboxes
+      for _, input of checkboxes
+        $.on input, 'change', syncToggle
+      syncToggle()
+      $.add picker, list
+    else
+      $.add picker, $.el 'p',
+        className: 'imp-exp-picker-empty'
+        textContent: 'No recognizable settings groups found.'
+
+    buttons = $.el 'div', className: 'imp-exp-picker-buttons'
+    cancel = $.el 'button', {type: 'button', textContent: 'Cancel'}
+    confirmBtn = $.el 'button',
+      type: 'button'
+      textContent: action
+      disabled: not hasAny
+    $.add buttons, cancel
+    $.add buttons, confirmBtn
+    $.add picker, buttons
+
+    close = ->
+      Settings.closeImpExpPicker()
+    $.on cancel, 'click', close
+    $.on overlay, 'click', (e) -> close() if e.target is overlay
+    $.on confirmBtn, 'click', ->
+      checked = $.dict()
+      for name, input of checkboxes when input.checked
+        checked[name] = true
+      Settings.closeImpExpPicker()
+      onConfirm checked
+
+    $.add Settings.dialog, overlay
+    Settings.impExpPicker = overlay
+
+  closeImpExpPicker: ->
+    return unless Settings.impExpPicker
+    $.rm Settings.impExpPicker
+    Settings.impExpPicker = null
 
   convertFrom:
     loadletter: (data) ->

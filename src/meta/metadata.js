@@ -45,6 +45,7 @@
 %>
 // @connect      api.clyp.it
 // @connect      api.dailymotion.com
+// @connect      api.fxtwitter.com
 // @connect      api.github.com
 // @connect      soundcloud.com
 // @connect      api.streamable.com
