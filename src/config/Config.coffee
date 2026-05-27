@@ -810,6 +810,8 @@ Config =
   'Highlight Auto Link Color': true
   'Highlight Link Color': '#99c3ff'
   'Custom CSS on Homepage': true
+  'Apply Style on Homepage': true
+  'siteStyle': ''
   'CSS Highlight Theme': 'auto'
   'Work around CORB Bug': true
   'Enable Native Flash Embedding': true

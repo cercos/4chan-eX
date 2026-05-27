@@ -12,15 +12,15 @@ Settings =
 
     add = @addSection
 
-    add 'General',  @general
-    add 'Reading',  @reading
-    add 'Media',    @media
-    add 'Posting',  @posting
-    add 'Styling',  @styling
-    add 'Filters',  @filters
-    add 'Sauce',    @sauce
-    add 'Advanced', @advanced
-    add 'Keybinds', @keybinds
+    add 'General',         @general
+    add 'Interface',       @interface
+    add 'Threads & Posts', @threadsAndPosts
+    add 'Media',           @media
+    add 'Posting',         @posting
+    add 'Filtering',       @filters
+    add 'Styling',         @styling
+    add 'Keybinds',        @keybinds
+    add 'Advanced',        @advanced
 
     $.on d, 'AddSettingsSection',   Settings.addSection
     $.on d, 'OpenSettings', (e) -> Settings.open e.detail
@@ -76,8 +76,9 @@ Settings =
       if (
         section.title is openSection or
         (openSection is 'Main' and section.title is 'General') or
-        (openSection is 'Filter' and section.title is 'Filters') or
-        (openSection is 'Simple Filters' and section.title is 'Filters')
+        (openSection is 'Filter' and section.title is 'Filtering') or
+        (openSection is 'Filters' and section.title is 'Filtering') or
+        (openSection is 'Simple Filters' and section.title is 'Filtering')
       )
         sectionToOpen = link
     $.add $('.sections-list', dialog), links
@@ -103,9 +104,9 @@ Settings =
       delete Settings.forcedFiltersMode
 
     if Settings.dialog
-      $('.tab-filters', Settings.dialog)?.click()
+      $('.tab-filtering', Settings.dialog)?.click()
     else
-      Settings.open 'Filters'
+      Settings.open 'Filtering'
 
   close: ->
     return unless Settings.dialog
@@ -259,7 +260,7 @@ Settings =
   addSection: (title, open) ->
     if typeof title isnt 'string'
       {title, open} = title.detail
-    hyphenatedTitle = title.toLowerCase().replace /\s+/g, '-'
+    hyphenatedTitle = title.toLowerCase().replace /[^a-z0-9]+/g, '-'
     Settings.sections.push {title, hyphenatedTitle, open, rendered: false}
 
   openSection: ->
@@ -433,6 +434,43 @@ Settings =
         lookup[key] = arr
     lookup
 
+  addCheckboxes: (root, obj, items, inputs, includeSetting = -> true) ->
+    containers = [root]
+    count = 0
+    for key, arr of obj when arr instanceof Array
+      continue unless includeSetting key
+      description = arr[1] or ''
+      div = $.el 'div',
+        `<%= html('<label><input type="checkbox" name="${key}"><span class="setting-title">${key}</span></label><span class="description">: <span class="setting-description">${description}</span></span>') %>`
+      div.dataset.name = key
+      div.dataset.settingTitle = key
+      div.dataset.settingDescription = description
+      if keywords = Settings.searchKeywords[key]
+        div.dataset.searchKeywords = keywords
+      input = $ 'input', div
+      $.on input, 'change', $.cb.checked
+      $.on input, 'change', -> @parentNode.parentNode.dataset.checked = @checked
+      items[key]  = Conf[key]
+      inputs[key] = input
+      level = arr[2] or 0
+      if containers.length <= level
+        container = $.el 'div', className: 'suboption-list'
+        $.add containers[containers.length-1].lastElementChild, container
+        containers[level] = container
+      else if containers.length > level+1
+        containers.splice level+1, containers.length - (level+1)
+      $.add containers[level], div
+      count++
+    count
+
+  selectGroup: (obj, keys, baseLevel = 0) ->
+    group = $.dict()
+    for key in keys when (arr = obj[key])
+      [defaultValue, description, level] = arr
+      adjustedLevel = Math.max 0, (level or 0) - baseLevel
+      group[key] = [defaultValue, description, adjustedLevel]
+    group
+
   renderMainGroups: (section, options) ->
     {
       categories
@@ -457,56 +495,21 @@ Settings =
 
     items  = $.dict()
     inputs = $.dict()
-    addCheckboxes = (root, obj, includeSetting = -> true) ->
-      containers = [root]
-      count = 0
-      for key, arr of obj when arr instanceof Array
-        continue unless includeSetting key
-        description = arr[1] or ''
-        div = $.el 'div',
-          `<%= html('<label><input type="checkbox" name="${key}"><span class="setting-title">${key}</span></label><span class="description">: <span class="setting-description">${description}</span></span>') %>`
-        div.dataset.name = key
-        div.dataset.settingTitle = key
-        div.dataset.settingDescription = description
-        if keywords = Settings.searchKeywords[key]
-          div.dataset.searchKeywords = keywords
-        input = $ 'input', div
-        $.on input, 'change', $.cb.checked
-        $.on input, 'change', -> @parentNode.parentNode.dataset.checked = @checked
-        items[key]  = Conf[key]
-        inputs[key] = input
-        level = arr[2] or 0
-        if containers.length <= level
-          container = $.el 'div', className: 'suboption-list'
-          $.add containers[containers.length-1].lastElementChild, container
-          containers[level] = container
-        else if containers.length > level+1
-          containers.splice level+1, containers.length - (level+1)
-        $.add containers[level], div
-        count++
-      count
-    addSettingGroup = (root, name, beforeSetting) ->
-      before = $("div[data-name=\"#{beforeSetting}\"]", root)
-      return unless before
-      heading = $.el 'h3',
-        className: 'settings-group-heading'
-        textContent: name
-      $.before before, heading
-    selectGroup = (obj, keys, baseLevel = 0) ->
-      group = $.dict()
-      for key in keys when (arr = obj[key])
-        [defaultValue, description, level] = arr
-        adjustedLevel = Math.max 0, (level or 0) - baseLevel
-        group[key] = [defaultValue, description, adjustedLevel]
-      group
 
     styleNames = Settings.stylingOptionNames
-    for keyFS in categories
+    for cat in categories
+      if typeof cat is 'string'
+        keyFS = cat
+        subgroups = null
+      else
+        keyFS = cat.name
+        subgroups = cat.subgroups
+
       continue unless (obj = Config.main[keyFS])
 
       if keyFS is 'Miscellaneous'
         lookup = Settings.getMainSettingLookup()
-        for [legendTitle, keys] in [
+        subgroups ?= [
           ['Browsing and Catalog', ['Redirect to HTTPS', 'JSON Index', 'Use <%= meta.name %> Catalog', 'Open Threads in New Tab', 'External Catalog']]
           ['UI', ['Announcement Hiding', 'Follow Cursor', 'Catalog Links']]
           ['Notifications', ['Desktop Notifications', 'Index Refresh Notifications', 'Show Updated Notifications', 'Posting Success Notifications']]
@@ -514,12 +517,13 @@ Settings =
           ['Keyboard and Navigation', ['Keybinds', 'Comment Expansion', 'Thread Expansion', 'Index Navigation', 'Reply Navigation', 'Unique ID and Capcode Navigation', 'Normalize URL', 'Disable Autoplaying Sounds']]
           ['Compatibility', ['Disable Native Extension']]
         ]
+        for [legendTitle, keys] in subgroups
           fs = $.el 'fieldset',
             `<%= html('<legend>${legendTitle}</legend>') %>`
           group = $.dict()
           for key in keys when lookup[key]
             group[key] = lookup[key]
-          continue unless addCheckboxes(fs, group, (key) -> key not in styleNames)
+          continue unless Settings.addCheckboxes(fs, group, items, inputs, (key) -> key not in styleNames)
           $.add section, fs
         continue
 
@@ -531,8 +535,8 @@ Settings =
         ]
           fs = $.el 'fieldset',
             `<%= html('<legend>${legendTitle}</legend>') %>`
-          group = selectGroup obj, keys, baseLevel
-          continue unless addCheckboxes(fs, group, (key) -> key not in styleNames)
+          group = Settings.selectGroup obj, keys, baseLevel
+          continue unless Settings.addCheckboxes(fs, group, items, inputs, (key) -> key not in styleNames)
           if legendTitle is 'Captcha'
             $.add fs, $.el 'p',
               `<%= html('For more info on captcha options and issues, see the <a href="' + meta.captchaFAQ + '" target="_blank">captcha FAQ</a>.') %>`
@@ -543,12 +547,12 @@ Settings =
       fs = $.el 'fieldset'
       unless keyFS in hideLegendFor
         $.extend fs, `<%= html('<legend>${legendTitle}</legend>') %>`
-      continue unless addCheckboxes(fs, obj, (key) -> key not in styleNames)
+      continue unless Settings.addCheckboxes(fs, obj, items, inputs, (key) -> key not in styleNames)
       $.add section, fs
 
     if includeJSONIndex
       if root = $('div[data-name="JSON Index"] > .suboption-list', section)
-        addCheckboxes root, Config.Index
+        Settings.addCheckboxes root, Config.Index, items, inputs
 
     # Unsupported options
     if $.engine isnt 'gecko'
@@ -698,23 +702,95 @@ Settings =
       return
     return
 
-  main: (section) ->
-    Settings.general section
-
   general: (section) ->
     Settings.renderMainGroups section,
-      categories: ['Miscellaneous', 'Linkification', 'Menu']
+      categories: [
+        {
+          name: 'Miscellaneous'
+          subgroups: [
+            ['System', ['Redirect to HTTPS', 'JSON Index', 'Show Updated Notifications', '404 Redirect', 'Archive Report', 'Exempt Archives from Encryption']]
+            ['Compatibility', ['Disable Native Extension']]
+          ]
+        }
+      ]
       includeWarnings: true
       includeJSONIndex: true
       includeHiddenCount: false
       hideLegendFor: ['Miscellaneous']
 
-  reading: (section) ->
+  interface: (section) ->
+    items = $.dict()
+    inputs = $.dict()
+
     Settings.renderMainGroups section,
-      categories: ['Monitoring', 'Quote Links', 'Filtering']
+      categories: [
+        {
+          name: 'Miscellaneous'
+          subgroups: [
+            ['UI', ['Announcement Hiding', 'Follow Cursor', 'Catalog Links']]
+            ['Notifications', ['Desktop Notifications', 'Index Refresh Notifications', 'Posting Success Notifications']]
+            ['Keyboard and Navigation', ['Keybinds', 'Comment Expansion', 'Thread Expansion', 'Index Navigation', 'Reply Navigation', 'Unique ID and Capcode Navigation', 'Normalize URL', 'Disable Autoplaying Sounds']]
+          ]
+        }
+        'Menu'
+      ]
+      includeWarnings: false
+      includeJSONIndex: false
+      includeHiddenCount: false
+
+    # Custom Board Navigation (moved from Advanced)
+    fsNav = $.el 'fieldset',
+      `<%= html('<legend>Board Navigation</legend>') %>`
+    textarea = $.el 'textarea',
+      name: 'boardnav'
+      className: 'field'
+      spellcheck: false
+    $.on textarea, 'change', $.cb.value
+    $.on textarea, 'change', Settings.boardnav
+    items['boardnav'] = Conf['boardnav']
+    inputs['boardnav'] = textarea
+    $.add fsNav, textarea
+    $.add section, fsNav
+
+    $.get items, (items) ->
+      for key, val of items
+        input = inputs[key]
+        if input.type is 'checkbox'
+          input.checked = val
+          input.parentNode.parentNode.dataset.checked = val
+        else
+          input.value = val
+      return
+
+  threadsAndPosts: (section) ->
+    # Formatting options moved from Styling
+    items  = $.dict()
+    inputs = $.dict()
+    fs = $.el 'fieldset',
+      `<%= html('<legend>Formatting</legend>') %>`
+    lookup = Settings.getMainSettingLookup()
+    for [title, keys] in [
+      ['Time and Formatting', ['Time Formatting', 'Relative Post Dates', 'Relative Date Title', 'File Info Formatting']]
+      ['Board and ID Display', ['Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID']]
+      ['Spoiler Display', ['Remove Spoilers', 'Reveal Spoilers']]
+    ]
+      group = $.dict()
+      for key in keys when lookup[key]
+        group[key] = lookup[key]
+      continue unless Object.keys(group).length
+      $.add fs, $.el 'h3',
+        className: 'settings-group-heading'
+        textContent: title
+      Settings.addCheckboxes fs, group, items, inputs
+    $.add section, fs
+
+    # Main groups for Content Controls (filtering/hiding), Monitoring and Quotes
+    Settings.renderMainGroups section,
+      categories: ['Filtering', 'Monitoring', 'Quote Links']
       includeWarnings: false
       includeJSONIndex: false
       includeHiddenCount: true
+    
     Settings.addThreadWatcherFieldset section
     Settings.addSelectFieldset section, 'Thread Title',
       [
@@ -740,12 +816,50 @@ Settings =
         }
       ]
 
+    # Interval and Cooldown (moved from Advanced)
+    fs = $.el 'fieldset',
+      `<%= html('<legend>Updater & Cooldown</legend>') %>`
+    
+    divInterval = $.el 'div',
+      `<%= html('<label><span class="setting-title">Update Interval: </span><input type="number" name="Interval" class="field" min="1"></label><span class="description">: Seconds between updates.</span>') %>`
+    divInterval.dataset.name = 'Interval'
+    divInterval.dataset.settingTitle = 'Update Interval'
+    intervalInput = $ 'input', divInterval
+    $.on intervalInput, 'change', ThreadUpdater.cb.interval
+    items['Interval'] = Conf['Interval']
+    inputs['Interval'] = intervalInput
+    $.add fs, divInterval
+
+    divCooldown = $.el 'div',
+      `<%= html('<label><span class="setting-title">Custom Cooldown: </span><input type="number" name="customCooldown" class="field" min="0"></label><span class="description">: Seconds to wait after posting.</span>') %>`
+    divCooldown.dataset.name = 'customCooldown'
+    divCooldown.dataset.settingTitle = 'Custom Cooldown'
+    cooldownInput = $ 'input', divCooldown
+    $.on cooldownInput, 'change', $.cb.value
+    items['customCooldown'] = Conf['customCooldown']
+    inputs['customCooldown'] = cooldownInput
+    $.add fs, divCooldown
+
+    $.add section, fs
+
+    # Initialize the formatting checkboxes
+    $.get items, (items) ->
+      for key, val of items
+        input = inputs[key]
+        if input.type is 'checkbox'
+          input.checked = val
+          input.parentNode.parentNode.dataset.checked = val
+        else
+          input.value = val
+      return
+
   media: (section) ->
     Settings.renderMainGroups section,
-      categories: ['Images and Videos']
+      categories: ['Images and Videos', 'Linkification']
       includeWarnings: false
       includeJSONIndex: false
       includeHiddenCount: false
+    Settings.sauce section
 
   posting: (section) ->
     Settings.renderMainGroups section,
@@ -753,53 +867,25 @@ Settings =
       includeWarnings: false
       includeJSONIndex: false
       includeHiddenCount: false
+    
+    # Quick Reply Personas (moved from Advanced)
+    fs = $.el 'fieldset',
+      `<%= html('<legend>Personas</legend>') %>`
+    div = $.el 'div',
+      `<%= html('<textarea name="QR.personas" class="field" spellcheck="false"></textarea><p class="description">One persona per line (e.g. name:"Name";options:"sage"). See Advanced for more details.</p>') %>`
+    div.dataset.name = 'QR.personas'
+    div.dataset.settingTitle = 'Personas'
+    textarea = $ 'textarea', div
+    $.on textarea, 'change', $.cb.value
+    $.add fs, div
+    $.add section, fs
+    $.get 'QR.personas', Conf['QR.personas'], (item) ->
+      textarea.value = item['QR.personas']
+      textarea.hidden = false
 
   styling: (section) ->
     items  = $.dict()
     inputs = $.dict()
-    addCheckboxes = (root, obj) ->
-      containers = [root]
-      for key, arr of obj when arr instanceof Array
-        description = arr[1] or ''
-        div = $.el 'div',
-          `<%= html('<label><input type="checkbox" name="${key}"><span class="setting-title">${key}</span></label><span class="description">: <span class="setting-description">${description}</span></span>') %>`
-        div.dataset.name = key
-        div.dataset.settingTitle = key
-        div.dataset.settingDescription = description
-        if keywords = Settings.searchKeywords[key]
-          div.dataset.searchKeywords = keywords
-        input = $ 'input', div
-        $.on input, 'change', $.cb.checked
-        $.on input, 'change', -> @parentNode.parentNode.dataset.checked = @checked
-        items[key]  = Conf[key]
-        inputs[key] = input
-        level = arr[2] or 0
-        if containers.length <= level
-          container = $.el 'div', className: 'suboption-list'
-          $.add containers[containers.length-1].lastElementChild, container
-          containers[level] = container
-        else if containers.length > level+1
-          containers.splice level+1, containers.length - (level+1)
-        $.add containers[level], div
-      return
-
-    fs = $.el 'fieldset',
-      `<%= html('<legend>Display Options</legend>') %>`
-    lookup = Settings.getMainSettingLookup()
-    for [title, keys] in [
-      ['Time and Formatting', ['Time Formatting', 'Relative Post Dates', 'Relative Date Title', 'File Info Formatting']]
-      ['Board and ID Display', ['Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID']]
-      ['Spoiler Display', ['Remove Spoilers', 'Reveal Spoilers']]
-    ]
-      group = $.dict()
-      for key in keys when lookup[key]
-        group[key] = lookup[key]
-      continue unless Object.keys(group).length
-      $.add fs, $.el 'h3',
-        className: 'settings-group-heading'
-        textContent: title
-      addCheckboxes fs, group
-    $.add section, fs
 
     $.extend section, `<%= readHTML('Styling.html') %>`
     Settings.setupSiteStyleMirror section
@@ -855,20 +941,39 @@ Settings =
     controls = $('.site-theme-controls', section)
     mirror = $('.site-style-mirror', section)
     nativeSelect = $.id 'styleSelector'
-    unless controls and mirror and nativeSelect?.options?.length
-      controls.hidden = true if controls
+    
+    knownStyles = [
+      ['yotsuba', 'Yotsuba']
+      ['yotsuba-b', 'Yotsuba B']
+      ['futaba', 'Futaba']
+      ['burichan', 'Burichan']
+      ['photon', 'Photon']
+      ['tomorrow', 'Tomorrow']
+      ['spooky', 'Spooky']
+    ]
+
+    unless controls and mirror
       return
 
     $.rmAll mirror
     options = []
-    for option in nativeSelect.options
-      options.push $.el 'option',
-        value: option.value
-        textContent: option.textContent
-    $.add mirror, options
-    mirror.value = nativeSelect.value
+    if nativeSelect?.options?.length
+      for option in nativeSelect.options
+        options.push $.el 'option',
+          value: option.value
+          textContent: option.textContent
+      $.add mirror, options
+      mirror.value = nativeSelect.value
+    else
+      for [value, text] in knownStyles
+        options.push $.el 'option',
+          value: value
+          textContent: text
+      $.add mirror, options
+      mirror.value = Conf['siteStyle'] or 'yotsuba'
 
     dispatchChange = ->
+      return unless nativeSelect
       event = try
         new Event 'change',
           bubbles: true
@@ -879,8 +984,16 @@ Settings =
       nativeSelect.dispatchEvent event
 
     $.on mirror, 'change', ->
-      nativeSelect.value = mirror.value
-      dispatchChange()
+      if Conf['siteStyle'] isnt @value
+        Conf['siteStyle'] = @value
+        $.set 'siteStyle', @value
+      if nativeSelect
+        nativeSelect.value = @value
+        dispatchChange()
+      else
+        # On pages without a native selector, apply the class immediately for preview.
+        $.rmClass doc, val for [val, text] in knownStyles
+        $.addClass doc, @value
 
   flushCustomCSSEditor: ->
     textarea = $('textarea[name=usercss]', Settings.dialog)
@@ -1322,6 +1435,7 @@ Settings =
     advancedPanel.hidden = true
     simplePanel.hidden = true
     filteredPanel.hidden = true
+    
     $.add section, [tabs, simplePanel, advancedPanel, filteredPanel]
 
     openMode = (mode) ->
@@ -2081,7 +2195,9 @@ Settings =
     {href, text}
 
   sauce: (section) ->
-    $.extend section, `<%= readHTML('Sauce.html') %>`
+    div = $.el 'div'
+    $.extend div, `<%= readHTML('Sauce.html') %>`
+    $.add section, div
     $('.warning', section).hidden = Conf['Sauce']
     ta = $ 'textarea', section
     $.get 'sauces', Conf['sauces'], (item) ->
@@ -2125,12 +2241,6 @@ Settings =
     listImageHost = $.id 'list-fourchanImageHost'
     for textContent in ImageHost.suggestions
       $.add listImageHost, $.el 'option', {textContent}
-
-    interval = inputs['Interval']
-
-    interval.value = Conf['Interval']
-
-    $.on interval, 'change', ThreadUpdater.cb.interval
 
     itemsArchive = $.dict()
     itemsArchive[name] = Conf[name] for name in ['archives', 'selectedArchives', 'lastarchivecheck']

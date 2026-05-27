@@ -332,7 +332,7 @@ Filter =
 
   showFilters: (type) ->
     # Open the settings and display & focus the relevant filter textarea.
-    Settings.open 'Filters'
+    Settings.open 'Filtering'
     section = $ '.section-container'
     select = $ 'select[name=filter]', section
     select.value = type

@@ -284,11 +284,18 @@ Main =
   setClass: ->
     knownStyles = ['yotsuba', 'yotsuba-b', 'futaba', 'burichan', 'photon', 'tomorrow', 'spooky']
 
+    if !g.VIEW and Conf['Apply Style on Homepage'] and Conf['siteStyle'] in knownStyles
+      $.addClass doc, Conf['siteStyle']
+      return
+
     if g.SITE.software is 'yotsuba' and g.VIEW is 'catalog'
       if (mainStyleSheet = $.id('base-css'))
         style = mainStyleSheet.href.match(/catalog_(\w+)/)?[1].replace('_new', '').replace(/_+/g, '-')
         if style in knownStyles
           $.addClass doc, style
+          if Conf['siteStyle'] isnt style
+            Conf['siteStyle'] = style
+            $.set 'siteStyle', style
           return
 
     style = mainStyleSheet = styleSheets = null
@@ -308,6 +315,9 @@ Main =
         if style
           $.addClass doc, style
           $.rm Main.bgColorStyle
+          if Conf['siteStyle'] isnt style
+            Conf['siteStyle'] = style
+            $.set 'siteStyle', style
           return
 
       # Determine proper dialog background color for other themes.
