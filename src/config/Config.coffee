@@ -439,6 +439,10 @@ Config =
         false
         'When opening a thread, fetch deleted posts from the configured archive and insert them inline as ghost posts. Requires Resurrect Quotes and a Foolfuuka archive for the board.'
       ]
+      'Ghost Post Backlinks': [
+        false
+        'Like Fetch Ghost Posts, but without inserting deleted posts inline: only add their backlinks under the live posts they quoted. Hover the backlinks to preview the ghost post. Ignored if Fetch Ghost Posts is on. Requires Resurrect Quotes and a Foolfuuka archive for the board.'
+      ]
       'Reply Pruning': [
         true
         'Add option in header menu to hide old replies in long threads. Activated by default in stickies.'

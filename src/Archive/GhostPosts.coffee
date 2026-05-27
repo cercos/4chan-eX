@@ -6,7 +6,8 @@ GhostPosts =
       Conf['Highlight Ghost Posts'] = enabled
       doc.classList.toggle 'highlight-ghost', enabled
 
-    return unless g.VIEW is 'thread' and Conf['Fetch Ghost Posts']
+    return unless g.VIEW is 'thread'
+    return unless Conf['Fetch Ghost Posts'] or Conf['Ghost Post Backlinks']
     return unless Conf['Resurrect Quotes']
     Callbacks.Thread.push
       name: 'Ghost Posts'
@@ -78,6 +79,8 @@ GhostPosts =
 
     Main.callbackNodes 'Post', built
 
+    return unless Conf['Fetch Ghost Posts']
+
     threadRoot = GhostPosts.thread.OP.nodes.root.parentNode
     return unless threadRoot
 
@@ -99,4 +102,3 @@ GhostPosts =
       livePosts.sort (a, b) -> a.ID - b.ID
 
     $.event 'PostsInserted', null, threadRoot
-    new Notice 'info', "Loaded #{built.length} ghost post#{if built.length is 1 then '' else 's'} from #{archive.name}.", 8
