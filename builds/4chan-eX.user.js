@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX
-// @version      1.0.8
+// @version      1.0.9
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -233,7 +233,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1.0.8',
+  VERSION:   '1.0.9',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)
@@ -329,8 +329,8 @@ Config = (function() {
       },
       'Images and Videos': {
         'Image Expansion': [true, 'Expand images / videos.'],
-        'Image Hover': [true, 'Show full image / video on mouseover.'],
-        'Image Hover in Catalog': [true, 'Show full image / video on mouseover in 4chan-eX catalog.'],
+        'Image Hover': [false, 'Show full image / video on mouseover.'],
+        'Image Hover in Catalog': [false, 'Show full image / video on mouseover in 4chan-eX catalog.'],
         'Gallery': [true, 'Adds a simple and cute image gallery. Has more options in the gallery menu.'],
         'Fullscreen Gallery': [false, 'Open gallery in fullscreen mode.', 1],
         'PDF in Gallery': [false, 'Show PDF files in gallery.', 1],
@@ -475,12 +475,12 @@ Config = (function() {
     },
     'Custom CSS': true,
     'Open Filters Mode': 'remember',
-    'Generated Highlight Styles': false,
-    'Highlight Watched Color': '#00509b',
+    'Generated Highlight Styles': true,
+    'Highlight Watched Color': '#08357d',
     'Highlight Watched Opacity': '1',
-    'Highlight Your Post Color': '#059600',
+    'Highlight Your Post Color': '#00800f',
     'Highlight Your Post Opacity': '0.7',
-    'Highlight Quotes You Color': '#ad2c27',
+    'Highlight Quotes You Color': '#ad2300',
     'Highlight Quotes You Opacity': '0.8',
     'Highlight Auto Text Color': true,
     'Highlight Text Color': '#f2f2f2',
@@ -497,7 +497,7 @@ Config = (function() {
     'Thread Title': 'excerpt',
     'Unread Title Count': 'always',
     Index: {
-      'Index Mode': 'paged',
+      'Index Mode': 'catalog',
       'Previous Index Mode': 'paged',
       'Index Size': 'small',
       'Show Replies': [true, 'Show replies in the index, and also in the catalog if "Catalog hover expand" is checked.'],
@@ -2520,8 +2520,10 @@ div[data-checked=\"false\"] > .suboption-list {\n\
   display: flex;\n\
   justify-content: flex-end;\n\
   align-items: center;\n\
+  gap: 6px;\n\
 }\n\
-.section-styling .generated-highlight-quotes .reset-generated-highlights {\n\
+.section-styling .generated-highlight-quotes .randomize-generated-highlights,\n\
+.section-styling .generated-highlight-quotes .restore-generated-highlights {\n\
   font-size: 11px;\n\
   padding: 3px 8px;\n\
   cursor: pointer;\n\
@@ -10449,7 +10451,7 @@ Filter = (function() {
       }
     },
     parseFilterLine: function(key, line) {
-      var base, base1, boards, err, excludes, file, filter, hide, hl, i, isstring, len, mask, noti, op, ref, ref1, ref2, ref3, ref4, ref5, regexp, results, stub, top, type, types;
+      var base, base1, boards, err, excludes, file, filter, hide, hl, i, isstring, len, mask, noti, op, override, ref, ref1, ref2, ref3, ref4, ref5, regexp, results, stub, top, type, types;
       if (line[0] === '#') {
         return;
       }
@@ -10497,6 +10499,7 @@ Filter = (function() {
         top = ((ref5 = filter.match(/(?:^|;)\s*top:(yes|no)/)) != null ? ref5[1] : void 0) || 'yes';
         top = top === 'yes';
       }
+      override = hl && /(?:^|;)\s*override/.test(filter);
       if (key === 'general') {
         if ((types = filter.match(/(?:^|;)\s*type:([^;]*)/))) {
           types = types[1].split(',');
@@ -10515,7 +10518,8 @@ Filter = (function() {
         stub: stub,
         hl: hl,
         top: top,
-        noti: noti
+        noti: noti,
+        override: override
       };
       if (key === 'general') {
         results = [];
@@ -10588,6 +10592,9 @@ Filter = (function() {
             options.push('highlight');
           }
           options.push("top:" + (rule.auto ? 'yes' : 'no'));
+          if (rule.override) {
+            options.push('override');
+          }
         }
         if (rule.action === 'notify') {
           options.push('notify');
@@ -10636,7 +10643,7 @@ Filter = (function() {
     },
     parseBoardsMemo: $.dict(),
     test: function(post, hideable) {
-      var board, filter, hide, hl, i, j, key, len, len1, mask, noti, ref, ref1, ref2, site, stub, top, value;
+      var board, filter, hide, hl, hlOverride, i, j, key, len, len1, mask, noti, ref, ref1, ref2, site, stub, top, value;
       if (hideable == null) {
         hideable = true;
       }
@@ -10646,6 +10653,7 @@ Filter = (function() {
       hide = false;
       stub = true;
       hl = void 0;
+      hlOverride = false;
       top = false;
       noti = false;
       if (QuoteYou.isYou(post)) {
@@ -10674,6 +10682,9 @@ Filter = (function() {
               if (!(hl && (ref2 = filter.hl, indexOf.call(hl, ref2) >= 0))) {
                 (hl || (hl = [])).push(filter.hl);
               }
+              if (filter.override) {
+                hlOverride = true;
+              }
               top || (top = filter.top);
               if (filter.noti) {
                 noti = true;
@@ -10682,7 +10693,7 @@ Filter = (function() {
           }
         }
       }
-      if (hide) {
+      if (hide && !hlOverride) {
         return {
           hide: hide,
           stub: stub
@@ -14997,7 +15008,7 @@ Settings = (function() {
       });
     },
     styling: function(section) {
-      var addCheckboxes, applyCSS, customCSS, customCSSHome, event, fs, group, input, inputs, items, j, k, key, keys, l, len, len1, len2, len3, lookup, n, name, ref, ref1, ref2, ref3, ref4, resetGeneratedHighlights, title, warning;
+      var addCheckboxes, applyCSS, customCSS, customCSSHome, event, fs, group, input, inputs, items, j, k, key, keys, l, len, len1, len2, len3, lookup, n, name, randomizeGeneratedHighlights, ref, ref1, ref2, ref3, ref4, restoreGeneratedHighlights, title, warning;
       items = $.dict();
       inputs = $.dict();
       addCheckboxes = function(root, obj) {
@@ -15058,7 +15069,7 @@ Settings = (function() {
         addCheckboxes(fs, group);
       }
       $.add(section, fs);
-      $.extend(section, {innerHTML: "<fieldset class=\"styling-theme\"><legend>Theme</legend><div class=\"site-theme-controls\"><label>Site Style:<select class=\"site-style-mirror\"></select></label></div></fieldset><fieldset class=\"post-highlights\"><legend>Post Highlights</legend><label><input type=\"checkbox\" name=\"Highlight Posts Quoting You\"> Highlight posts that quote you</label><label><input type=\"checkbox\" name=\"Highlight Own Posts\"> Highlight your own posts</label></fieldset><fieldset class=\"generated-highlight-styles\"><legend>Highlight Styles</legend><div class=\"generated-highlight-toggle\"><label><input type=\"checkbox\" name=\"Generated Highlight Styles\"> Enable built-in highlight styling</label></div><div class=\"generated-highlight-quotes\"><div class=\"generated-highlight-quotes-header\"><button type=\"button\" class=\"reset-generated-highlights\">Reset to Default</button></div></div><div class=\"generated-highlight-grid\"><div class=\"generated-highlight-group\"><h4>Watched Catalog</h4><div class=\"generated-highlight-help\">Used for watched thread tiles in the catalog preview and catalog view.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Watched Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Watched Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Watched Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Your Post</h4><div class=\"generated-highlight-help\">Used for posts and threads that are marked as yours.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Your Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Your Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Your Post Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Quotes You</h4><div class=\"generated-highlight-help\">Used for posts that quote you (when quote highlighting is enabled).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Quotes You Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Quotes You Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Quotes You Opacity\"></span></label></div></div><div class=\"generated-highlight-auto-row\"><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Text Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Text Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Text Color\" data-auto-color-for=\"Highlight Auto Text Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Greentext Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Greentext Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Greentext Color\" data-auto-color-for=\"Highlight Auto Greentext Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Title Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Title Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Title Color\" data-auto-color-for=\"Highlight Auto Title Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Link Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Link Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Link Color\" data-auto-color-for=\"Highlight Auto Link Color\"></label></div></div><div class=\"generated-highlight-preview\"><div class=\"generated-highlight-preview-column ghs-catalog-preview\"><h4>Catalog Preview</h4><div class=\"ghs-catalog-grid\"><div class=\"ghs-catalog-thread watched ghs-watched-only\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-a/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">24</span> / <span class=\"file-count\">6</span> / <span class=\"page-count\">9</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Sample Catalog Title</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread sample preview.</blockquote></div></div></div><div class=\"ghs-catalog-thread watched ghs-watched-you\"><div class=\"yourPost\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-b/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">45</span> / <span class=\"file-count\">3</span> / <span class=\"page-count\">4</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Your Thread Title Sample</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread that you created.</blockquote></div></div></div></div></div></div><div class=\"generated-highlight-preview-column ghs-thread-preview highlight-you\"><h4>Thread Preview</h4><div class=\"postContainer replyContainer yourPost noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\">Your post sample in thread view.<br><a href=\"javascript:;\" class=\"quotelink\">&gt;&gt;108904436</a><br><span class=\"quote\">&gt;sample quote line</span><br><a href=\"javascript:;\">sample link</a></blockquote></div></div><div class=\"postContainer replyContainer quotesYou noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\"><a href=\"javascript:;\" class=\"quotelink you\">&gt;&gt;108900390<span class=\"qmark-you\">&nbsp;(You)</span><span class=\"qmark-op\">&nbsp;(OP)</span></a><br><span class=\"quote\">&gt;sample quote line</span><br>Reply quoting you sample.<br><a href=\"javascript:;\">sample link</a></blockquote></div></div></div></div></fieldset><fieldset class=\"custom-css-editor\"><legend>Custom CSS</legend><div class=\"custom-css-enable-controls\"><label><input type=\"checkbox\" name=\"Custom CSS\"> Enable Custom CSS</label><label><input type=\"checkbox\" name=\"Custom CSS on Homepage\"> Load Custom CSS on home page</label></div><div class=\"custom-css-note\">For more information about customizing 4chan-eX&#039;s CSS, see the <a href=\"https://github.com/cercos/4chan-eX/wiki/Styling-Guide\" target=\"_blank\">styling guide</a>.</div><div class=\"custom-css-note\"><strong>Note:</strong> Custom CSS can override the classes and styles used by built-in Highlight Styles.</div><div class=\"custom-css-controls\"><label>Theme:<select name=\"CSS Highlight Theme\"><option value=\"auto\">Auto</option><option value=\"vscode-dark\">VS Code Dark</option><option value=\"monokai\">Monokai</option><option value=\"github-light\">GitHub Light</option><option value=\"dracula\">Dracula</option></select></label><button id=\"apply-css\">Apply CSS</button></div><textarea hidden name=\"usercss\" class=\"field\" spellcheck=\"false\"></textarea></fieldset><fieldset><legend>Time Formatting <span class=\"warning\" data-feature=\"Time Formatting\">is disabled.</span></legend><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></fieldset><fieldset><legend>Quote Backlinks formatting <span class=\"warning\" data-feature=\"Quote Backlinks\">is disabled.</span></legend><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></fieldset><fieldset><legend>File Info Formatting <span class=\"warning\" data-feature=\"File Info Formatting\">is disabled.</span></legend><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></fieldset><fieldset><legend>Unread Favicon <span class=\"warning\" data-feature=\"Unread Favicon\">is disabled.</span></legend><select name=\"favicon\"><option value=\"ferongr\">ferongr</option><option value=\"xat-\">xat-</option><option value=\"4chanJS\">4chanJS</option><option value=\"Mayhem\">Mayhem</option><option value=\"Original\">Original</option><option value=\"Metro\">Metro</option></select><span class=\"favicon-preview\"></span></fieldset><fieldset><legend>Known Banners</legend><div>List of known banners, used for click-to-change feature.</div><textarea hidden name=\"knownBanners\" class=\"field\" spellcheck=\"false\"></textarea></fieldset>"});
+      $.extend(section, {innerHTML: "<fieldset class=\"styling-theme\"><legend>Theme</legend><div class=\"site-theme-controls\"><label>Site Style:<select class=\"site-style-mirror\"></select></label></div></fieldset><fieldset class=\"post-highlights\"><legend>Post Highlights</legend><label><input type=\"checkbox\" name=\"Highlight Posts Quoting You\"> Highlight posts that quote you</label><label><input type=\"checkbox\" name=\"Highlight Own Posts\"> Highlight your own posts</label></fieldset><fieldset class=\"generated-highlight-styles\"><legend>Highlight Styles</legend><div class=\"generated-highlight-toggle\"><label><input type=\"checkbox\" name=\"Generated Highlight Styles\"> Enable built-in highlight styling</label></div><div class=\"generated-highlight-quotes\"><div class=\"generated-highlight-quotes-header\"><button type=\"button\" class=\"randomize-generated-highlights\" title=\"Generate new highlight colors that contrast with your current theme\">Randomize Highlights</button><button type=\"button\" class=\"restore-generated-highlights\" title=\"Restore the highlight post colors to their defaults\">Restore to Default</button></div></div><div class=\"generated-highlight-grid\"><div class=\"generated-highlight-group\"><h4>Watched Catalog</h4><div class=\"generated-highlight-help\">Used for watched thread tiles in the catalog preview and catalog view.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Watched Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Watched Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Watched Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Your Post</h4><div class=\"generated-highlight-help\">Used for posts and threads that are marked as yours.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Your Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Your Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Your Post Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Quotes You</h4><div class=\"generated-highlight-help\">Used for posts that quote you (when quote highlighting is enabled).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Quotes You Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Quotes You Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Quotes You Opacity\"></span></label></div></div><div class=\"generated-highlight-auto-row\"><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Text Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Text Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Text Color\" data-auto-color-for=\"Highlight Auto Text Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Greentext Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Greentext Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Greentext Color\" data-auto-color-for=\"Highlight Auto Greentext Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Title Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Title Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Title Color\" data-auto-color-for=\"Highlight Auto Title Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Link Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Link Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Link Color\" data-auto-color-for=\"Highlight Auto Link Color\"></label></div></div><div class=\"generated-highlight-preview\"><div class=\"generated-highlight-preview-column ghs-catalog-preview\"><h4>Catalog Preview</h4><div class=\"ghs-catalog-grid\"><div class=\"ghs-catalog-thread watched ghs-watched-only\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-a/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">24</span> / <span class=\"file-count\">6</span> / <span class=\"page-count\">9</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Sample Catalog Title</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread sample preview.</blockquote></div></div></div><div class=\"ghs-catalog-thread watched ghs-watched-you\"><div class=\"yourPost\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-b/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">45</span> / <span class=\"file-count\">3</span> / <span class=\"page-count\">4</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Your Thread Title Sample</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread that you created.</blockquote></div></div></div></div></div></div><div class=\"generated-highlight-preview-column ghs-thread-preview highlight-you\"><h4>Thread Preview</h4><div class=\"postContainer replyContainer yourPost noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\">Your post sample in thread view.<br><a href=\"javascript:;\" class=\"quotelink\">&gt;&gt;108904436</a><br><span class=\"quote\">&gt;sample quote line</span><br><a href=\"javascript:;\">sample link</a></blockquote></div></div><div class=\"postContainer replyContainer quotesYou noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\"><a href=\"javascript:;\" class=\"quotelink you\">&gt;&gt;108900390<span class=\"qmark-you\">&nbsp;(You)</span><span class=\"qmark-op\">&nbsp;(OP)</span></a><br><span class=\"quote\">&gt;sample quote line</span><br>Reply quoting you sample.<br><a href=\"javascript:;\">sample link</a></blockquote></div></div></div></div></fieldset><fieldset class=\"custom-css-editor\"><legend>Custom CSS</legend><div class=\"custom-css-enable-controls\"><label><input type=\"checkbox\" name=\"Custom CSS\"> Enable Custom CSS</label><label><input type=\"checkbox\" name=\"Custom CSS on Homepage\"> Load Custom CSS on home page</label></div><div class=\"custom-css-note\">For more information about customizing 4chan-eX&#039;s CSS, see the <a href=\"https://github.com/cercos/4chan-eX/wiki/Styling-Guide\" target=\"_blank\">styling guide</a>.</div><div class=\"custom-css-note\"><strong>Note:</strong> Custom CSS can override the classes and styles used by built-in Highlight Styles.</div><div class=\"custom-css-controls\"><label>Theme:<select name=\"CSS Highlight Theme\"><option value=\"auto\">Auto</option><option value=\"vscode-dark\">VS Code Dark</option><option value=\"monokai\">Monokai</option><option value=\"github-light\">GitHub Light</option><option value=\"dracula\">Dracula</option></select></label><button id=\"apply-css\">Apply CSS</button></div><textarea hidden name=\"usercss\" class=\"field\" spellcheck=\"false\"></textarea></fieldset><fieldset><legend>Time Formatting <span class=\"warning\" data-feature=\"Time Formatting\">is disabled.</span></legend><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></fieldset><fieldset><legend>Quote Backlinks formatting <span class=\"warning\" data-feature=\"Quote Backlinks\">is disabled.</span></legend><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></fieldset><fieldset><legend>File Info Formatting <span class=\"warning\" data-feature=\"File Info Formatting\">is disabled.</span></legend><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></fieldset><fieldset><legend>Unread Favicon <span class=\"warning\" data-feature=\"Unread Favicon\">is disabled.</span></legend><select name=\"favicon\"><option value=\"ferongr\">ferongr</option><option value=\"xat-\">xat-</option><option value=\"4chanJS\">4chanJS</option><option value=\"Mayhem\">Mayhem</option><option value=\"Original\">Original</option><option value=\"Metro\">Metro</option></select><span class=\"favicon-preview\"></span></fieldset><fieldset><legend>Known Banners</legend><div>List of known banners, used for click-to-change feature.</div><textarea hidden name=\"knownBanners\" class=\"field\" spellcheck=\"false\"></textarea></fieldset>"});
       Settings.setupSiteStyleMirror(section);
       ref2 = $$('.warning', section);
       for (l = 0, len2 = ref2.length; l < len2; l++) {
@@ -15119,8 +15130,11 @@ Settings = (function() {
           return CustomCSS.update();
         });
       }
-      if (resetGeneratedHighlights = $('.reset-generated-highlights', section)) {
-        $.on(resetGeneratedHighlights, 'click', Settings.resetGeneratedHighlightStyles);
+      if (randomizeGeneratedHighlights = $('.randomize-generated-highlights', section)) {
+        $.on(randomizeGeneratedHighlights, 'click', Settings.randomizeGeneratedHighlightStyles);
+      }
+      if (restoreGeneratedHighlights = $('.restore-generated-highlights', section)) {
+        $.on(restoreGeneratedHighlights, 'click', Settings.restoreGeneratedHighlightStyles);
       }
       Settings.refreshGeneratedHighlightStylesEditor();
       return Settings.setupCSSHighlight(inputs['usercss']);
@@ -15827,7 +15841,7 @@ Settings = (function() {
     easyFilterTypes: [['General', 'general'], ['Post Number', 'postID'], ['Name', 'name'], ['Unique ID', 'uniqueID'], ['Tripcode', 'tripcode'], ['Capcode', 'capcode'], ['Pass Date', 'pass'], ['Email', 'email'], ['Subject', 'subject'], ['Comment', 'comment'], ['Flag', 'flag'], ['Filename', 'filename'], ['Dimensions', 'dimensions'], ['Filesize', 'filesize'], ['Image MD5', 'MD5']],
     easyFilters: function(section, previewState) {
       var addButton, addRow, j, len, markDirty, rule, rules, save, saveButton, status, tbody;
-      $.extend(section, {innerHTML: "<table class=\"easy-filters-table\"><thead><tr><th>On</th><th>Pattern</th><th>Boards</th><th>Type</th><th>Color</th><th>Auto</th><th>Hide</th><th>Del</th></tr></thead><tbody></tbody></table><div class=\"easy-filters-controls\"><button class=\"easy-filter-add\" type=\"button\">Add</button><button class=\"easy-filter-save\" type=\"button\">Save</button><span class=\"easy-filter-status\"></span></div>"});
+      $.extend(section, {innerHTML: "<table class=\"easy-filters-table\"><thead><tr><th>On</th><th>Pattern</th><th>Boards</th><th>Type</th><th>Color</th><th>Auto</th><th>Hide</th><th title=\"Whitelist: matching highlight prevents this thread from being hidden by other rules\">Override</th><th>Del</th></tr></thead><tbody></tbody></table><div class=\"easy-filters-controls\"><button class=\"easy-filter-add\" type=\"button\">Add</button><button class=\"easy-filter-save\" type=\"button\">Save</button><span class=\"easy-filter-status\"></span></div>"});
       tbody = $('tbody', section);
       addButton = $('.easy-filter-add', section);
       saveButton = $('.easy-filter-save', section);
@@ -15932,14 +15946,15 @@ Settings = (function() {
           type: type,
           color: typeof rule.color === 'string' ? rule.color : '',
           auto: rule.auto != null ? !!rule.auto : false,
-          hide: hide
+          hide: hide,
+          override: rule.override != null ? !!rule.override : false
         };
       });
     },
     easyFilterRow: function(rule, markDirty) {
-      var autoInput, boardsInput, colorInput, enabledInput, hideInput, input, j, k, label, len, len1, patternInput, ref, ref1, ref2, ref3, removeButton, tr, typeSelect, value;
+      var autoInput, boardsInput, colorInput, enabledInput, hideInput, input, j, k, label, len, len1, overrideInput, patternInput, ref, ref1, ref2, ref3, removeButton, syncOverrideState, tr, typeSelect, value;
       tr = $.el('tr', {
-        innerHTML: "<td><input class=\"easy-filter-enabled\" type=\"checkbox\"></td>\n<td><input class=\"field easy-filter-pattern\" type=\"text\"></td>\n<td><input class=\"field easy-filter-boards\" type=\"text\" placeholder=\"all or g,v\"></td>\n<td><select class=\"easy-filter-type\"></select></td>\n<td><input class=\"field easy-filter-color\" type=\"text\" placeholder=\"highlight class\"></td>\n<td><input class=\"easy-filter-auto\" type=\"checkbox\" title=\"Move highlighted OPs to top\"></td>\n<td><input class=\"easy-filter-hide\" type=\"checkbox\"></td>\n<td><button class=\"easy-filter-remove\" type=\"button\" title=\"Remove\">\u00d7</button></td>"
+        innerHTML: "<td><input class=\"easy-filter-enabled\" type=\"checkbox\"></td>\n<td><input class=\"field easy-filter-pattern\" type=\"text\"></td>\n<td><input class=\"field easy-filter-boards\" type=\"text\" placeholder=\"all or g,v\"></td>\n<td><select class=\"easy-filter-type\"></select></td>\n<td><input class=\"field easy-filter-color\" type=\"text\" placeholder=\"highlight class\"></td>\n<td><input class=\"easy-filter-auto\" type=\"checkbox\" title=\"Move highlighted OPs to top\"></td>\n<td><input class=\"easy-filter-hide\" type=\"checkbox\"></td>\n<td><input class=\"easy-filter-override\" type=\"checkbox\" title=\"Whitelist: matching highlight prevents this thread from being hidden by other rules\"></td>\n<td><button class=\"easy-filter-remove\" type=\"button\" title=\"Remove\">\u00d7</button></td>"
       });
       typeSelect = $('.easy-filter-type', tr);
       ref = Settings.easyFilterTypes;
@@ -15956,6 +15971,7 @@ Settings = (function() {
       colorInput = $('.easy-filter-color', tr);
       autoInput = $('.easy-filter-auto', tr);
       hideInput = $('.easy-filter-hide', tr);
+      overrideInput = $('.easy-filter-override', tr);
       removeButton = $('.easy-filter-remove', tr);
       enabledInput.checked = rule.enabled != null ? !!rule.enabled : true;
       patternInput.value = rule.pattern || '';
@@ -15964,6 +15980,17 @@ Settings = (function() {
       colorInput.value = rule.color || '';
       autoInput.checked = !!rule.auto;
       hideInput.checked = rule.hide != null ? !!rule.hide : true;
+      overrideInput.checked = !!rule.override;
+      syncOverrideState = function() {
+        var disabled;
+        disabled = hideInput.checked;
+        overrideInput.disabled = disabled;
+        if (disabled) {
+          return overrideInput.checked = false;
+        }
+      };
+      syncOverrideState();
+      $.on(hideInput, 'change', syncOverrideState);
       ref2 = $$('input, select', tr);
       for (k = 0, len1 = ref2.length; k < len1; k++) {
         input = ref2[k];
@@ -15979,7 +16006,7 @@ Settings = (function() {
       return tr;
     },
     collectEasyFilters: function(tbody) {
-      var j, len, pattern, ref, rules, tr, type;
+      var hide, j, len, pattern, ref, rules, tr, type;
       rules = [];
       ref = $$('tr', tbody);
       for (j = 0, len = ref.length; j < len; j++) {
@@ -15989,6 +16016,7 @@ Settings = (function() {
           continue;
         }
         type = $('.easy-filter-type', tr).value;
+        hide = $('.easy-filter-hide', tr).checked;
         rules.push({
           enabled: $('.easy-filter-enabled', tr).checked,
           pattern: pattern,
@@ -15996,18 +16024,20 @@ Settings = (function() {
           type: type in Config.filter ? type : 'general',
           color: $('.easy-filter-color', tr).value.trim(),
           auto: $('.easy-filter-auto', tr).checked,
-          hide: $('.easy-filter-hide', tr).checked
+          hide: hide,
+          override: !hide && $('.easy-filter-override', tr).checked
         });
       }
       return rules;
     },
     easyFilterRuleFromRow: function(tr) {
-      var pattern, type;
+      var hide, pattern, type;
       pattern = $('.easy-filter-pattern', tr).value.trim();
       if (!pattern) {
         return null;
       }
       type = $('.easy-filter-type', tr).value;
+      hide = $('.easy-filter-hide', tr).checked;
       return {
         enabled: $('.easy-filter-enabled', tr).checked,
         pattern: pattern,
@@ -16015,7 +16045,8 @@ Settings = (function() {
         type: type in Config.filter ? type : 'general',
         color: $('.easy-filter-color', tr).value.trim(),
         auto: $('.easy-filter-auto', tr).checked,
-        hide: $('.easy-filter-hide', tr).checked
+        hide: hide,
+        override: !hide && $('.easy-filter-override', tr).checked
       };
     },
     easyFilterRuleToLine: function(rule) {
@@ -16058,6 +16089,9 @@ Settings = (function() {
           options.push('highlight');
         }
         options.push("top:" + (rule.auto ? 'yes' : 'no'));
+        if (rule.override) {
+          options.push('override');
+        }
       }
       if (rule.action === 'notify') {
         options.push('notify');
@@ -17117,37 +17151,53 @@ Settings = (function() {
         return $.addClass(fieldset, 'generated-highlight-disabled');
       }
     },
-    generatedHighlightDefaultValues: function() {
-      var defaults, j, key, len, ref;
-      defaults = $.dict();
-      ref = CustomCSS.generatedKeys;
-      for (j = 0, len = ref.length; j < len; j++) {
-        key = ref[j];
-        defaults[key] = Config[key];
-      }
-      return defaults;
-    },
-    resetGeneratedHighlightStyles: function() {
-      var defaults, input, key, section, val;
+    randomizeGeneratedHighlightStyles: function() {
+      var colors, input, key, section, updates, val;
       section = $('.section-styling', Settings.dialog);
       if (!section) {
         return;
       }
-      defaults = Settings.generatedHighlightDefaultValues();
-      $.set(defaults);
-      for (key in defaults) {
-        val = defaults[key];
+      colors = CustomCSS.randomGeneratedHighlightColors();
+      updates = $.dict();
+      updates['Highlight Watched Color'] = colors.watched;
+      updates['Highlight Your Post Color'] = colors.yourPost;
+      updates['Highlight Quotes You Color'] = colors.quotesYou;
+      $.set(updates);
+      for (key in updates) {
+        val = updates[key];
         input = $("input[name='" + key + "']", section);
         if (!input) {
           continue;
         }
-        if (input.type === 'checkbox') {
-          input.checked = !!val;
-          $.cb.checked.call(input);
-        } else {
-          input.value = val;
-          $.cb.value.call(input);
+        input.value = val;
+        $.cb.value.call(input);
+        if (key in Settings) {
+          Settings[key].call(input);
         }
+      }
+      return Settings.generatedHighlightStylesChanged();
+    },
+    restoreGeneratedHighlightStyles: function() {
+      var input, j, key, len, ref, section, updates, val;
+      section = $('.section-styling', Settings.dialog);
+      if (!section) {
+        return;
+      }
+      updates = $.dict();
+      ref = ['Highlight Watched Color', 'Highlight Your Post Color', 'Highlight Quotes You Color'];
+      for (j = 0, len = ref.length; j < len; j++) {
+        key = ref[j];
+        updates[key] = Config[key];
+      }
+      $.set(updates);
+      for (key in updates) {
+        val = updates[key];
+        input = $("input[name='" + key + "']", section);
+        if (!input) {
+          continue;
+        }
+        input.value = val;
+        $.cb.value.call(input);
         if (key in Settings) {
           Settings[key].call(input);
         }
@@ -21726,10 +21776,10 @@ CustomCSS = (function() {
   CustomCSS = {
     generatedKeys: ['Generated Highlight Styles', 'Highlight Watched Color', 'Highlight Watched Opacity', 'Highlight Your Post Color', 'Highlight Your Post Opacity', 'Highlight Quotes You Color', 'Highlight Quotes You Opacity', 'Highlight Auto Text Color', 'Highlight Text Color', 'Highlight Auto Greentext Color', 'Highlight Greentext Color', 'Highlight Auto Title Color', 'Highlight Title Color', 'Highlight Auto Link Color', 'Highlight Link Color'],
     init: function() {
-      var i, key, len, ref, refresh;
+      var k, key, len, ref, refresh;
       ref = this.generatedKeys;
-      for (i = 0, len = ref.length; i < len; i++) {
-        key = ref[i];
+      for (k = 0, len = ref.length; k < len; k++) {
+        key = ref[k];
         $.sync(key, this.syncGenerated);
       }
       this.updateGeneratedStyles();
@@ -21936,7 +21986,7 @@ CustomCSS = (function() {
       }
     },
     autoBorderColor: function(hex, opacity, backgroundRGB) {
-      var amount, base, border, fillLuma, i, len, minContrast, ref, target;
+      var amount, base, border, fillLuma, k, len, minContrast, ref, target;
       if (backgroundRGB == null) {
         backgroundRGB = [0, 0, 0];
       }
@@ -21955,8 +22005,8 @@ CustomCSS = (function() {
       minContrast = 2.0;
       if (this.contrastRatio(border, base) < minContrast) {
         ref = [0.78, 0.86, 0.94];
-        for (i = 0, len = ref.length; i < len; i++) {
-          amount = ref[i];
+        for (k = 0, len = ref.length; k < len; k++) {
+          amount = ref[k];
           border = this.mixRGB(base, target, amount);
           if (this.contrastRatio(border, base) >= minContrast) {
             break;
@@ -21966,7 +22016,7 @@ CustomCSS = (function() {
       return this.rgbToHex(border.r, border.g, border.b);
     },
     autoQuoteColor: function(hex, opacity, backgroundRGB) {
-      var amount, baseGreen, best, bestContrast, contrast, fill, fillLuma, i, len, minContrast, quote, steps, target;
+      var amount, baseGreen, best, bestContrast, contrast, fill, fillLuma, k, len, minContrast, quote, steps, target;
       if (backgroundRGB == null) {
         backgroundRGB = [0, 0, 0];
       }
@@ -21993,8 +22043,8 @@ CustomCSS = (function() {
       steps = [0.08, 0.16, 0.24, 0.32, 0.42, 0.54, 0.68];
       best = baseGreen;
       bestContrast = this.contrastRatio(baseGreen, fill);
-      for (i = 0, len = steps.length; i < len; i++) {
-        amount = steps[i];
+      for (k = 0, len = steps.length; k < len; k++) {
+        amount = steps[k];
         quote = this.mixRGB(baseGreen, target, amount);
         contrast = this.contrastRatio(quote, fill);
         if (contrast > bestContrast) {
@@ -22008,7 +22058,7 @@ CustomCSS = (function() {
       return this.rgbToHex(best.r, best.g, best.b);
     },
     autoLinkColor: function(hex, opacity, backgroundRGB) {
-      var amount, baseBlue, best, bestContrast, contrast, fill, fillLuma, i, len, link, minContrast, steps, target;
+      var amount, baseBlue, best, bestContrast, contrast, fill, fillLuma, k, len, link, minContrast, steps, target;
       if (backgroundRGB == null) {
         backgroundRGB = [0, 0, 0];
       }
@@ -22035,8 +22085,8 @@ CustomCSS = (function() {
       steps = [0.08, 0.16, 0.24, 0.32, 0.42, 0.54, 0.68];
       best = baseBlue;
       bestContrast = this.contrastRatio(baseBlue, fill);
-      for (i = 0, len = steps.length; i < len; i++) {
-        amount = steps[i];
+      for (k = 0, len = steps.length; k < len; k++) {
+        amount = steps[k];
         link = this.mixRGB(baseBlue, target, amount);
         contrast = this.contrastRatio(link, fill);
         if (contrast > bestContrast) {
@@ -22074,11 +22124,11 @@ CustomCSS = (function() {
       steps = [0.12, 0.2, 0.3, 0.42, 0.56, 0.7, 0.84, 0.92, 0.97];
       pickFor = (function(_this) {
         return function(target) {
-          var amount, best, bestContrast, contrast, i, len, shade, targetContrast;
+          var amount, best, bestContrast, contrast, k, len, shade, targetContrast;
           best = fill;
           bestContrast = 1;
-          for (i = 0, len = steps.length; i < len; i++) {
-            amount = steps[i];
+          for (k = 0, len = steps.length; k < len; k++) {
+            amount = steps[k];
             shade = _this.mixRGB(fill, target, amount);
             contrast = _this.contrastRatio(shade, fill);
             if (contrast > bestContrast) {
@@ -22112,6 +22162,85 @@ CustomCSS = (function() {
       secondary = pickFor(secondaryTarget);
       winner = secondary.contrast > primary.contrast ? secondary : primary;
       return this.rgbToHex(winner.color.r, winner.color.g, winner.color.b);
+    },
+    randomGeneratedHighlightColors: function() {
+      var baseHue, bgB, bgG, bgR, bgRGB, delta, dir, hues, i, isDark, j, k, o, offset1, offset2, pickColor, ref, ref1, ref2, result, roles;
+      ref = this.generatedHighlightReferenceBackground(), bgR = ref[0], bgG = ref[1], bgB = ref[2];
+      bgRGB = {
+        r: bgR,
+        g: bgG,
+        b: bgB
+      };
+      isDark = this.luma(bgR, bgG, bgB) < 128;
+      baseHue = Math.random() * 360;
+      dir = Math.random() < 0.5 ? 1 : -1;
+      offset1 = dir * (90 + Math.random() * 50);
+      offset2 = dir * (200 + Math.random() * 50);
+      hues = (function() {
+        var k, len, ref1, results;
+        ref1 = [0, offset1, offset2];
+        results = [];
+        for (k = 0, len = ref1.length; k < len; k++) {
+          delta = ref1[k];
+          results.push((((baseHue + delta) % 360) + 360) % 360);
+        }
+        return results;
+      })();
+      roles = ['watched', 'yourPost', 'quotesYou'];
+      for (i = k = ref1 = roles.length - 1; k >= 1; i = k += -1) {
+        j = Math.floor(Math.random() * (i + 1));
+        ref2 = [roles[j], roles[i]], roles[i] = ref2[0], roles[j] = ref2[1];
+      }
+      pickColor = (function(_this) {
+        return function(hue) {
+          var attempts, color, light, sat;
+          sat = 0.6 + Math.random() * 0.28;
+          light = isDark ? 0.42 + Math.random() * 0.2 : 0.32 + Math.random() * 0.15;
+          color = _this.hslToRGB(hue, sat, light);
+          attempts = 0;
+          while (attempts < 8 && _this.contrastRatio(color, bgRGB) < 2.4) {
+            light = isDark ? Math.min(0.74, light + 0.06) : Math.max(0.18, light - 0.06);
+            color = _this.hslToRGB(hue, sat, light);
+            attempts++;
+          }
+          return _this.rgbToHex(color.r, color.g, color.b);
+        };
+      })(this);
+      result = $.dict();
+      for (i = o = 0; o < 3; i = ++o) {
+        result[roles[i]] = pickColor(hues[i]);
+      }
+      return result;
+    },
+    hslToRGB: function(h, s, l) {
+      var b1, c, g1, m, r1, ref, x;
+      h = ((h % 360) + 360) % 360;
+      s = Math.max(0, Math.min(1, s));
+      l = Math.max(0, Math.min(1, l));
+      c = (1 - Math.abs(2 * l - 1)) * s;
+      x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+      m = l - c / 2;
+      ref = (function() {
+        switch (false) {
+          case !(h < 60):
+            return [c, x, 0];
+          case !(h < 120):
+            return [x, c, 0];
+          case !(h < 180):
+            return [0, c, x];
+          case !(h < 240):
+            return [0, x, c];
+          case !(h < 300):
+            return [x, 0, c];
+          default:
+            return [c, 0, x];
+        }
+      })(), r1 = ref[0], g1 = ref[1], b1 = ref[2];
+      return {
+        r: Math.round((r1 + m) * 255),
+        g: Math.round((g1 + m) * 255),
+        b: Math.round((b1 + m) * 255)
+      };
     },
     generatedHighlightReferenceBackground: function() {
       var bg, color, node;
