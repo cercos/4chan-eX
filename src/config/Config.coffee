@@ -411,6 +411,29 @@ Config =
         false
         'Label each post from a new IP with the thread\'s current IP count.'
       ]
+      'Scrollbar Markers': [
+        true
+        'Show colored markers along the right edge of the page for tracked posts. Uses the highlight colors from the Style settings.'
+      ]
+      'Scrollbar Mark Own Posts': [
+        true
+        'Mark your own posts in the scrollbar.'
+        1
+      ]
+      'Scrollbar Mark Quotes You': [
+        true
+        'Mark posts that quote you in the scrollbar.'
+        1
+      ]
+      'Scrollbar Mark Ghost Posts': [
+        true
+        'Mark deleted (ghost) posts in the scrollbar.'
+        1
+      ]
+      'Fetch Ghost Posts': [
+        false
+        'When opening a thread, fetch deleted posts from the configured archive and insert them inline as ghost posts. Requires Resurrect Quotes and a Foolfuuka archive for the board.'
+      ]
       'Reply Pruning': [
         true
         'Add option in header menu to hide old replies in long threads. Activated by default in stickies.'
@@ -576,6 +599,11 @@ Config =
       'Highlight Own Posts': [
         true
         'Highlights own posts.'
+        1
+      ]
+      'Highlight Ghost Posts': [
+        true
+        'Highlights deleted (ghost) posts fetched from the archive.'
         1
       ]
       'Mark OP Quotes': [
@@ -749,6 +777,26 @@ Config =
       #/1920x1080/;op:yes;highlight;top:no;boards:w,wg
     """
 
+    width: """
+      # Numeric width comparisons. Operators: >, <, >=, <=, =.
+      # Highlight images at least 1080p wide:
+      #>=1920;highlight;file:only
+    """
+
+    height: """
+      # Numeric height comparisons.
+      # Hide tiny images shorter than 200px:
+      #<200;file:only
+    """
+
+    aspect: """
+      # Aspect-ratio comparisons. Accepts a decimal (>=1.5) or W:H (=16:9).
+      # Highlight landscape images:
+      #>=1.6;highlight
+      # Hide portrait-oriented OPs:
+      #<1;op:only
+    """
+
     filesize: ''
 
     MD5: ''
@@ -801,6 +849,8 @@ Config =
   'Highlight Your Post Opacity': '0.7'
   'Highlight Quotes You Color': '#ad2300'
   'Highlight Quotes You Opacity': '0.8'
+  'Highlight Ghost Post Color': '#666666'
+  'Highlight Ghost Post Opacity': '0.5'
   'Highlight Auto Text Color': true
   'Highlight Text Color': '#f2f2f2'
   'Highlight Auto Greentext Color': true

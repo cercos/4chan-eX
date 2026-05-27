@@ -2191,6 +2191,16 @@ textarea.copy-text-element {
 #thread-watcher > .move {
   padding-top: 3px;
 }
+#watcher-footer {
+  padding: 2px 5px;
+  font-size: 0.85em;
+  opacity: 0.65;
+  text-align: right;
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+#watcher-footer:empty {
+  display: none;
+}
 #watched-threads > div {
   display: -webkit-flex;
   display: flex;
@@ -2555,6 +2565,67 @@ input[name="Default Volume"] {
 :root:root.werkTyme:not(.catalog-hover-expand) .catalog-thread.watched,
 :root.werkTyme.catalog-hover-expand .catalog-thread.watched > .catalog-container:hover > .catalog-post {
   border: 2px solid rgba(255, 0, 0, .75);
+}
+
+/* Ghost posts (fetched from archive) */
+.ghost-post .postInfo > strong.warning {
+  display: none;
+}
+.ghost-post > .post .nameBlock::before,
+.ghost-post.opContainer > .post.op .nameBlock::before {
+  content: "deleted";
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(200, 40, 40, .85);
+  padding: 0 5px;
+  margin-right: 5px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+/* Scrollbar markers (You / Quotes You / Ghost) */
+#scroll-markers {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 27px;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2147483646;
+}
+#scroll-markers[hidden] {
+  display: none;
+}
+.scroll-marker {
+  position: absolute;
+  width: 9px;
+  min-height: 3px;
+  border-radius: 1px 0 0 1px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .35);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform .08s ease-out, filter .08s ease-out;
+  transform-origin: right center;
+}
+.scroll-marker:hover {
+  transform: scaleX(1.6);
+  filter: brightness(1.2);
+}
+.scroll-marker-own {
+  right: 9px;
+  background: var(--eX-your-post-color, #d83030);
+}
+.scroll-marker-you {
+  right: 0;
+  background: var(--eX-quotes-you-color, #ff5050);
+}
+.scroll-marker-ghost {
+  right: 18px;
+  background: var(--eX-ghost-post-color, #888888);
 }
 
 /* Spoiler text */

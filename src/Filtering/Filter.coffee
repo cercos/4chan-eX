@@ -22,13 +22,60 @@ Filter =
         name: 'Filter'
         cb:   @node
 
+  numericTypes: ['width', 'height', 'aspect']
+
+  dimParts: (post, index) ->
+    post.files.map((f) ->
+      return undefined unless f?.dimensions
+      n = +f.dimensions.split('x')[index]
+      if isNaN(n) then undefined else n
+    )
+
+  parseNumericExpr: (key, expr) ->
+    return null unless typeof expr is 'string'
+    m = expr.match /^\s*(>=|<=|==|=|>|<)?\s*(\S+?)\s*$/
+    return null unless m
+    [_, op, valStr] = m
+    op or= '='
+    op = '=' if op is '=='
+    num = NaN
+    if key is 'aspect' and (parts = valStr.match /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/)
+      w = +parts[1]
+      h = +parts[2]
+      num = w / h if h
+    else
+      num = +valStr
+    return null if isNaN num
+    {op, value: num}
+
+  numericMatch: (n, value) ->
+    return false unless typeof value is 'number' and not isNaN(value)
+    switch n.op
+      when '>'  then value >  n.value
+      when '<'  then value <  n.value
+      when '>=' then value >= n.value
+      when '<=' then value <= n.value
+      when '='  then Math.abs(value - n.value) < 1e-6
+      else false
+
   parseFilterLine: (key, line) ->
     return if line[0] is '#'
 
-    return if not (regexp = line.match /\/(.*)\/(\w*)/)
+    isnumeric = key in Filter.numericTypes
+    regexp = null
+    numeric = null
+    if isnumeric
+      # Numeric filters use `op value` syntax (e.g. `>=1920`, `=16:9`) followed by ;options.
+      idx = line.indexOf ';'
+      [exprStr, restRaw] = if idx is -1 then [line, ''] else [line[...idx], line[idx..]]
+      numeric = Filter.parseNumericExpr key, exprStr
+      return unless numeric
+      filter = restRaw
+    else
+      return if not (regexp = line.match /\/(.*)\/(\w*)/)
 
-    # Don't mix up filter flags with the regular expression.
-    filter = line.replace regexp[0], ''
+      # Don't mix up filter flags with the regular expression.
+      filter = line.replace regexp[0], ''
 
     # List of the boards this filter applies to.
     boards = @parseBoards filter.match(/(?:^|;)\s*boards:([^;]+)/)?[1]
@@ -36,23 +83,25 @@ Filter =
     # Boards to exclude from an otherwise global rule.
     excludes = @parseBoards filter.match(/(?:^|;)\s*exclude:([^;]+)/)?[1]
 
-    if (isstring = (key in ['uniqueID', 'MD5']))
-      # MD5 filter will use strings instead of regular expressions.
-      regexp = regexp[1]
-    else
-      try
-        # Please, don't write silly regular expressions.
-        regexp = RegExp regexp[1], regexp[2]
-      catch err
-        # I warned you, bro.
-        new Notice 'warning', [
-          $.tn "Invalid #{key} filter:"
-          $.el 'br'
-          $.tn line
-          $.el 'br'
-          $.tn err.message
-        ], 60
-        return
+    isstring = false
+    unless isnumeric
+      if (isstring = (key in ['uniqueID', 'MD5']))
+        # MD5 filter will use strings instead of regular expressions.
+        regexp = regexp[1]
+      else
+        try
+          # Please, don't write silly regular expressions.
+          regexp = RegExp regexp[1], regexp[2]
+        catch err
+          # I warned you, bro.
+          new Notice 'warning', [
+            $.tn "Invalid #{key} filter:"
+            $.el 'br'
+            $.tn line
+            $.el 'br'
+            $.tn err.message
+          ], 60
+          return
 
     # Filter OPs along with their threads or replies only.
     op = filter.match(/(?:^|;)\s*op:(no|only)/)?[1] or ''
@@ -99,12 +148,14 @@ Filter =
     hide = !(hl or noti)
 
     # Human-readable label used to group hidden threads by their triggering rule.
-    label = if isstring
+    label = if isnumeric
+      "#{key}: #{numeric.op}#{numeric.value}"
+    else if isstring
       "#{key}: #{regexp}"
     else
       "#{key}: /#{regexp.source}/#{regexp.flags}"
 
-    filter = {isstring, regexp, boards, excludes, mask, hide, stub, hl, top, noti, override, label}
+    filter = {isstring, isnumeric, numeric, regexp, boards, excludes, mask, hide, stub, hl, top, noti, override, label}
     if key is 'general'
       for type in types
         (@filters[type] or= []).push filter
@@ -208,11 +259,17 @@ Filter =
     for key of Filter.filters
       for value in Filter.values(key, post)
         for filter in Filter.filters[key]
+          matchVal = if filter.isnumeric
+            Filter.numericMatch(filter.numeric, value)
+          else if filter.isstring
+            filter.regexp is value
+          else
+            filter.regexp.test(value)
           continue if (
             (filter.boards   and !(filter.boards[board]   or filter.boards[site]  )) or
             (filter.excludes and  (filter.excludes[board] or filter.excludes[site])) or
             (filter.mask & mask) or
-            (if filter.isstring then (filter.regexp isnt value) else !filter.regexp.test(value))
+            (not matchVal)
           )
           if filter.hide
             if hideable
@@ -243,7 +300,7 @@ Filter =
       if hl
         @highlights = hl
         $.addClass @nodes.root, hl...
-    if noti and Unread.posts and (@ID > Unread.lastReadPost) and not QuoteYou.isYou(@)
+    if noti and Unread.posts and (@ID > Unread.lastReadPost) and not QuoteYou.isYou(@) and not @isGhostPost
       Unread.openNotification @, ' triggered a notification filter'
 
   catalog: ->
@@ -297,6 +354,15 @@ Filter =
     flag:       (post) -> [post.info.flag]
     filename:   (post) -> post.files.map((f) -> f.name)
     dimensions: (post) -> post.files.map((f) -> f.dimensions)
+    width:      (post) -> Filter.dimParts(post, 0)
+    height:     (post) -> Filter.dimParts(post, 1)
+    aspect:     (post) ->
+      post.files.map((f) ->
+        return undefined unless f?.dimensions
+        [w, h] = f.dimensions.split('x').map(Number)
+        return undefined if !w or !h
+        w / h
+      )
     filesize:   (post) -> post.files.map((f) -> f.size)
     MD5:        (post) -> post.files.map((f) -> f.MD5)
 
@@ -442,6 +508,9 @@ Filter =
         ['Flag',             'flag']
         ['Filename',         'filename']
         ['Image dimensions', 'dimensions']
+        ['Image width',      'width']
+        ['Image height',     'height']
+        ['Aspect ratio',     'aspect']
         ['Filesize',         'filesize']
         ['Image MD5',        'MD5']
       ]
@@ -465,15 +534,20 @@ Filter =
 
     makeFilter: ->
       {type} = @dataset
-      # Convert value -> regexp, unless type is MD5
       values = Filter.values type, Filter.menu.post
-      res = values.map((value) ->
-        re = if type in ['uniqueID', 'MD5'] then value else Filter.escape(value)
-        if type in ['uniqueID', 'MD5']
-          "/#{re}/"
-        else
-          "/^#{re}$/"
-      ).join('\n')
+      res = if type in Filter.numericTypes
+        values.map((value) ->
+          v = if type is 'aspect' then (+value).toFixed(3).replace(/\.?0+$/, '') else value
+          "=#{v}"
+        ).join('\n')
+      else
+        values.map((value) ->
+          re = if type in ['uniqueID', 'MD5'] then value else Filter.escape(value)
+          if type in ['uniqueID', 'MD5']
+            "/#{re}/"
+          else
+            "/^#{re}$/"
+        ).join('\n')
 
       Filter.addFilter type, res, ->
         Filter.showFilters type

@@ -259,6 +259,16 @@ Embedding =
         el.setAttribute "allowfullscreen", "true"
         el
     ,
+      key: 'Bilibili'
+      regExp: /^\w+:\/\/(?:www\.|m\.)?bilibili\.com\/video\/(BV[A-Za-z0-9]+|av\d+)/i
+      el: (a) ->
+        uid = a.dataset.uid
+        param = if /^av/i.test(uid) then "aid=#{uid.replace(/^av/i, '')}" else "bvid=#{uid}"
+        el = $.el 'iframe',
+          src: "https://player.bilibili.com/player.html?#{param}&high_quality=1&autoplay=0"
+        el.setAttribute "allowfullscreen", "true"
+        el
+    ,
       key: 'Clyp'
       regExp: /^\w+:\/\/(?:www\.)?clyp\.it\/(\w{8})/
       style: 'border: 0; width: 640px; height: 160px;'
@@ -378,6 +388,14 @@ Embedding =
               $.add el, $.el 'source', src: url
         el
     ,
+      key: 'Odysee'
+      regExp: /^\w+:\/\/(?:www\.)?odysee\.com\/(?:\$\/embed\/)?(@?[^?#]+)/
+      el: (a) ->
+        el = $.el 'iframe',
+          src: "https://odysee.com/$/embed/#{a.dataset.uid}"
+        el.setAttribute "allowfullscreen", "true"
+        el
+    ,
       key: 'Openings.moe'
       regExp: /^\w+:\/\/openings.moe\/\?video=([^.&=]+)/
       style: 'width: 1280px; height: 720px; max-width: 80vw; max-height: 80vh;'
@@ -393,6 +411,14 @@ Embedding =
         div = $.el 'iframe',
           src: "//pastebin.com/embed_iframe.php?i=#{a.dataset.uid}"
     ,
+      key: 'Rumble'
+      regExp: /^\w+:\/\/(?:www\.)?rumble\.com\/(?:embed\/)?(v[A-Za-z0-9]+)(?:[-./?#]|$)/i
+      el: (a) ->
+        el = $.el 'iframe',
+          src: "https://rumble.com/embed/#{a.dataset.uid}/?pub=4"
+        el.setAttribute "allowfullscreen", "true"
+        el
+    ,
       key: 'SoundCloud'
       regExp: /^\w+:\/\/(?:www\.)?(?:soundcloud\.com\/|snd\.sc\/)([\w\-\/]+)/
       style: 'border: 0; width: 500px; height: 400px;'
@@ -402,6 +428,13 @@ Embedding =
       title:
         api: (uid) -> "#{location.protocol}//soundcloud.com/oembed?format=json&url=https%3A%2F%2Fsoundcloud.com%2F#{encodeURIComponent uid}"
         text: (_) -> _.title
+    ,
+      key: 'Spotify'
+      regExp: /^\w+:\/\/open\.spotify\.com\/(?:embed\/)?((?:track|album|playlist|episode|show|artist)\/[A-Za-z0-9]+)/
+      style: 'border: 0; width: 500px; height: 380px;'
+      el: (a) ->
+        $.el 'iframe',
+          src: "https://open.spotify.com/embed/#{a.dataset.uid}"
     ,
       key: 'StrawPoll'
       regExp: /^\w+:\/\/(?:www\.)?strawpoll\.me\/(?:embed_\d+\/)?(\d+(?:\/r)?)/
@@ -420,6 +453,15 @@ Embedding =
       title:
         api: (uid) -> "https://api.streamable.com/oembed?url=https://streamable.com/#{uid}"
         text: (_) -> _.title
+    ,
+      key: 'TikTok'
+      regExp: /^\w+:\/\/(?:www\.|m\.)?tiktok\.com\/@[^\/]+\/video\/(\d+)/
+      style: 'border: 0; width: 340px; height: 700px;'
+      el: (a) ->
+        el = $.el 'iframe',
+          src: "https://www.tiktok.com/embed/v2/#{a.dataset.uid}"
+        el.setAttribute "allowfullscreen", "true"
+        el
     ,
       key: 'TwitchTV'
       regExp: /^\w+:\/\/(?:www\.|secure\.|clips\.|m\.)?twitch\.tv\/(\w[^#\&\?]*)/

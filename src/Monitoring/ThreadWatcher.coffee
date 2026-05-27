@@ -13,7 +13,8 @@ ThreadWatcher =
     @dbLM   = new DataBoard 'watcherLastModified', null, true
     @dialog = UI.dialog 'thread-watcher', `<%= readHTML('ThreadWatcher.html') %>`
     @status = $ '#watcher-status', @dialog
-    @list   = @dialog.lastElementChild
+    @list   = $ '#watched-threads', @dialog
+    @footer = $ '#watcher-footer', @dialog
     @refreshButton = $ '.refresh', @dialog
     @markReadButton = $ '.mark-read', @dialog
     @closeButton = $('.move > .close', @dialog)
@@ -563,13 +564,17 @@ ThreadWatcher =
       href: 'javascript:;'
     $.on x, 'click', ThreadWatcher.cb.rm
 
-    {excerpt, isArchived} = data
+    {excerpt, isArchived, addedAt} = data
     excerpt or= "/#{boardID}/ - No.#{threadID}"
     excerpt = ThreadWatcher.prefixes[siteID] + excerpt if Conf['Show Site Prefix']
 
+    linkTitle = excerpt
+    if addedAt
+      linkTitle += "\nAdded: #{ThreadWatcher.formatAddedAt addedAt}"
+
     link = $.el 'a',
       href: g.sites[siteID]?.urls.thread({siteID, boardID, threadID}, isArchived) or ''
-      title: excerpt
+      title: linkTitle
       className: 'watcher-link'
 
     if ThreadWatcher.showThumbnails()
@@ -671,7 +676,54 @@ ThreadWatcher =
     $.rmAll list
     $.add list, nodes
 
+    ThreadWatcher.refreshFooter threads.length
     ThreadWatcher.refreshIcon()
+
+  refreshFooter: (visibleCount) ->
+    return unless ThreadWatcher.footer
+    total = 0
+    for siteID, boards of ThreadWatcher.db.data when typeof boards is 'object' and boards?.boards
+      for boardID, threads of boards.boards
+        for threadID, data of threads when data and typeof data is 'object'
+          total++
+    bytes = ThreadWatcher.estimateStorage()
+    parts = []
+    parts.push if visibleCount? and visibleCount isnt total
+      "#{visibleCount} shown · #{total} watched"
+    else
+      "#{total} watched"
+    parts.push ThreadWatcher.formatBytes bytes
+    ThreadWatcher.footer.textContent = parts.join(' · ')
+
+  estimateStorage: ->
+    try
+      JSON.stringify(ThreadWatcher.db.data).length
+    catch
+      0
+
+  formatBytes: (n) ->
+    return '0 B' unless n > 0
+    units = ['B', 'KB', 'MB', 'GB']
+    i = Math.min units.length - 1, Math.floor(Math.log(n) / Math.log(1024))
+    val = n / Math.pow(1024, i)
+    "#{(if i is 0 then val.toFixed(0) else val.toFixed(1))} #{units[i]}"
+
+  formatAddedAt: (ts) ->
+    return '' unless ts
+    diff = Date.now() - ts
+    if diff < 60000
+      'just now'
+    else if diff < 3600000
+      m = Math.floor(diff / 60000)
+      "#{m} minute#{if m is 1 then '' else 's'} ago"
+    else if diff < 86400000
+      h = Math.floor(diff / 3600000)
+      "#{h} hour#{if h is 1 then '' else 's'} ago"
+    else if diff < 30 * 86400000
+      d = Math.floor(diff / 86400000)
+      "#{d} day#{if d is 1 then '' else 's'} ago"
+    else
+      new Date(ts).toLocaleDateString()
 
   refresh: (manual) ->
     ThreadWatcher.applyLayout()
@@ -775,6 +827,7 @@ ThreadWatcher =
       for {data: data2} in ThreadWatcher.getAll false, true
         maxOrder = Math.max maxOrder, data2.order or 0
       data.order = maxOrder + 1
+    data.addedAt = oldData.addedAt ? Date.now()
     delete oldData.last
     delete oldData.modified
     $.extend oldData, data

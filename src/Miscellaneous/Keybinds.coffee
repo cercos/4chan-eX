@@ -123,6 +123,12 @@ Keybinds =
       when Conf['Open Gallery']
         return unless Gallery.enabled
         Gallery.cb.toggle()
+      when Conf['Rotate image clockwise']
+        return unless ImageExpand.enabled and ImageExpand.findRotatablePost()
+        ImageExpand.cb.rotateRight()
+      when Conf['Rotate image anticlockwise']
+        return unless ImageExpand.enabled and ImageExpand.findRotatablePost()
+        ImageExpand.cb.rotateLeft()
       when Conf['fappeTyme']
         return unless FappeTyme.nodes?.fappe
         FappeTyme.toggle 'fappe'

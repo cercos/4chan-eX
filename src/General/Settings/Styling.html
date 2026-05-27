@@ -12,6 +12,7 @@
   <legend>Post Highlights</legend>
   <label><input type="checkbox" name="Highlight Posts Quoting You"> Highlight posts that quote you</label>
   <label><input type="checkbox" name="Highlight Own Posts"> Highlight your own posts</label>
+  <label><input type="checkbox" name="Highlight Ghost Posts"> Highlight ghost (deleted) posts</label>
 </fieldset>
 
 <fieldset class="generated-highlight-styles">
@@ -63,6 +64,19 @@
         <span class="generated-highlight-label-text">Opacity</span>
         <input type="range" name="Highlight Quotes You Opacity" min="0" max="1" step="0.01">
         <span class="generated-highlight-value" data-generated-value="Highlight Quotes You Opacity"></span>
+      </label>
+    </div>
+    <div class="generated-highlight-group">
+      <h4>Ghost Posts</h4>
+      <div class="generated-highlight-help">Used for deleted posts fetched from the archive (Fetch Ghost Posts).</div>
+      <label class="generated-highlight-row generated-highlight-row-color">
+        <span class="generated-highlight-label-text">Background</span>
+        <input type="color" name="Highlight Ghost Post Color">
+      </label>
+      <label class="generated-highlight-row generated-highlight-row-opacity">
+        <span class="generated-highlight-label-text">Opacity</span>
+        <input type="range" name="Highlight Ghost Post Opacity" min="0" max="1" step="0.01">
+        <span class="generated-highlight-value" data-generated-value="Highlight Ghost Post Opacity"></span>
       </label>
     </div>
   </div>

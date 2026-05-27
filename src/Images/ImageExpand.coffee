@@ -97,6 +97,57 @@ ImageExpand =
     setFitness: ->
       $[if @checked then 'addClass' else 'rmClass'] doc, @name.toLowerCase().replace /\s+/g, '-'
 
+    rotateLeft: ->
+      ImageExpand.rotateActive 270
+    rotateRight: ->
+      ImageExpand.rotateActive  90
+    rotateReset: ->
+      post = ImageExpand.menuPost
+      post = null unless post?.file?.fullImage
+      post or= ImageExpand.findRotatablePost()
+      ImageExpand.applyRotation(post, 0) if post
+
+  rotateActive: (delta) ->
+    post = ImageExpand.menuPost
+    post = null unless post?.file?.fullImage
+    post or= ImageExpand.findRotatablePost()
+    return unless post
+    {file} = post
+    current = file.dataRotate or 0
+    ImageExpand.applyRotation post, (current + delta) % 360
+
+  applyRotation: (post, deg) ->
+    {file} = post
+    el = file.fullImage
+    return unless el
+    file.dataRotate = deg
+    el.dataset.rotate = deg
+    el.style.transform = if deg then "rotate(#{deg}deg)" else ''
+    if deg % 180 is 90
+      # Swap layout margins so the rotated image takes a square-ish box.
+      margin = (el.clientWidth - el.clientHeight) / 2
+      el.style.margin = "#{margin}px #{-margin}px"
+    else
+      el.style.margin = ''
+
+  findRotatablePost: ->
+    # Pick the expanded image whose box is closest to the viewport vertical centre.
+    viewportH = doc.clientHeight
+    target = viewportH / 2
+    best = null
+    bestDist = Number.POSITIVE_INFINITY
+    for img in $$ '.full-image'
+      rect = img.getBoundingClientRect()
+      continue if rect.height is 0
+      mid  = rect.top + rect.height / 2
+      dist = Math.abs(mid - target)
+      if dist < bestDist
+        post = Get.postFromNode img
+        if post?.file?.fullImage
+          best = post
+          bestDist = dist
+    best
+
   toggle: (post) ->
     unless post.file.isExpanding or post.file.isExpanded
       post.file.scrollIntoView = Conf['Scroll into view']
@@ -216,6 +267,9 @@ ImageExpand =
     file.isExpanded = true
     delete file.isExpanding
 
+    # Re-apply any saved rotation after the image lays out.
+    ImageExpand.applyRotation post, file.dataRotate if file.dataRotate
+
     # Scroll to keep our place in the thread when images are expanded above us.
     if doc.contains(post.nodes.root) and bottom <= 0
       window.scrollBy 0, scrollY - window.scrollY + d.body.clientHeight - oldHeight
@@ -304,3 +358,36 @@ ImageExpand =
       $.event 'change', null, input
       $.on input, 'change', $.cb.checked
       el: label
+
+  postMenu:
+    init: ->
+      return unless ImageExpand.enabled and Conf['Menu']
+
+      root = $.el 'div', textContent: 'Rotate image'
+
+      entry =
+        el: root
+        order: 110
+        open: (post) ->
+          if post.file?.fullImage
+            ImageExpand.menuPost = post
+            true
+          else
+            false
+        subEntries: [
+          ImageExpand.postMenu.sub 'Rotate left',    ImageExpand.cb.rotateLeft
+          ImageExpand.postMenu.sub 'Rotate right',   ImageExpand.cb.rotateRight
+          ImageExpand.postMenu.sub 'Reset rotation', ImageExpand.cb.rotateReset
+        ]
+
+      Menu.menu.addEntry entry
+
+    sub: (text, cb) ->
+      el = $.el 'a',
+        href: 'javascript:;'
+        textContent: text
+      $.on el, 'click', ->
+        cb()
+        ImageExpand.menuPost = null
+        $.event 'CloseMenu'
+      {el: el, open: -> true}

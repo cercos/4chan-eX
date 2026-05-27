@@ -7,6 +7,8 @@ CustomCSS =
     'Highlight Your Post Opacity'
     'Highlight Quotes You Color'
     'Highlight Quotes You Opacity'
+    'Highlight Ghost Post Color'
+    'Highlight Ghost Post Opacity'
     'Highlight Auto Text Color'
     'Highlight Text Color'
     'Highlight Auto Greentext Color'
@@ -82,9 +84,11 @@ CustomCSS =
     watchedColor = @normalizeHexColor Conf['Highlight Watched Color'], '#00509b'
     yourPostColor = @normalizeHexColor Conf['Highlight Your Post Color'], '#059600'
     quotesYouColor = @normalizeHexColor Conf['Highlight Quotes You Color'], '#ad2c27'
+    ghostPostColor = @normalizeHexColor Conf['Highlight Ghost Post Color'], '#666666'
     watchedOpacity = @normalizeNumber Conf['Highlight Watched Opacity'], 1, 0, 1
     yourPostOpacity = @normalizeNumber Conf['Highlight Your Post Opacity'], 0.7, 0, 1
     quotesYouOpacity = @normalizeNumber Conf['Highlight Quotes You Opacity'], 0.8, 0, 1
+    ghostPostOpacity = @normalizeNumber Conf['Highlight Ghost Post Opacity'], 0.5, 0, 1
     autoTextColor = Conf['Highlight Auto Text Color'] isnt false
     manualTextColor = @normalizeHexColor Conf['Highlight Text Color'], '#f2f2f2'
     autoGreentextColor = Conf['Highlight Auto Greentext Color'] isnt false
@@ -98,6 +102,7 @@ CustomCSS =
     yourPostFillRGB = @blendedFillRGB yourPostColor, yourPostOpacity, referenceBackgroundRGB
     yourPostBorderColor = @autoBorderColor yourPostColor, yourPostOpacity, referenceBackgroundRGB
     quotesYouBorderColor = @autoBorderColor quotesYouColor, quotesYouOpacity, referenceBackgroundRGB
+    ghostPostBorderColor = @autoBorderColor ghostPostColor, ghostPostOpacity, referenceBackgroundRGB
     watchedQuoteColor = @autoQuoteColor watchedColor, watchedOpacity, referenceBackgroundRGB
     yourPostQuoteColor = @autoQuoteColor yourPostColor, yourPostOpacity, referenceBackgroundRGB
     quotesYouQuoteColor = @autoQuoteColor quotesYouColor, quotesYouOpacity, referenceBackgroundRGB
@@ -114,16 +119,21 @@ CustomCSS =
       yourPostOpacity
       quotesYouColor
       quotesYouOpacity
+      ghostPostColor
+      ghostPostOpacity
       referenceBackgroundRGB
       referenceBackgroundCSS: @rgbCSS referenceBackgroundRGB
       referenceTextColor: @autoBaseTextColor referenceBackgroundRGB
       yourPostBorderColor
       quotesYouBorderColor
+      ghostPostBorderColor
       watchedRGBA: @toRGBA watchedColor, watchedOpacity
       yourPostRGBA: @toRGBA yourPostColor, yourPostOpacity
       quotesYouRGBA: @toRGBA quotesYouColor, quotesYouOpacity
+      ghostPostRGBA: @toRGBA ghostPostColor, ghostPostOpacity
       yourPostBorderRGBA: @toRGBA yourPostBorderColor, 1
       quotesYouBorderRGBA: @toRGBA quotesYouBorderColor, 1
+      ghostPostBorderRGBA: @toRGBA ghostPostBorderColor, 1
       watchedTextColor: if autoTextColor then @autoTextColor watchedColor, watchedOpacity, referenceBackgroundRGB else manualTextColor
       yourPostTextColor: if autoTextColor then @autoTextColor yourPostColor, yourPostOpacity, referenceBackgroundRGB else manualTextColor
       quotesYouTextColor: if autoTextColor then @autoTextColor quotesYouColor, quotesYouOpacity, referenceBackgroundRGB else manualTextColor
@@ -141,6 +151,15 @@ CustomCSS =
     styles = @generatedHighlightSettings()
     """
       /* Auto-generated Highlight Styles (4chan-eX) */
+      :root {
+        --eX-your-post-color: #{styles.yourPostColor};
+        --eX-quotes-you-color: #{styles.quotesYouColor};
+        --eX-ghost-post-color: #{styles.ghostPostColor};
+        --eX-watched-color: #{styles.watchedColor};
+        --eX-your-post-border: #{styles.yourPostBorderRGBA};
+        --eX-quotes-you-border: #{styles.quotesYouBorderRGBA};
+        --eX-ghost-post-border: #{styles.ghostPostBorderRGBA};
+      }
       :root .watched {
         background: #{styles.watchedRGBA} !important;
         color: #{styles.watchedTextColor} !important;
@@ -242,6 +261,12 @@ CustomCSS =
       :root.highlight-you .postContainer.quotesYou > .reply .quote,
       :root.highlight-you .opContainer.quotesYou > .op .quote {
         color: #{styles.quotesYouQuoteColor} !important;
+      }
+
+      :root.highlight-ghost .ghost-post > .post,
+      :root.highlight-ghost .ghost-post.opContainer > .post.op {
+        background: #{styles.ghostPostRGBA} !important;
+        border-left: 3px dotted #{styles.ghostPostBorderRGBA} !important;
       }
     """
 

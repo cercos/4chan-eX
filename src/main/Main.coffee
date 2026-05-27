@@ -728,6 +728,7 @@ Main =
     ['Sauce',                     Sauce]
     ['Image Expansion',           ImageExpand]
     ['Image Expansion (Menu)',    ImageExpand.menu]
+    ['Rotate Image (Menu)',       ImageExpand.postMenu]
     ['Reveal Spoiler Thumbnails', RevealSpoilers]
     ['Image Loading',             ImageLoader]
     ['Image Hover',               ImageHover]
@@ -751,6 +752,8 @@ Main =
     ['Flash Features',            Flash]
     ['Reply Pruning',             ReplyPruning]
     ['Mod Contact Links',         ModContact]
+    ['Scrollbar Markers',         ScrollMarkers]
+    ['Ghost Posts',               GhostPosts]
   ]
 
 <% if (readJSON('/.tests_enabled')) { %>

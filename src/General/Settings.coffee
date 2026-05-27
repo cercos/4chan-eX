@@ -1485,6 +1485,9 @@ Settings =
     ['Flag', 'flag']
     ['Filename', 'filename']
     ['Dimensions', 'dimensions']
+    ['Width', 'width']
+    ['Height', 'height']
+    ['Aspect', 'aspect']
     ['Filesize', 'filesize']
     ['Image MD5', 'MD5']
   ]
@@ -2038,20 +2041,32 @@ Settings =
 
   parseFilterPreviewLine: (key, line) ->
     return {skip: true} if line[0] is '#'
-    return {skip: true} unless (regexpMatch = line.match /\/(.*)\/(\w*)/)
 
-    filter = line.replace regexpMatch[0], ''
+    isnumeric = key in Filter.numericTypes
+    regexp = null
+    numeric = null
+    if isnumeric
+      idx = line.indexOf ';'
+      [exprStr, restRaw] = if idx is -1 then [line, ''] else [line[...idx], line[idx..]]
+      numeric = Filter.parseNumericExpr key, exprStr
+      return {skip: true} unless numeric
+      filter = restRaw
+    else
+      return {skip: true} unless (regexpMatch = line.match /\/(.*)\/(\w*)/)
+      filter = line.replace regexpMatch[0], ''
 
     boards = Filter.parseBoards filter.match(/(?:^|;)\s*boards:([^;]+)/)?[1]
     excludes = Filter.parseBoards filter.match(/(?:^|;)\s*exclude:([^;]+)/)?[1]
 
-    isstring = key in ['uniqueID', 'MD5']
-    regexp = regexpMatch[1]
-    unless isstring
-      try
-        regexp = RegExp regexpMatch[1], regexpMatch[2]
-      catch err
-        return {invalid: err.message}
+    isstring = false
+    unless isnumeric
+      isstring = key in ['uniqueID', 'MD5']
+      regexp = regexpMatch[1]
+      unless isstring
+        try
+          regexp = RegExp regexpMatch[1], regexpMatch[2]
+        catch err
+          return {invalid: err.message}
 
     op = filter.match(/(?:^|;)\s*op:(no|only)/)?[1] or ''
     mask = $.getOwn({'no': 1, 'only': 2}, op) or 0
@@ -2074,6 +2089,8 @@ Settings =
     {
       regexp
       isstring
+      isnumeric
+      numeric
       boards
       excludes
       mask
@@ -2113,7 +2130,9 @@ Settings =
 
     for key in parsed.keys
       for value in Filter.values(key, post)
-        if parsed.isstring
+        if parsed.isnumeric
+          return true if Filter.numericMatch(parsed.numeric, value)
+        else if parsed.isstring
           return true if parsed.regexp is value
         else
           parsed.regexp.lastIndex = 0
@@ -2468,6 +2487,8 @@ Settings =
           span.textContent = settings.yourPostOpacity
         when 'Highlight Quotes You Opacity'
           span.textContent = settings.quotesYouOpacity
+        when 'Highlight Ghost Post Opacity'
+          span.textContent = settings.ghostPostOpacity
 
     for input in $$ 'input[type="color"], input[type="range"], .generated-highlight-auto-row input[type="checkbox"]', fieldset
       input.disabled = !enabled
@@ -2518,7 +2539,7 @@ Settings =
     return unless section
 
     updates = $.dict()
-    for key in ['Highlight Watched Color', 'Highlight Your Post Color', 'Highlight Quotes You Color']
+    for key in ['Highlight Watched Color', 'Highlight Your Post Color', 'Highlight Quotes You Color', 'Highlight Ghost Post Color']
       updates[key] = Config[key]
     $.set updates
 
@@ -2566,6 +2587,12 @@ Settings =
     Settings.generatedHighlightStylesChanged()
 
   'Highlight Quotes You Opacity': ->
+    Settings.generatedHighlightStylesChanged()
+
+  'Highlight Ghost Post Color': ->
+    Settings.generatedHighlightStylesChanged()
+
+  'Highlight Ghost Post Opacity': ->
     Settings.generatedHighlightStylesChanged()
 
   'Highlight Auto Text Color': ->

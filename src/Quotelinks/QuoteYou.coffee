@@ -54,6 +54,11 @@ QuoteYou =
     # Stop there if there's no quotes in that post.
     return unless @quotes.length
 
+    # Ghost (archive-restored deleted) posts shouldn't appear as fresh quotes-to-you:
+    # they're historical, and treating them like new replies confuses notifications
+    # and the thread watcher.
+    return if @isGhostPost
+
     for quotelink in @nodes.quotelinks when QuoteYou.db.get Get.postDataFromLink quotelink
         $.add quotelink, QuoteYou.mark.cloneNode(true) if Conf['Mark Quotes of You']
         $.addClass quotelink, 'you'
@@ -94,6 +99,7 @@ QuoteYou =
         if $.hasClass quotelink, 'quotelink'
           quoter = Get.postFromNode(quotelink).nodes.root
           quoter.classList.toggle 'quotesYou', !!$('.quotelink.you', quoter)
+      $.event 'YouMarkChanged', {postID: post.ID, isYou: @checked}
       return
 
   cb:

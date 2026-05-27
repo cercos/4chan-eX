@@ -3,7 +3,9 @@
   Use <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions" target="_blank">regular expressions</a>, one per line.<br>
   Lines starting with a <code>#</code> will be ignored.<br>
   For example, <code>/weeaboo/i</code> will filter posts containing the string `<code>weeaboo</code>`, case-insensitive.<br>
-  MD5 and Unique ID filtering use exact string matching, not regular expressions.
+  MD5 and Unique ID filtering use exact string matching, not regular expressions.<br>
+  <code>width</code>, <code>height</code>, and <code>aspect</code> filters use numeric comparisons instead of regular expressions. Each line is an operator (<code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>, <code>=</code>) followed by a value, then optional <code>;</code>-separated flags. Aspect ratio accepts a decimal (e.g. <code>1.78</code>) or <code>W:H</code> notation (e.g. <code>16:9</code>).<br>
+  For example: <code>&gt;=1920;file:only;highlight</code> in the <code>width</code> filter.
 </p>
 <ul>You can use these settings with each regular expression, separate them with semicolons:
   <li>

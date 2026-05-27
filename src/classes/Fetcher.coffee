@@ -137,13 +137,26 @@ class Fetcher
       @root.textContent = data.error
       return
 
+    post = Fetcher.buildArchivedPost data, url, archive, @boardID, @postID, {isFetchedQuote: true}
+    return unless post
+
+    @threadID = post.threadID
+    Main.callbackNodes 'Post', [post]
+    @insert post
+
+  # Build a Post object from a foolfuuka/fuuka archive post payload.
+  # Does NOT insert into the DOM. Returns the Post, or null on failure.
+  # `flags` is forwarded to the Post constructor (e.g. {isFetchedQuote: true}).
+  @buildArchivedPost: (data, url, archive, boardID, postID, flags={}) ->
+    return null unless data and not data.error
+
     # https://github.com/eksopl/asagi/blob/v0.4.0b74/src/main/java/net/easymodo/asagi/YotsubaAbstract.java#L82-L129
     # https://github.com/FoolCode/FoolFuuka/blob/800bd090835489e7e24371186db6e336f04b85c0/src/Model/Comment.php#L368-L428
     # https://github.com/bstats/b-stats/blob/6abe7bffaf6e5f523498d760e54b110df5331fbb/inc/classes/Yotsuba.php#L157-L168
     comment = (data.comment or '').split /(\n|\[\/?(?:b|spoiler|code|moot|banned|fortune(?: color="#\w+")?|i|red|green|blue)\])/
     comment = for text, i in comment
       if i % 2 is 1
-        tag = @archiveTags[text.replace(/\ .*\]/, ']')]
+        tag = Fetcher::archiveTags[text.replace(/\ .*\]/, ']')]
         if typeof tag is 'function' then tag(text) else tag
       else
         greentext = text[0] is '>'
@@ -154,19 +167,18 @@ class Fetcher
         text
     comment = `<%= html('@{comment}') %>`
 
-    @threadID = +data.thread_num
+    threadID = +data.thread_num
     o =
-      ID:       @postID
-      threadID: @threadID
-      boardID:  @boardID
-      isReply:  @postID isnt @threadID
+      ID:       postID
+      threadID: threadID
+      boardID:  boardID
+      isReply:  postID isnt threadID
     o.info =
       subject:  data.title
       email:    data.email
       name:     data.name or ''
       tripcode: data.trip
       capcode:  switch data.capcode
-        # https://github.com/pleebe/FoolFuuka/blob/bf4224eed04637a4d0bd4411c2bf5f9945dfec0b/assets/themes/foolz/foolfuuka-theme-fuuka/src/Partial/Board.php#L77
         when 'M' then 'Mod'
         when 'A' then 'Admin'
         when 'D' then 'Developer'
@@ -185,39 +197,37 @@ class Fetcher
       o.fileDeleted = true
     else if data.media?.media_filename
       {thumb_link} = data.media
-      # Fix URLs missing origin
       thumb_link = url.split('/', 3).join('/') + thumb_link if thumb_link?[0] is '/'
       thumb_link = '' unless Redirect.securityCheck thumb_link
-      media_link = Redirect.to('file', {boardID: @boardID, filename: data.media.media_orig})
+      media_link = Redirect.to('file', {boardID: boardID, filename: data.media.media_orig})
       media_link = '' unless Redirect.securityCheck media_link
       o.file =
         name:      data.media.media_filename
         url:       media_link or
-                     if @boardID is 'f'
-                       "#{location.protocol}//#{ImageHost.flashHost()}/#{@boardID}/#{encodeURIComponent E data.media.media_filename}"
+                     if boardID is 'f'
+                       "#{location.protocol}//#{ImageHost.flashHost()}/#{boardID}/#{encodeURIComponent E data.media.media_filename}"
                      else
-                       "#{location.protocol}//#{ImageHost.host()}/#{@boardID}/#{data.media.media_orig}"
+                       "#{location.protocol}//#{ImageHost.host()}/#{boardID}/#{data.media.media_orig}"
         height:    data.media.media_h
         width:     data.media.media_w
         MD5:       data.media.media_hash
         size:      $.bytesToString data.media.media_size
-        thumbURL:  thumb_link or "#{location.protocol}//#{ImageHost.thumbHost()}/#{@boardID}/#{data.media.preview_orig}"
+        thumbURL:  thumb_link or "#{location.protocol}//#{ImageHost.thumbHost()}/#{boardID}/#{data.media.preview_orig}"
         theight:   data.media.preview_h
         twidth:    data.media.preview_w
         isSpoiler: data.media.spoiler is '1'
       o.file.dimensions = "#{o.file.width}x#{o.file.height}" unless /\.pdf$/.test o.file.url
-      o.file.tag = JSON.parse(data.media.exif).Tag if @boardID is 'f' and data.media.exif
+      o.file.tag = JSON.parse(data.media.exif).Tag if boardID is 'f' and data.media.exif
     o.extra = $.dict()
 
-    board = g.boards[@boardID] or
-      new Board @boardID
-    thread = g.threads.get("#{@boardID}.#{@threadID}") or
-      new Thread @threadID, board
-    post = new Post g.SITE.Build.post(o), thread, board, {isFetchedQuote: true}
+    board = g.boards[boardID] or
+      new Board boardID
+    thread = g.threads.get("#{boardID}.#{threadID}") or
+      new Thread threadID, board
+    post = new Post g.SITE.Build.post(o), thread, board, flags
     post.kill()
     post.file.thumbURL = o.file.thumbURL if post.file
-    Main.callbackNodes 'Post', [post]
-    @insert post
+    post
 
   archiveTags:
     '\n':         `<%= html('<br>') %>`

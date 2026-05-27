@@ -110,7 +110,8 @@ Unread =
     postIDs = Unread.thread.posts.keys
     for i in [Unread.readCount...postIDs.length] by 1
       ID = +postIDs[i]
-      unless Unread.thread.posts.get(ID).isFetchedQuote
+      p = Unread.thread.posts.get(ID)
+      unless p.isFetchedQuote or p.isGhostPost
         break if ID > Unread.lastReadPost
         Unread.posts.delete ID
         Unread.postsQuotingYou.delete ID
@@ -121,7 +122,7 @@ Unread =
     Unread.update()
 
   addPost: ->
-    return if @isFetchedQuote or @isClone
+    return if @isFetchedQuote or @isClone or @isGhostPost
     Unread.order.push @
     return if @ID <= Unread.lastReadPost or @isHidden or QuoteYou.isYou(@)
     Unread.posts.add (Unread.posts.last = @ID)
@@ -196,7 +197,8 @@ Unread =
     postIDs = Unread.thread.posts.keys
     for i in [Unread.readCount...postIDs.length] by 1
       ID = +postIDs[i]
-      unless Unread.thread.posts.get(ID).isFetchedQuote
+      p = Unread.thread.posts.get(ID)
+      unless p.isFetchedQuote or p.isGhostPost
         break if Unread.posts.has ID
         Unread.lastReadPost = ID
       Unread.readCount++
