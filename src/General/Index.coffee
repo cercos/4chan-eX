@@ -64,6 +64,7 @@ Index =
     $.on inputs['Catalog Hover Expand'], 'change', @cb.hover
     $.on inputs['Pin Watched Threads'], 'change', @cb.resort
     $.on inputs['Anchor Hidden Threads'], 'change', @cb.resort
+    $.on inputs['Group Hidden Threads By Filter'], 'change', @cb.replies
 
     watchSettings = (e) ->
       if (input = $.getOwn(inputs, e.target.name))
@@ -227,9 +228,35 @@ Index =
 
   catalogNode: ->
     $.on @nodes.root, 'mousedown click', (e) =>
-      return unless e.button is 0 and e.shiftKey
-      Index.toggleHide @thread if e.type is 'click'
-      e.preventDefault() # Also on mousedown to prevent highlighting text.
+      return unless e.button is 0
+      # Parse on every event so changing the binding in settings takes effect
+      # without reloading. Empty/None disables the action.
+      hideBind  = Index.parseClickBinding Conf['Catalog Hide Click']
+      watchBind = Index.parseClickBinding Conf['Catalog Watch Click']
+      if watchBind and Index.matchClickBinding(e, watchBind)
+        if e.type is 'click'
+          ThreadWatcher.toggle @thread, true
+        e.preventDefault()
+        return
+      if hideBind and Index.matchClickBinding(e, hideBind)
+        Index.toggleHide @thread if e.type is 'click'
+        e.preventDefault() # Also on mousedown to prevent highlighting text.
+
+  parseClickBinding: (str) ->
+    return null unless str and str isnt 'None'
+    parts = str.split '+'
+    return null unless parts[parts.length - 1] is 'Click'
+    return null if parts.length is 1 # bare "Click" — no modifier, refuse
+    alt:   'Alt'   in parts
+    ctrl:  'Ctrl'  in parts
+    meta:  'Meta'  in parts
+    shift: 'Shift' in parts
+
+  matchClickBinding: (e, bind) ->
+    (!!bind.alt   is !!e.altKey)  and
+    (!!bind.ctrl  is !!e.ctrlKey) and
+    (!!bind.meta  is !!e.metaKey) and
+    (!!bind.shift is !!e.shiftKey)
 
   toggleHide: (thread) ->
     if Index.showHiddenThreads
@@ -902,6 +929,9 @@ Index =
     return
 
   buildCatalog: (threadIDs) ->
+    if Index.showHiddenThreads and Conf['Group Hidden Threads By Filter']
+      Index.buildCatalogGrouped threadIDs
+      return
     i = 0
     n = threadIDs.length
     node0 = null
@@ -911,6 +941,55 @@ Index =
       node0 = Index.buildCatalogPart(threadIDs[i...j])[0]
       i = j
       if i < n
+        $.queueTask fn
+      else
+        if Index.root.parentNode
+          $.event 'PostsInserted', null, Index.root
+        Index.loaded = true
+    fn()
+    return
+
+  buildCatalogGrouped: (threadIDs) ->
+    # Group hidden threads by the filter rule that hid them; threads not matched
+    # by any filter (i.e. hidden manually via the menu/button) land in a
+    # "Manually hidden" bucket. Order is determined by first occurrence in the
+    # already-sorted threadIDs list, so the existing sort still drives layout.
+    groups = $.dict()
+    order  = []
+    for ID in threadIDs
+      label = Index.parsedThreads[ID]?.filterResults?.pattern or 'Manually hidden'
+      unless groups[label]
+        groups[label] = []
+        order.push label
+      groups[label].push ID
+
+    if order.length is 0
+      Index.loaded = true
+      $.event 'PostsInserted', null, Index.root if Index.root.parentNode
+      return
+
+    groupIdx = 0
+    partIdx  = 0
+    node0    = null
+    fn = ->
+      return if node0 and !node0.parentNode # Index.root cleared
+      return if groupIdx >= order.length
+      label = order[groupIdx]
+      ids   = groups[label]
+      if partIdx is 0
+        header = $.el 'div',
+          className: 'hidden-section-header'
+          textContent: "#{label} (#{ids.length})"
+        $.add Index.root, header
+        node0 or= header
+      chunk = ids[partIdx ... partIdx + 30]
+      built = Index.buildCatalogPart chunk
+      node0 or= built[0]
+      partIdx += chunk.length
+      if partIdx >= ids.length
+        groupIdx++
+        partIdx = 0
+      if groupIdx < order.length
         $.queueTask fn
       else
         if Index.root.parentNode

@@ -825,6 +825,7 @@ Config =
     'Catalog Hover Toggle':  [true,  'Turn "Catalog hover expand" on and off by clicking in the catalog.']
     'Pin Watched Threads':   [false, 'Move watched threads to the start of the index.']
     'Anchor Hidden Threads': [true,  'Move hidden threads to the end of the index.']
+    'Group Hidden Threads By Filter': [true, 'When showing hidden threads in catalog mode, group them under a header for the filter rule that hid them, with a separate "Manually hidden" section.']
     'Refreshed Navigation':  [false, 'Refresh index when navigating through pages.']
 
   Header:
@@ -953,6 +954,14 @@ Config =
     'Watch': [
       'w'
       'Watch thread.'
+    ]
+    'Catalog Hide Click': [
+      'Shift+Click'
+      'Modifier(s) held while clicking a catalog thread to hide/unhide it. Click the field and hold modifiers + click to set. Use "None" to disable.'
+    ]
+    'Catalog Watch Click': [
+      'Ctrl+Shift+Click'
+      'Modifier(s) held while clicking a catalog thread to watch/unwatch it. Click the field and hold modifiers + click to set. Use "None" to disable.'
     ]
     'Update': [
       'r'

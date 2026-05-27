@@ -2066,6 +2066,25 @@ textarea.copy-text-element {
   top: -10000px;
 }
 
+/* Hidden-threads grouping headers (catalog mode + Show hidden threads) */
+.hidden-section-header {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 10px 0 4px;
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 12px;
+  background: rgba(128, 128, 128, 0.12);
+  border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+  word-break: break-all;
+}
+.hidden-section-header:first-child {
+  margin-top: 0;
+}
+
 /* Announcement Hiding */
 :root.hide-announcement $site$psa {
   display: none;

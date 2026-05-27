@@ -98,7 +98,13 @@ Filter =
     # Hide the post (default case).
     hide = !(hl or noti)
 
-    filter = {isstring, regexp, boards, excludes, mask, hide, stub, hl, top, noti, override}
+    # Human-readable label used to group hidden threads by their triggering rule.
+    label = if isstring
+      "#{key}: #{regexp}"
+    else
+      "#{key}: /#{regexp.source}/#{regexp.flags}"
+
+    filter = {isstring, regexp, boards, excludes, mask, hide, stub, hl, top, noti, override, label}
     if key is 'general'
       for type in types
         (@filters[type] or= []).push filter
@@ -192,6 +198,7 @@ Filter =
     hlOverride = false
     top  = false
     noti = false
+    pattern = null
     if QuoteYou.isYou(post)
       hideable = false
     mask = (if post.isReply then 2 else 1)
@@ -210,6 +217,7 @@ Filter =
           if filter.hide
             if hideable
               hide = true
+              pattern or= filter.label
               stub and= filter.stub
           else
             unless hl and filter.hl in hl
@@ -219,7 +227,7 @@ Filter =
             if filter.noti
               noti = true
     if hide and not hlOverride
-      {hide, stub}
+      {hide, stub, pattern}
     else
       {hl, top, noti}
 

@@ -2504,7 +2504,9 @@ Settings =
       items[key]  = Conf[key]
       inputs[key] = input
       $.on input, 'keydown', Settings.keybind
+      $.on input, 'mousedown', Settings.clickbind
       $.add tbody, tr
+    Settings.keybindInputs = inputs
 
     $.get items, (items) ->
       for key, val of items
@@ -2525,4 +2527,32 @@ Settings =
     e.stopPropagation()
     return unless (key = Keybinds.keyCode e)?
     @value = key
+    Settings.checkBindConflict.call @, key
     $.cb.value.call @
+
+  clickbind: (e) ->
+    # A bare click should just focus the input; only capture when a modifier
+    # is held so the user can rebind to a modifier+click combo.
+    return unless e.button is 0
+    return unless e.altKey or e.ctrlKey or e.metaKey or e.shiftKey
+    e.preventDefault()
+    e.stopPropagation()
+    parts = []
+    parts.push 'Alt'   if e.altKey
+    parts.push 'Ctrl'  if e.ctrlKey
+    parts.push 'Meta'  if e.metaKey
+    parts.push 'Shift' if e.shiftKey
+    parts.push 'Click'
+    @value = parts.join '+'
+    Settings.checkBindConflict.call @, @value
+    $.cb.value.call @
+
+  checkBindConflict: (value) ->
+    return unless value and value isnt 'None'
+    return unless (inputs = Settings.keybindInputs)
+    own = @name
+    for name, input of inputs when name isnt own and input.value is value
+      input.value = 'None'
+      $.cb.value.call input
+      new Notice 'warning', "Removed conflicting binding from “#{name}” (was #{value}).", 5
+    return
