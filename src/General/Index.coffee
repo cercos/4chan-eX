@@ -869,7 +869,9 @@ Index =
       when 'all pages'
         threadIDs = Index.sortedThreadIDs
       when 'catalog'
-        threadIDs = Index.sortedThreadIDs.filter (ID) -> !Index.isHidden(ID) isnt Index.showHiddenThreads
+        threadIDs = Index.sortedThreadIDs.filter (ID) ->
+          effectivelyHidden = Index.isHidden(ID) and not ThreadHiding.hasUnreadYou(g.BOARD.ID, ID)
+          !effectivelyHidden isnt Index.showHiddenThreads
       else
         threadIDs = Index.threadsOnPage Index.currentPage
     delete Index.pageNum

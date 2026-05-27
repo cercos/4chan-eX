@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX
-// @version      1.0.7
+// @version      1.0.8
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -233,7 +233,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1.0.7',
+  VERSION:   '1.0.8',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)
@@ -324,7 +324,8 @@ Config = (function() {
         'Recursive Hiding': [true, 'Hide replies of hidden posts, recursively.'],
         'Thread Hiding Buttons': [true, 'Add buttons to hide entire threads.'],
         'Reply Hiding Buttons': [true, 'Add buttons to hide single replies.'],
-        'Stubs': [true, 'Show stubs of hidden threads / replies.']
+        'Stubs': [true, 'Show stubs of hidden threads / replies.'],
+        'Show Threads With Yous': [true, 'Show hidden threads on the index/catalog when they have unread replies quoting you. They re-hide once the (You) is read.']
       },
       'Images and Videos': {
         'Image Expansion': [true, 'Expand images / videos.'],
@@ -3937,6 +3938,11 @@ $site$thread[hidden] + hr {\n\
 }\n\
 :root.sw-yotsuba.thread-hide .party-hat {\n\
   left: 19px;\n\
+}\n\
+.revealed-with-you {\n\
+  box-shadow: inset 3px 0 0 var(--quotesyou-color, #ad2c27);\n\
+  outline: 1px dashed var(--quotesyou-color, #ad2c27);\n\
+  outline-offset: -1px;\n\
 }\n\
 /* Anonymize */\n\
 :root.anonymize $site$info$name,\n\
@@ -11492,6 +11498,13 @@ ThreadHiding = (function() {
         threadID: threadID
       }));
     },
+    hasUnreadYou: function(boardID, threadID) {
+      var ref, ref1;
+      return !!(Conf['Show Threads With Yous'] && ((ref = ThreadWatcher.db) != null ? (ref1 = ref.get({
+        boardID: boardID,
+        threadID: threadID
+      })) != null ? ref1.quotingYou : void 0 : void 0));
+    },
     node: function() {
       var data;
       if (this.isReply || this.isClone || this.isFetchedQuote) {
@@ -11504,7 +11517,11 @@ ThreadHiding = (function() {
         boardID: this.board.ID,
         threadID: this.ID
       })) {
-        return ThreadHiding.hide(this.thread, data.makeStub);
+        if (ThreadHiding.hasUnreadYou(this.board.ID, this.ID)) {
+          return $.addClass(this.nodes.root, 'revealed-with-you');
+        } else {
+          return ThreadHiding.hide(this.thread, data.makeStub);
+        }
       }
     },
     onIndexRefresh: function() {
@@ -13781,7 +13798,9 @@ Index = (function() {
           break;
         case 'catalog':
           threadIDs = Index.sortedThreadIDs.filter(function(ID) {
-            return !Index.isHidden(ID) !== Index.showHiddenThreads;
+            var effectivelyHidden;
+            effectivelyHidden = Index.isHidden(ID) && !ThreadHiding.hasUnreadYou(g.BOARD.ID, ID);
+            return !effectivelyHidden !== Index.showHiddenThreads;
           });
           break;
         default:
@@ -15382,6 +15401,9 @@ Settings = (function() {
         try {
           version = JSON.parse(version);
         } catch (error) {}
+      }
+      if (/^1\.0\./.test(version)) {
+        return changes;
       }
       compareString = version.replace(/\d+/g, function(x) {
         return ('0000' + x).slice(-5);

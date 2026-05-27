@@ -209,6 +209,10 @@ Config =
         true
         'Show stubs of hidden threads / replies.'
       ]
+      'Show Threads With Yous': [
+        true
+        'Show hidden threads on the index/catalog when they have unread replies quoting you. They re-hide once the (You) is read.'
+      ]
 
     'Images and Videos':
       'Image Expansion': [

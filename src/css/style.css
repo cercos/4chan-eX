@@ -2590,6 +2590,11 @@ $site$thread[hidden] + hr {
 :root.sw-yotsuba.thread-hide .party-hat {
   left: 19px;
 }
+.revealed-with-you {
+  box-shadow: inset 3px 0 0 var(--quotesyou-color, #ad2c27);
+  outline: 1px dashed var(--quotesyou-color, #ad2c27);
+  outline-offset: -1px;
+}
 
 /* Anonymize */
 :root.anonymize $site$info$name,

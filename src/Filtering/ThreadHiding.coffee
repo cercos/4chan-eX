@@ -46,6 +46,9 @@ ThreadHiding =
   isHidden: (boardID, threadID) ->
     !!(ThreadHiding.db and ThreadHiding.db.get {boardID, threadID})
 
+  hasUnreadYou: (boardID, threadID) ->
+    !!(Conf['Show Threads With Yous'] and ThreadWatcher.db?.get({boardID, threadID})?.quotingYou)
+
   node: ->
     return if @isReply or @isClone or @isFetchedQuote
 
@@ -53,7 +56,10 @@ ThreadHiding =
       $.prepend @nodes.root, ThreadHiding.makeButton(@thread, 'hide')
 
     if data = ThreadHiding.db.get {boardID: @board.ID, threadID: @ID}
-      ThreadHiding.hide @thread, data.makeStub
+      if ThreadHiding.hasUnreadYou(@board.ID, @ID)
+        $.addClass @nodes.root, 'revealed-with-you'
+      else
+        ThreadHiding.hide @thread, data.makeStub
 
   onIndexRefresh: ->
     g.BOARD.threads.forEach (thread) ->

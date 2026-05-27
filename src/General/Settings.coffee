@@ -1057,6 +1057,10 @@ Settings =
     if (corrupted = (version[0] is '"'))
       try
         version = JSON.parse version
+    # Fork (1.0.x) versions skip the legacy upstream 4chan-X migrations below.
+    # They were one-time fixes for 4chan-X 1.11-1.14 upgrades; running them
+    # every fork version bump duplicates usercss and re-coerces value types.
+    return changes if /^1\.0\./.test(version)
     compareString = version.replace(/\d+/g, (x) -> ('0000'+x)[-5..])
     if compareString < '00001.00013.00014.00008'
       for key, val of data when typeof val is 'string' and typeof Conf[key] isnt 'string' and key not in ['Index Sort', 'Last Long Reply Thresholds 0', 'Last Long Reply Thresholds 1']
