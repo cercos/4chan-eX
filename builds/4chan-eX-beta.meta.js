@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX beta
-// @version      1.0.9
+// @version      1.1.2
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -106,6 +106,7 @@
 // @connect      eientei.xyz
 // @connect      api.clyp.it
 // @connect      api.dailymotion.com
+// @connect      api.fxtwitter.com
 // @connect      api.github.com
 // @connect      soundcloud.com
 // @connect      api.streamable.com
