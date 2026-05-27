@@ -1152,8 +1152,10 @@ div[data-checked="false"] > .suboption-list {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 6px;
 }
-.section-styling .generated-highlight-quotes .reset-generated-highlights {
+.section-styling .generated-highlight-quotes .randomize-generated-highlights,
+.section-styling .generated-highlight-quotes .restore-generated-highlights {
   font-size: 11px;
   padding: 3px 8px;
   cursor: pointer;

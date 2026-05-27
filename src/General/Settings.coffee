@@ -843,8 +843,10 @@ Settings =
       $.on applyCSS,  'click',  ->
         Settings.flushCustomCSSEditor()
         CustomCSS.update()
-    if resetGeneratedHighlights = $('.reset-generated-highlights', section)
-      $.on resetGeneratedHighlights, 'click', Settings.resetGeneratedHighlightStyles
+    if randomizeGeneratedHighlights = $('.randomize-generated-highlights', section)
+      $.on randomizeGeneratedHighlights, 'click', Settings.randomizeGeneratedHighlightStyles
+    if restoreGeneratedHighlights = $('.restore-generated-highlights', section)
+      $.on restoreGeneratedHighlights, 'click', Settings.restoreGeneratedHighlightStyles
 
     Settings.refreshGeneratedHighlightStylesEditor()
     Settings.setupCSSHighlight inputs['usercss']
@@ -1460,6 +1462,7 @@ Settings =
         color: if typeof rule.color is 'string' then rule.color else ''
         auto: if rule.auto? then !!rule.auto else false
         hide: hide
+        override: if rule.override? then !!rule.override else false
       }
 
   easyFilterRow: (rule, markDirty) ->
@@ -1472,6 +1475,7 @@ Settings =
         <td><input class="field easy-filter-color" type="text" placeholder="highlight class"></td>
         <td><input class="easy-filter-auto" type="checkbox" title="Move highlighted OPs to top"></td>
         <td><input class="easy-filter-hide" type="checkbox"></td>
+        <td><input class="easy-filter-override" type="checkbox" title="Whitelist: matching highlight prevents this thread from being hidden by other rules"></td>
         <td><button class="easy-filter-remove" type="button" title="Remove">\u00d7</button></td>
       """
 
@@ -1485,6 +1489,7 @@ Settings =
     colorInput = $('.easy-filter-color', tr)
     autoInput = $('.easy-filter-auto', tr)
     hideInput = $('.easy-filter-hide', tr)
+    overrideInput = $('.easy-filter-override', tr)
     removeButton = $('.easy-filter-remove', tr)
 
     enabledInput.checked = if rule.enabled? then !!rule.enabled else true
@@ -1494,6 +1499,16 @@ Settings =
     colorInput.value = rule.color or ''
     autoInput.checked = !!rule.auto
     hideInput.checked = if rule.hide? then !!rule.hide else true
+    overrideInput.checked = !!rule.override
+
+    # Override only applies to highlight rules. Grey it out when this row is set
+    # to hide, since "hide + override" has no meaning.
+    syncOverrideState = ->
+      disabled = hideInput.checked
+      overrideInput.disabled = disabled
+      overrideInput.checked = false if disabled
+    syncOverrideState()
+    $.on hideInput, 'change', syncOverrideState
 
     for input in $$ 'input, select', tr
       $.on input, 'change', markDirty
@@ -1511,6 +1526,7 @@ Settings =
       pattern = $('.easy-filter-pattern', tr).value.trim()
       continue unless pattern
       type = $('.easy-filter-type', tr).value
+      hide = $('.easy-filter-hide', tr).checked
       rules.push
         enabled: $('.easy-filter-enabled', tr).checked
         pattern: pattern
@@ -1518,13 +1534,15 @@ Settings =
         type: if type of Config.filter then type else 'general'
         color: $('.easy-filter-color', tr).value.trim()
         auto: $('.easy-filter-auto', tr).checked
-        hide: $('.easy-filter-hide', tr).checked
+        hide: hide
+        override: not hide and $('.easy-filter-override', tr).checked
     rules
 
   easyFilterRuleFromRow: (tr) ->
     pattern = $('.easy-filter-pattern', tr).value.trim()
     return null unless pattern
     type = $('.easy-filter-type', tr).value
+    hide = $('.easy-filter-hide', tr).checked
     {
       enabled: $('.easy-filter-enabled', tr).checked
       pattern: pattern
@@ -1532,7 +1550,8 @@ Settings =
       type: if type of Config.filter then type else 'general'
       color: $('.easy-filter-color', tr).value.trim()
       auto: $('.easy-filter-auto', tr).checked
-      hide: $('.easy-filter-hide', tr).checked
+      hide: hide
+      override: not hide and $('.easy-filter-override', tr).checked
     }
 
   easyFilterRuleToLine: (rule) ->
@@ -1569,6 +1588,7 @@ Settings =
       else
         options.push 'highlight'
       options.push "top:#{if rule.auto then 'yes' else 'no'}"
+      options.push 'override' if rule.override
 
     if rule.action is 'notify'
       options.push 'notify'
@@ -2363,28 +2383,40 @@ Settings =
     else
       $.addClass fieldset, 'generated-highlight-disabled'
 
-  generatedHighlightDefaultValues: ->
-    defaults = $.dict()
-    for key in CustomCSS.generatedKeys
-      defaults[key] = Config[key]
-    defaults
-
-  resetGeneratedHighlightStyles: ->
+  randomizeGeneratedHighlightStyles: ->
     section = $ '.section-styling', Settings.dialog
     return unless section
 
-    defaults = Settings.generatedHighlightDefaultValues()
-    $.set defaults
+    colors = CustomCSS.randomGeneratedHighlightColors()
+    updates = $.dict()
+    updates['Highlight Watched Color'] = colors.watched
+    updates['Highlight Your Post Color'] = colors.yourPost
+    updates['Highlight Quotes You Color'] = colors.quotesYou
+    $.set updates
 
-    for key, val of defaults
+    for key, val of updates
       input = $("input[name='#{key}']", section)
       continue unless input
-      if input.type is 'checkbox'
-        input.checked = !!val
-        $.cb.checked.call input
-      else
-        input.value = val
-        $.cb.value.call input
+      input.value = val
+      $.cb.value.call input
+      Settings[key].call input if key of Settings
+
+    Settings.generatedHighlightStylesChanged()
+
+  restoreGeneratedHighlightStyles: ->
+    section = $ '.section-styling', Settings.dialog
+    return unless section
+
+    updates = $.dict()
+    for key in ['Highlight Watched Color', 'Highlight Your Post Color', 'Highlight Quotes You Color']
+      updates[key] = Config[key]
+    $.set updates
+
+    for key, val of updates
+      input = $("input[name='#{key}']", section)
+      continue unless input
+      input.value = val
+      $.cb.value.call input
       Settings[key].call input if key of Settings
 
     Settings.generatedHighlightStylesChanged()

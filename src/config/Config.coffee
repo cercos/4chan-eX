@@ -220,11 +220,11 @@ Config =
         'Expand images / videos.'
       ]
       'Image Hover': [
-        true
+        false
         'Show full image / video on mouseover.'
       ]
       'Image Hover in Catalog': [
-        true
+        false
         'Show full image / video on mouseover in <%= meta.name %> catalog.'
       ]
       'Gallery': [
@@ -794,12 +794,12 @@ Config =
 
   'Custom CSS': true
   'Open Filters Mode': 'remember'
-  'Generated Highlight Styles': false
-  'Highlight Watched Color': '#00509b'
+  'Generated Highlight Styles': true
+  'Highlight Watched Color': '#08357d'
   'Highlight Watched Opacity': '1'
-  'Highlight Your Post Color': '#059600'
+  'Highlight Your Post Color': '#00800f'
   'Highlight Your Post Opacity': '0.7'
-  'Highlight Quotes You Color': '#ad2c27'
+  'Highlight Quotes You Color': '#ad2300'
   'Highlight Quotes You Opacity': '0.8'
   'Highlight Auto Text Color': true
   'Highlight Text Color': '#f2f2f2'
@@ -817,7 +817,7 @@ Config =
   'Unread Title Count': 'always'
 
   Index:
-    'Index Mode': 'paged'
+    'Index Mode': 'catalog'
     'Previous Index Mode': 'paged'
     'Index Size': 'small'
     'Show Replies':          [true,  'Show replies in the index, and also in the catalog if "Catalog hover expand" is checked.']

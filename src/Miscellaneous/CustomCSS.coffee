@@ -464,6 +464,59 @@ CustomCSS =
     winner = if secondary.contrast > primary.contrast then secondary else primary
     @rgbToHex winner.color.r, winner.color.g, winner.color.b
 
+  randomGeneratedHighlightColors: ->
+    [bgR, bgG, bgB] = @generatedHighlightReferenceBackground()
+    bgRGB = {r: bgR, g: bgG, b: bgB}
+    isDark = @luma(bgR, bgG, bgB) < 128
+
+    baseHue = Math.random() * 360
+    dir = if Math.random() < 0.5 then 1 else -1
+    offset1 = dir * (90 + Math.random() * 50)
+    offset2 = dir * (200 + Math.random() * 50)
+    hues = (
+      ((((baseHue + delta) % 360) + 360) % 360) for delta in [0, offset1, offset2]
+    )
+
+    roles = ['watched', 'yourPost', 'quotesYou']
+    for i in [roles.length - 1..1] by -1
+      j = Math.floor(Math.random() * (i + 1))
+      [roles[i], roles[j]] = [roles[j], roles[i]]
+
+    pickColor = (hue) =>
+      sat = 0.6 + Math.random() * 0.28
+      light = if isDark then 0.42 + Math.random() * 0.2 else 0.32 + Math.random() * 0.15
+      color = @hslToRGB hue, sat, light
+      attempts = 0
+      while attempts < 8 and @contrastRatio(color, bgRGB) < 2.4
+        light = if isDark then Math.min(0.74, light + 0.06) else Math.max(0.18, light - 0.06)
+        color = @hslToRGB hue, sat, light
+        attempts++
+      @rgbToHex color.r, color.g, color.b
+
+    result = $.dict()
+    result[roles[i]] = pickColor(hues[i]) for i in [0...3]
+    result
+
+  hslToRGB: (h, s, l) ->
+    h = ((h % 360) + 360) % 360
+    s = Math.max 0, Math.min(1, s)
+    l = Math.max 0, Math.min(1, l)
+    c = (1 - Math.abs(2 * l - 1)) * s
+    x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+    m = l - c / 2
+    [r1, g1, b1] = switch
+      when h <  60 then [c, x, 0]
+      when h < 120 then [x, c, 0]
+      when h < 180 then [0, c, x]
+      when h < 240 then [0, x, c]
+      when h < 300 then [x, 0, c]
+      else              [c, 0, x]
+    {
+      r: Math.round((r1 + m) * 255)
+      g: Math.round((g1 + m) * 255)
+      b: Math.round((b1 + m) * 255)
+    }
+
   generatedHighlightReferenceBackground: ->
     return [18, 18, 18] unless d?.body
     node = $('.post.reply, .post.op, .post') or d.body

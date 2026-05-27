@@ -84,6 +84,10 @@ Filter =
       top = filter.match(/(?:^|;)\s*top:(yes|no)/)?[1] or 'yes'
       top = top is 'yes' # Turn it into a boolean
 
+    # Whitelist: a matching highlight with this flag prevents the post from
+    # being hidden by any other rule. Only meaningful on highlight filters.
+    override = hl and /(?:^|;)\s*override/.test filter
+
     # Fields that this filter applies to (for 'general' filters)
     if key is 'general'
       if (types = filter.match /(?:^|;)\s*type:([^;]*)/)
@@ -94,7 +98,7 @@ Filter =
     # Hide the post (default case).
     hide = !(hl or noti)
 
-    filter = {isstring, regexp, boards, excludes, mask, hide, stub, hl, top, noti}
+    filter = {isstring, regexp, boards, excludes, mask, hide, stub, hl, top, noti, override}
     if key is 'general'
       for type in types
         (@filters[type] or= []).push filter
@@ -149,6 +153,7 @@ Filter =
         else
           options.push 'highlight'
         options.push "top:#{if rule.auto then 'yes' else 'no'}"
+        options.push 'override' if rule.override
 
       if rule.action is 'notify'
         options.push 'notify'
@@ -184,6 +189,7 @@ Filter =
     hide = false
     stub = true
     hl   = undefined
+    hlOverride = false
     top  = false
     noti = false
     if QuoteYou.isYou(post)
@@ -208,10 +214,11 @@ Filter =
           else
             unless hl and filter.hl in hl
               (hl or= []).push filter.hl
+            hlOverride = true if filter.override
             top or= filter.top
             if filter.noti
               noti = true
-    if hide
+    if hide and not hlOverride
       {hide, stub}
     else
       {hl, top, noti}
