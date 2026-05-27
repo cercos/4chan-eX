@@ -745,6 +745,7 @@ QR =
     setNode 'fileInput',      '[type=file]'
 
     {config} = g.BOARD
+    QR.nodes.com.maxLength = QR.max_comment
     {classList} = QR.nodes.el
     classList.toggle 'forced-anon',  QR.forcedAnon
     classList.toggle 'has-spoiler',  QR.spoiler

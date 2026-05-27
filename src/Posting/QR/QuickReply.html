@@ -3,7 +3,7 @@
     <input type="checkbox" id="autohide" title="Auto-hide">
     Quick Reply
   </label>
-  <a href="javascript:;" class="close" title="Close">×</a>
+  <a href="javascript:;" class="close fa fa-times" title="Close"></a>
   <select data-name="thread" title="Create a new thread / Reply">
     <option value="new">New thread</option>
   </select>
@@ -13,9 +13,9 @@
     <button type="button" id="sjis-toggle" title="Toggle Mona font">∀</button>
     <button type="button" id="tex-preview-button" title="Preview TeX">T<sub>E</sub>X</button>
     <button type="button" id="live-preview-toggle" title="Preview post"><i class="fa fa-eye"></i></button>
-    <input name="fcx-name" data-name="name" list="list-name" placeholder="Name" class="field" size="1" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <input name="fcx-email" data-name="email" list="list-email" placeholder="Options" class="field" size="1" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <input name="fcx-sub" data-name="sub" list="list-sub" placeholder="Subject" class="field" size="1" autocomplete="off">
+    <input name="fcx-name" data-name="name" list="list-name" placeholder="Name" class="field" size="1" maxlength="75" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <input name="fcx-email" data-name="email" list="list-email" placeholder="Options" class="field" size="1" maxlength="75" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <input name="fcx-sub" data-name="sub" list="list-sub" placeholder="Subject" class="field" size="1" maxlength="100" autocomplete="off">
   </div>
   <div class="textarea">
     <textarea data-name="com" placeholder="Comment" class="field" autocomplete="off"></textarea>
@@ -38,7 +38,7 @@
     <input type="button" id="qr-file-button" value="Files">
     <span id="qr-filename-container" class="field">
       <span id="qr-no-file">No selected file</span>
-      <input id="qr-filename" data-name="filename" spellcheck="false" autocomplete="off">
+      <input id="qr-filename" data-name="filename" maxlength="50" spellcheck="false" autocomplete="off">
       <label id="qr-spoiler-label">
         <input type="checkbox" id="qr-file-spoiler" title="Spoiler image">
         <a class="checkbox-letter">S</a>

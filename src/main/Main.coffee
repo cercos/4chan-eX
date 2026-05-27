@@ -274,11 +274,6 @@ Main =
     $.addStyle CSS.sub(CSS.boards), 'fourchanx-css'
     Main.bgColorStyle = $.el 'style', id: 'fourchanx-bgcolor-css'
 
-    keyboard = false
-    $.on d, 'mousedown', -> keyboard = false
-    $.on d, 'keydown', (e) -> (keyboard = true if e.keyCode is 9) # tab
-    window.addEventListener 'focus', (-> doc.classList.toggle 'keyboard-focus', keyboard), true
-
     Main.setClass()
 
   setClass: ->

@@ -63,7 +63,7 @@ a[href="javascript:;"] {
 body.hasDropDownNav{
   margin-top: 5px;
 }
-:root:not(.keyboard-focus) a {
+a:focus:not(:focus-visible) {
   outline: none;
 }
 .painted {
@@ -3307,14 +3307,15 @@ input[type="checkbox"]:checked ~ .checkbox-letter {
   width: 100%;
 }
 #qr .qr-flag-toggle::after {
-  content: '▾';
+  content: '\f107'; /* fa-angle-down */
+  font-family: FontAwesome;
   font-size: 11px;
   pointer-events: none;
   position: absolute;
   right: 6px;
 }
 #qr .qr-flag-picker.open .qr-flag-toggle::after {
-  content: '▴';
+  content: '\f106'; /* fa-angle-up */
 }
 .qr-flag-menu {
   background: #fff;
@@ -3809,26 +3810,9 @@ a:only-of-type > .remove {
   margin: 2px;
   position: relative;
 }
-.gal-start i {
-  border-left:   10px solid;
-  border-top:    6px solid transparent;
-  border-bottom: 6px solid transparent;
-  bottom: 1px;
-}
-.gal-stop i {
-  border: 5px solid;
-  bottom: 2px;
-}
 .gal-buttons.gal-playing > .gal-start,
 .gal-buttons:not(.gal-playing) > .gal-stop {
   display: none;
-}
-.gal-buttons .menu-button i {
-  border-top:   10px solid;
-  border-right:  6px solid transparent;
-  border-left:   6px solid transparent;
-  bottom: 2px;
-  vertical-align: baseline;
 }
 .gal-labels {
   position: fixed;
