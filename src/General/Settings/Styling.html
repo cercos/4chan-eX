@@ -5,21 +5,23 @@
       <select class="site-style-mirror"></select>
     </label>
   </div>
-  <div>
-    <label>Settings Theme:
-      <select name="Settings Theme">
-        <option value="site">Match site</option>
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-      </select>
-    </label>
-  </div>
+</fieldset>
+
+<fieldset class="post-highlights">
+  <legend>Post Highlights</legend>
+  <label><input type="checkbox" name="Highlight Posts Quoting You"> Highlight posts that quote you</label>
+  <label><input type="checkbox" name="Highlight Own Posts"> Highlight your own posts</label>
 </fieldset>
 
 <fieldset class="generated-highlight-styles">
   <legend>Highlight Styles</legend>
   <div class="generated-highlight-toggle">
     <label><input type="checkbox" name="Generated Highlight Styles"> Enable built-in highlight styling</label>
+  </div>
+  <div class="generated-highlight-quotes">
+    <div class="generated-highlight-quotes-header">
+      <button type="button" class="reset-generated-highlights">Reset to Default</button>
+    </div>
   </div>
   <div class="generated-highlight-grid">
     <div class="generated-highlight-group">
@@ -115,9 +117,6 @@
         <input type="color" name="Highlight Link Color" data-auto-color-for="Highlight Auto Link Color">
       </label>
     </div>
-  </div>
-  <div class="generated-highlight-controls">
-    <button type="button" class="reset-generated-highlights">Reset Highlight Styles to Default</button>
   </div>
   <div class="generated-highlight-preview">
     <div class="generated-highlight-preview-column ghs-catalog-preview">

@@ -90,10 +90,6 @@ Settings =
     $.on dialog.firstElementChild, 'click', (e) -> e.stopPropagation()
     $.on d, 'keydown', Settings.keydown
     Settings.setupWindow dialog
-    Settings.applySettingsTheme Conf['Settings Theme']
-    Settings.themeObserver = new MutationObserver ->
-      Settings.applySettingsTheme Conf['Settings Theme']
-    Settings.themeObserver.observe doc, {attributes: true, attributeFilter: ['class']}
 
     $.add d.body, dialog
 
@@ -118,8 +114,6 @@ Settings =
     Settings.saveWindowState()
     Settings.resizeObserver?.disconnect()
     delete Settings.resizeObserver
-    Settings.themeObserver?.disconnect()
-    delete Settings.themeObserver
     Settings.clearDragHandle()
     $.off d, 'keydown', Settings.keydown
     Settings.dragEnd()
@@ -161,40 +155,6 @@ Settings =
 
   applyLayoutMode: (win) ->
     win.classList.remove 'settings-layout-classic'
-
-  applySettingsTheme: (theme) ->
-    win = Settings.dialog?.firstElementChild
-    return unless win
-    $.rmClass win, 'settings-theme-light'
-    $.rmClass win, 'settings-theme-dark'
-    $.rmClass win, 'settings-theme-site'
-    $.rmClass win, 'settings-theme-site-light'
-    $.rmClass win, 'settings-theme-site-dark'
-    switch theme
-      when 'light'
-        $.addClass win, 'settings-theme-light'
-      when 'site'
-        $.addClass win, 'settings-theme-site'
-        $.addClass win, if Settings.settingsThemeIsDark 'site' then 'settings-theme-site-dark' else 'settings-theme-site-light'
-      else
-        $.addClass win, 'settings-theme-dark'
-
-  settingsThemeIsDark: (theme=Conf['Settings Theme']) ->
-    switch theme
-      when 'light'
-        return false
-      when 'dark'
-        return true
-
-    for style in ['tomorrow', 'spooky'] when $.hasClass doc, style
-      return true
-
-    win = Settings.dialog?.firstElementChild
-    if win and d.body.contains win
-      rgb = window.getComputedStyle(win).backgroundColor.match /[\d.]+/g
-      return $.luma(rgb) < 100 if rgb
-
-    false
 
   setDragHandle: (win) ->
     Settings.clearDragHandle()
@@ -458,6 +418,8 @@ Settings =
     'Count Posts by ID'
     'Remove Spoilers'
     'Reveal Spoilers'
+    'Highlight Posts Quoting You'
+    'Highlight Own Posts'
   ]
 
   searchKeywords:
@@ -543,25 +505,27 @@ Settings =
       continue unless (obj = Config.main[keyFS])
 
       if keyFS is 'Miscellaneous'
+        lookup = Settings.getMainSettingLookup()
         for [legendTitle, keys] in [
-          ['Browsing and Catalog', ['Redirect to HTTPS', 'JSON Index', 'Use <%= meta.name %> Catalog', 'Index Refresh Notifications', 'Follow Cursor', 'Open Threads in New Tab', 'External Catalog', 'Catalog Links']]
-          ['Notifications and UI', ['Announcement Hiding', 'Desktop Notifications']]
-          ['Archives and Security', ['404 Redirect', 'Archive Report', 'Exempt Archives from Encryption', 'Show Updated Notifications']]
-          ['Reading and Navigation', ['Keybinds', 'Comment Expansion', 'Thread Expansion', 'Index Navigation', 'Reply Navigation', 'Unique ID and Capcode Navigation', 'Normalize URL', 'Disable Autoplaying Sounds']]
+          ['Browsing and Catalog', ['Redirect to HTTPS', 'JSON Index', 'Use <%= meta.name %> Catalog', 'Open Threads in New Tab', 'External Catalog']]
+          ['UI', ['Announcement Hiding', 'Follow Cursor', 'Catalog Links']]
+          ['Notifications', ['Desktop Notifications', 'Index Refresh Notifications', 'Show Updated Notifications', 'Posting Success Notifications']]
+          ['Archives and Security', ['404 Redirect', 'Archive Report', 'Exempt Archives from Encryption']]
+          ['Keyboard and Navigation', ['Keybinds', 'Comment Expansion', 'Thread Expansion', 'Index Navigation', 'Reply Navigation', 'Unique ID and Capcode Navigation', 'Normalize URL', 'Disable Autoplaying Sounds']]
           ['Compatibility', ['Disable Native Extension']]
         ]
           fs = $.el 'fieldset',
             `<%= html('<legend>${legendTitle}</legend>') %>`
           group = $.dict()
-          for key in keys when obj[key]
-            group[key] = obj[key]
+          for key in keys when lookup[key]
+            group[key] = lookup[key]
           continue unless addCheckboxes(fs, group, (key) -> key not in styleNames)
           $.add section, fs
         continue
 
       if keyFS is 'Posting and Captchas'
         for [legendTitle, keys, baseLevel] in [
-          ['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Posting Success Notifications', 'Pass Link'], 0]
+          ['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Pass Link'], 0]
           ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio'], 1]
           ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]
         ]
@@ -2315,9 +2279,6 @@ Settings =
     $.on textarea, 'scroll', ->
       pre.scrollTop  = textarea.scrollTop
       pre.scrollLeft = textarea.scrollLeft
-
-  'Settings Theme': ->
-    Settings.applySettingsTheme @value
 
   'CSS Highlight Theme': ->
     section = $.x 'ancestor::section[1]', @

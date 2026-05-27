@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX beta
-// @version      1.0.6
+// @version      1.0.7
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -233,7 +233,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1.0.6',
+  VERSION:   '1.0.7',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)
@@ -2504,15 +2504,26 @@ div[data-checked=\"false\"] > .suboption-list {\n\
   align-items: center;\n\
   gap: 8px;\n\
 }\n\
+.section-styling .post-highlights {\n\
+  display: flex;\n\
+  flex-direction: column;\n\
+  gap: 4px;\n\
+}\n\
 .section-styling .generated-highlight-toggle {\n\
   margin-top: 6px;\n\
 }\n\
-.section-styling .generated-highlight-controls {\n\
-  display: -webkit-flex;\n\
-  display: flex;\n\
-  -webkit-justify-content: flex-end;\n\
-  justify-content: flex-end;\n\
+.section-styling .generated-highlight-quotes {\n\
   margin-top: 8px;\n\
+}\n\
+.section-styling .generated-highlight-quotes-header {\n\
+  display: flex;\n\
+  justify-content: flex-end;\n\
+  align-items: center;\n\
+}\n\
+.section-styling .generated-highlight-quotes .reset-generated-highlights {\n\
+  font-size: 11px;\n\
+  padding: 3px 8px;\n\
+  cursor: pointer;\n\
 }\n\
 .section-styling .generated-highlight-grid {\n\
   display: grid;\n\
@@ -2927,208 +2938,44 @@ div[data-checked=\"false\"] > .suboption-list {\n\
   z-index: 1;\n\
   border: 1px solid transparent !important;\n\
 }\n\
-#fourchanx-settings.settings-theme-dark textarea,\n\
-#fourchanx-settings.settings-theme-dark .field {\n\
+#fourchanx-settings textarea,\n\
+#fourchanx-settings .field {\n\
+  background-color: color-mix(in srgb, currentColor 8%, transparent);\n\
+  color: inherit;\n\
+  border-color: color-mix(in srgb, currentColor 28%, transparent);\n\
+}\n\
+/* CSS Highlight Editor — pre background matches textarea */\n\
+#fourchanx-settings .css-hl-pre {\n\
   background: #212121;\n\
   color: #eff;\n\
   border-color: rgba(255, 255, 255, .28);\n\
 }\n\
-#fourchanx-settings.settings-theme-light textarea,\n\
-#fourchanx-settings.settings-theme-light .field {\n\
-  background: #fff;\n\
-  color: #111;\n\
-  border-color: rgba(0, 0, 0, .28);\n\
-}\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site textarea,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site textarea,\n\
-:root.spooky #fourchanx-settings.settings-theme-site textarea {\n\
-  background: #212121;\n\
-  color: #eff;\n\
-  border-color: rgba(255, 255, 255, .28);\n\
-}\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .field,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .field,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .field {\n\
-  background: #2a2a2a;\n\
-  color: #ddd;\n\
-  border-color: rgba(255, 255, 255, .22);\n\
-}\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site textarea,\n\
-:root.futaba #fourchanx-settings.settings-theme-site textarea,\n\
-:root.burichan #fourchanx-settings.settings-theme-site textarea,\n\
-:root.photon #fourchanx-settings.settings-theme-site textarea {\n\
-  background: #fff;\n\
-  color: #111;\n\
-  border-color: rgba(0, 0, 0, .35);\n\
-}\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .field,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .field,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .field,\n\
-:root.photon #fourchanx-settings.settings-theme-site .field {\n\
-  background: #fff;\n\
-  color: #111;\n\
-  border-color: rgba(0, 0, 0, .28);\n\
-}\n\
-/* CSS Highlight Editor — pre background matches textarea background per theme */\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre {\n\
-  background: #212121;\n\
-  color: #eff;\n\
-  border-color: rgba(255, 255, 255, .28);\n\
-}\n\
-#fourchanx-settings.settings-theme-dark .css-hl-wrap {\n\
+#fourchanx-settings .css-hl-wrap {\n\
   color: #eff;\n\
 }\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre {\n\
-  background: #fff;\n\
-  color: #111;\n\
-  border-color: rgba(0, 0, 0, .28);\n\
-}\n\
-#fourchanx-settings.settings-theme-light .css-hl-wrap {\n\
-  color: #111;\n\
-}\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre {\n\
-  background: #212121;\n\
-  color: #eff;\n\
-  border-color: rgba(255, 255, 255, .28);\n\
-}\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-wrap,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-wrap,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-wrap {\n\
-  color: #eff;\n\
-}\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre {\n\
-  background: #fff;\n\
-  color: #111;\n\
-  border-color: rgba(0, 0, 0, .35);\n\
-}\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-wrap,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-wrap,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-wrap,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-wrap {\n\
-  color: #111;\n\
-}\n\
-/* Syntax token colors — dark themes */\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-c,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .com,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .com,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .com,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .com {\n\
+/* Syntax token colors (auto theme = dark) */\n\
+#fourchanx-settings .css-hl-pre .chl-c,\n\
+#fourchanx-settings .css-hl-pre .com {\n\
   color: #6a9955;\n\
   font-style: italic;\n\
 }\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-s,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .str,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .str,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .str,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .str {\n\
+#fourchanx-settings .css-hl-pre .chl-s,\n\
+#fourchanx-settings .css-hl-pre .str {\n\
   color: #ce9178;\n\
 }\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-a,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .kwd,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .kwd {\n\
+#fourchanx-settings .css-hl-pre .chl-a,\n\
+#fourchanx-settings .css-hl-pre .kwd {\n\
   color: #c586c0;\n\
 }\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-l,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .lit,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .lit,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .lit,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .lit {\n\
+#fourchanx-settings .css-hl-pre .chl-l,\n\
+#fourchanx-settings .css-hl-pre .lit {\n\
   color: #4ec9b0;\n\
 }\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-n,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n {\n\
+#fourchanx-settings .css-hl-pre .chl-n {\n\
   color: #b5cea8;\n\
 }\n\
-#fourchanx-settings.settings-theme-dark .css-hl-pre .chl-p,\n\
-:root.yotsuba-b #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,\n\
-:root.tomorrow #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,\n\
-:root.spooky #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p {\n\
+#fourchanx-settings .css-hl-pre .chl-p {\n\
   color: #9cdcfe;\n\
-}\n\
-/* Syntax token colors — light themes */\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .chl-c,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-c,\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .com,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .com,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .com,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .com,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .com {\n\
-  color: #008000;\n\
-  font-style: italic;\n\
-}\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .chl-s,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-s,\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .str,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .str,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .str,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .str,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .str {\n\
-  color: #a31515;\n\
-}\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .chl-a,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-a,\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .kwd,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .kwd,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .kwd {\n\
-  color: #800080;\n\
-}\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .chl-l,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-l,\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .lit,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .lit,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .lit,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .lit,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .lit {\n\
-  color: #098658;\n\
-}\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .chl-n,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-n {\n\
-  color: #098658;\n\
-}\n\
-#fourchanx-settings.settings-theme-light .css-hl-pre .chl-p,\n\
-:root.yotsuba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,\n\
-:root.futaba #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,\n\
-:root.burichan #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p,\n\
-:root.photon #fourchanx-settings.settings-theme-site .css-hl-pre .chl-p {\n\
-  color: #001080;\n\
 }\n\
 /* Named highlight themes — override auto-adaptive rules */\n\
 #fourchanx-settings .css-hl-wrap.chl-theme-vscode-dark .css-hl-pre {\n\
@@ -14237,7 +14084,6 @@ Settings = (function() {
       });
       $.on(d, 'keydown', Settings.keydown);
       Settings.setupWindow(dialog);
-      Settings.applySettingsTheme('dark');
       $.add(d.body, dialog);
       return $.event('OpenSettings', null, dialog);
     },
@@ -14323,54 +14169,6 @@ Settings = (function() {
     },
     applyLayoutMode: function(win) {
       return win.classList.remove('settings-layout-classic');
-    },
-    applySettingsTheme: function(theme) {
-      var ref, win;
-      win = (ref = Settings.dialog) != null ? ref.firstElementChild : void 0;
-      if (!win) {
-        return;
-      }
-      $.rmClass(win, 'settings-theme-light');
-      $.rmClass(win, 'settings-theme-dark');
-      $.rmClass(win, 'settings-theme-site');
-      $.rmClass(win, 'settings-theme-site-light');
-      $.rmClass(win, 'settings-theme-site-dark');
-      switch (theme) {
-        case 'light':
-          return $.addClass(win, 'settings-theme-light');
-        case 'site':
-          $.addClass(win, 'settings-theme-site');
-          return $.addClass(win, Settings.settingsThemeIsDark('site') ? 'settings-theme-site-dark' : 'settings-theme-site-light');
-        default:
-          return $.addClass(win, 'settings-theme-dark');
-      }
-    },
-    settingsThemeIsDark: function(theme) {
-      var j, len, ref, ref1, rgb, style, win;
-      if (theme == null) {
-        theme = Conf['Settings Theme'];
-      }
-      switch (theme) {
-        case 'light':
-          return false;
-        case 'dark':
-          return true;
-      }
-      ref = ['tomorrow', 'spooky'];
-      for (j = 0, len = ref.length; j < len; j++) {
-        style = ref[j];
-        if ($.hasClass(doc, style)) {
-          return true;
-        }
-      }
-      win = (ref1 = Settings.dialog) != null ? ref1.firstElementChild : void 0;
-      if (win && d.body.contains(win)) {
-        rgb = window.getComputedStyle(win).backgroundColor.match(/[\d.]+/g);
-        if (rgb) {
-          return $.luma(rgb) < 100;
-        }
-      }
-      return false;
     },
     setDragHandle: function(win) {
       var dialog, dragHandle;
@@ -14731,7 +14529,7 @@ Settings = (function() {
         });
       }
     },
-    stylingOptionNames: ['Time Formatting', 'Relative Post Dates', 'Relative Date Title', 'File Info Formatting', 'Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID', 'Remove Spoilers', 'Reveal Spoilers'],
+    stylingOptionNames: ['Time Formatting', 'Relative Post Dates', 'Relative Date Title', 'File Info Formatting', 'Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID', 'Remove Spoilers', 'Reveal Spoilers', 'Highlight Posts Quoting You', 'Highlight Own Posts'],
     searchKeywords: {
       'Replace Thumbnails': 'replace gif jpg jpeg png webm mp4 ogv thumbnails original media',
       'Detailed Thread Stats': 'ip count page count purge position'
@@ -14752,7 +14550,7 @@ Settings = (function() {
       return lookup;
     },
     renderMainGroups: function(section, options) {
-      var addCheckboxes, addSettingGroup, addWarning, baseLevel, button, categories, div, el, fs, group, hideLegendFor, includeHiddenCount, includeJSONIndex, includeWarnings, inputs, items, j, k, key, keyFS, keys, l, legendTitle, len, len1, len2, len3, n, obj, ref, ref1, ref2, ref3, ref4, root, selectGroup, stubs, styleNames, warning, warnings;
+      var addCheckboxes, addSettingGroup, addWarning, baseLevel, button, categories, div, el, fs, group, hideLegendFor, includeHiddenCount, includeJSONIndex, includeWarnings, inputs, items, j, k, key, keyFS, keys, l, legendTitle, len, len1, len2, len3, lookup, n, obj, ref, ref1, ref2, ref3, ref4, root, selectGroup, stubs, styleNames, warning, warnings;
       categories = options.categories, includeWarnings = options.includeWarnings, includeJSONIndex = options.includeJSONIndex, includeHiddenCount = options.includeHiddenCount, hideLegendFor = options.hideLegendFor;
       if (hideLegendFor == null) {
         hideLegendFor = [];
@@ -14857,15 +14655,16 @@ Settings = (function() {
           continue;
         }
         if (keyFS === 'Miscellaneous') {
-          ref1 = [['Browsing and Catalog', ['Redirect to HTTPS', 'JSON Index', 'Use 4chan-eX Catalog', 'Index Refresh Notifications', 'Follow Cursor', 'Open Threads in New Tab', 'External Catalog', 'Catalog Links']], ['Notifications and UI', ['Announcement Hiding', 'Desktop Notifications']], ['Archives and Security', ['404 Redirect', 'Archive Report', 'Exempt Archives from Encryption', 'Show Updated Notifications']], ['Reading and Navigation', ['Keybinds', 'Comment Expansion', 'Thread Expansion', 'Index Navigation', 'Reply Navigation', 'Unique ID and Capcode Navigation', 'Normalize URL', 'Disable Autoplaying Sounds']], ['Compatibility', ['Disable Native Extension']]];
+          lookup = Settings.getMainSettingLookup();
+          ref1 = [['Browsing and Catalog', ['Redirect to HTTPS', 'JSON Index', 'Use 4chan-eX Catalog', 'Open Threads in New Tab', 'External Catalog']], ['UI', ['Announcement Hiding', 'Follow Cursor', 'Catalog Links']], ['Notifications', ['Desktop Notifications', 'Index Refresh Notifications', 'Show Updated Notifications', 'Posting Success Notifications']], ['Archives and Security', ['404 Redirect', 'Archive Report', 'Exempt Archives from Encryption']], ['Keyboard and Navigation', ['Keybinds', 'Comment Expansion', 'Thread Expansion', 'Index Navigation', 'Reply Navigation', 'Unique ID and Capcode Navigation', 'Normalize URL', 'Disable Autoplaying Sounds']], ['Compatibility', ['Disable Native Extension']]];
           for (k = 0, len1 = ref1.length; k < len1; k++) {
             ref2 = ref1[k], legendTitle = ref2[0], keys = ref2[1];
             fs = $.el('fieldset', {innerHTML: "<legend>" + E(legendTitle) + "</legend>"});
             group = $.dict();
             for (l = 0, len2 = keys.length; l < len2; l++) {
               key = keys[l];
-              if (obj[key]) {
-                group[key] = obj[key];
+              if (lookup[key]) {
+                group[key] = lookup[key];
               }
             }
             if (!addCheckboxes(fs, group, function(key) {
@@ -14878,7 +14677,7 @@ Settings = (function() {
           continue;
         }
         if (keyFS === 'Posting and Captchas') {
-          ref3 = [['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Posting Success Notifications', 'Pass Link'], 0], ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio'], 1], ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]];
+          ref3 = [['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Pass Link'], 0], ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio'], 1], ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]];
           for (n = 0, len3 = ref3.length; n < len3; n++) {
             ref4 = ref3[n], legendTitle = ref4[0], keys = ref4[1], baseLevel = ref4[2];
             fs = $.el('fieldset', {innerHTML: "<legend>" + E(legendTitle) + "</legend>"});
@@ -15240,7 +15039,7 @@ Settings = (function() {
         addCheckboxes(fs, group);
       }
       $.add(section, fs);
-      $.extend(section, {innerHTML: "<fieldset class=\"styling-theme\"><legend>Theme</legend><div class=\"site-theme-controls\"><label>Site Style:<select class=\"site-style-mirror\"></select></label></div></fieldset><fieldset class=\"generated-highlight-styles\"><legend>Highlight Styles</legend><div class=\"generated-highlight-toggle\"><label><input type=\"checkbox\" name=\"Generated Highlight Styles\"> Enable built-in highlight styling</label></div><div class=\"generated-highlight-grid\"><div class=\"generated-highlight-group\"><h4>Watched Catalog</h4><div class=\"generated-highlight-help\">Used for watched thread tiles in the catalog preview and catalog view.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Watched Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Watched Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Watched Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Your Post</h4><div class=\"generated-highlight-help\">Used for posts and threads that are marked as yours.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Your Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Your Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Your Post Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Quotes You</h4><div class=\"generated-highlight-help\">Used for posts that quote you (when quote highlighting is enabled).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Quotes You Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Quotes You Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Quotes You Opacity\"></span></label></div></div><div class=\"generated-highlight-auto-row\"><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Text Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Text Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Text Color\" data-auto-color-for=\"Highlight Auto Text Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Greentext Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Greentext Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Greentext Color\" data-auto-color-for=\"Highlight Auto Greentext Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Title Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Title Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Title Color\" data-auto-color-for=\"Highlight Auto Title Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Link Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Link Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Link Color\" data-auto-color-for=\"Highlight Auto Link Color\"></label></div></div><div class=\"generated-highlight-controls\"><button type=\"button\" class=\"reset-generated-highlights\">Reset Highlight Styles to Default</button></div><div class=\"generated-highlight-preview\"><div class=\"generated-highlight-preview-column ghs-catalog-preview\"><h4>Catalog Preview</h4><div class=\"ghs-catalog-grid\"><div class=\"ghs-catalog-thread watched ghs-watched-only\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-a/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">24</span> / <span class=\"file-count\">6</span> / <span class=\"page-count\">9</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Sample Catalog Title</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread sample preview.</blockquote></div></div></div><div class=\"ghs-catalog-thread watched ghs-watched-you\"><div class=\"yourPost\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-b/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">45</span> / <span class=\"file-count\">3</span> / <span class=\"page-count\">4</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Your Thread Title Sample</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread that you created.</blockquote></div></div></div></div></div></div><div class=\"generated-highlight-preview-column ghs-thread-preview highlight-you\"><h4>Thread Preview</h4><div class=\"postContainer replyContainer yourPost noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\">Your post sample in thread view.<br><a href=\"javascript:;\" class=\"quotelink\">&gt;&gt;108904436</a><br><span class=\"quote\">&gt;sample quote line</span><br><a href=\"javascript:;\">sample link</a></blockquote></div></div><div class=\"postContainer replyContainer quotesYou noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\"><a href=\"javascript:;\" class=\"quotelink you\">&gt;&gt;108900390<span class=\"qmark-you\">&nbsp;(You)</span><span class=\"qmark-op\">&nbsp;(OP)</span></a><br><span class=\"quote\">&gt;sample quote line</span><br>Reply quoting you sample.<br><a href=\"javascript:;\">sample link</a></blockquote></div></div></div></div></fieldset><fieldset class=\"custom-css-editor\"><legend>Custom CSS</legend><div class=\"custom-css-enable-controls\"><label><input type=\"checkbox\" name=\"Custom CSS\"> Enable Custom CSS</label><label><input type=\"checkbox\" name=\"Custom CSS on Homepage\"> Load Custom CSS on home page</label></div><div class=\"custom-css-note\">For more information about customizing 4chan-eX&#039;s CSS, see the <a href=\"https://github.com/cercos/4chan-eX/wiki/Styling-Guide\" target=\"_blank\">styling guide</a>.</div><div class=\"custom-css-note\"><strong>Note:</strong> Custom CSS can override the classes and styles used by built-in Highlight Styles.</div><div class=\"custom-css-controls\"><label>Theme:<select name=\"CSS Highlight Theme\"><option value=\"auto\">Auto</option><option value=\"vscode-dark\">VS Code Dark</option><option value=\"monokai\">Monokai</option><option value=\"github-light\">GitHub Light</option><option value=\"dracula\">Dracula</option></select></label><button id=\"apply-css\">Apply CSS</button></div><textarea hidden name=\"usercss\" class=\"field\" spellcheck=\"false\"></textarea></fieldset><fieldset><legend>Time Formatting <span class=\"warning\" data-feature=\"Time Formatting\">is disabled.</span></legend><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></fieldset><fieldset><legend>Quote Backlinks formatting <span class=\"warning\" data-feature=\"Quote Backlinks\">is disabled.</span></legend><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></fieldset><fieldset><legend>File Info Formatting <span class=\"warning\" data-feature=\"File Info Formatting\">is disabled.</span></legend><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></fieldset><fieldset><legend>Unread Favicon <span class=\"warning\" data-feature=\"Unread Favicon\">is disabled.</span></legend><select name=\"favicon\"><option value=\"ferongr\">ferongr</option><option value=\"xat-\">xat-</option><option value=\"4chanJS\">4chanJS</option><option value=\"Mayhem\">Mayhem</option><option value=\"Original\">Original</option><option value=\"Metro\">Metro</option></select><span class=\"favicon-preview\"></span></fieldset><fieldset><legend>Known Banners</legend><div>List of known banners, used for click-to-change feature.</div><textarea hidden name=\"knownBanners\" class=\"field\" spellcheck=\"false\"></textarea></fieldset>"});
+      $.extend(section, {innerHTML: "<fieldset class=\"styling-theme\"><legend>Theme</legend><div class=\"site-theme-controls\"><label>Site Style:<select class=\"site-style-mirror\"></select></label></div></fieldset><fieldset class=\"post-highlights\"><legend>Post Highlights</legend><label><input type=\"checkbox\" name=\"Highlight Posts Quoting You\"> Highlight posts that quote you</label><label><input type=\"checkbox\" name=\"Highlight Own Posts\"> Highlight your own posts</label></fieldset><fieldset class=\"generated-highlight-styles\"><legend>Highlight Styles</legend><div class=\"generated-highlight-toggle\"><label><input type=\"checkbox\" name=\"Generated Highlight Styles\"> Enable built-in highlight styling</label></div><div class=\"generated-highlight-quotes\"><div class=\"generated-highlight-quotes-header\"><button type=\"button\" class=\"reset-generated-highlights\">Reset to Default</button></div></div><div class=\"generated-highlight-grid\"><div class=\"generated-highlight-group\"><h4>Watched Catalog</h4><div class=\"generated-highlight-help\">Used for watched thread tiles in the catalog preview and catalog view.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Watched Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Watched Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Watched Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Your Post</h4><div class=\"generated-highlight-help\">Used for posts and threads that are marked as yours.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Your Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Your Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Your Post Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Quotes You</h4><div class=\"generated-highlight-help\">Used for posts that quote you (when quote highlighting is enabled).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Quotes You Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Quotes You Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Quotes You Opacity\"></span></label></div></div><div class=\"generated-highlight-auto-row\"><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Text Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Text Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Text Color\" data-auto-color-for=\"Highlight Auto Text Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Greentext Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Greentext Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Greentext Color\" data-auto-color-for=\"Highlight Auto Greentext Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Title Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Title Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Title Color\" data-auto-color-for=\"Highlight Auto Title Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Link Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Link Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Link Color\" data-auto-color-for=\"Highlight Auto Link Color\"></label></div></div><div class=\"generated-highlight-preview\"><div class=\"generated-highlight-preview-column ghs-catalog-preview\"><h4>Catalog Preview</h4><div class=\"ghs-catalog-grid\"><div class=\"ghs-catalog-thread watched ghs-watched-only\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-a/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">24</span> / <span class=\"file-count\">6</span> / <span class=\"page-count\">9</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Sample Catalog Title</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread sample preview.</blockquote></div></div></div><div class=\"ghs-catalog-thread watched ghs-watched-you\"><div class=\"yourPost\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-b/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">45</span> / <span class=\"file-count\">3</span> / <span class=\"page-count\">4</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Your Thread Title Sample</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread that you created.</blockquote></div></div></div></div></div></div><div class=\"generated-highlight-preview-column ghs-thread-preview highlight-you\"><h4>Thread Preview</h4><div class=\"postContainer replyContainer yourPost noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\">Your post sample in thread view.<br><a href=\"javascript:;\" class=\"quotelink\">&gt;&gt;108904436</a><br><span class=\"quote\">&gt;sample quote line</span><br><a href=\"javascript:;\">sample link</a></blockquote></div></div><div class=\"postContainer replyContainer quotesYou noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\"><a href=\"javascript:;\" class=\"quotelink you\">&gt;&gt;108900390<span class=\"qmark-you\">&nbsp;(You)</span><span class=\"qmark-op\">&nbsp;(OP)</span></a><br><span class=\"quote\">&gt;sample quote line</span><br>Reply quoting you sample.<br><a href=\"javascript:;\">sample link</a></blockquote></div></div></div></div></fieldset><fieldset class=\"custom-css-editor\"><legend>Custom CSS</legend><div class=\"custom-css-enable-controls\"><label><input type=\"checkbox\" name=\"Custom CSS\"> Enable Custom CSS</label><label><input type=\"checkbox\" name=\"Custom CSS on Homepage\"> Load Custom CSS on home page</label></div><div class=\"custom-css-note\">For more information about customizing 4chan-eX&#039;s CSS, see the <a href=\"https://github.com/cercos/4chan-eX/wiki/Styling-Guide\" target=\"_blank\">styling guide</a>.</div><div class=\"custom-css-note\"><strong>Note:</strong> Custom CSS can override the classes and styles used by built-in Highlight Styles.</div><div class=\"custom-css-controls\"><label>Theme:<select name=\"CSS Highlight Theme\"><option value=\"auto\">Auto</option><option value=\"vscode-dark\">VS Code Dark</option><option value=\"monokai\">Monokai</option><option value=\"github-light\">GitHub Light</option><option value=\"dracula\">Dracula</option></select></label><button id=\"apply-css\">Apply CSS</button></div><textarea hidden name=\"usercss\" class=\"field\" spellcheck=\"false\"></textarea></fieldset><fieldset><legend>Time Formatting <span class=\"warning\" data-feature=\"Time Formatting\">is disabled.</span></legend><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></fieldset><fieldset><legend>Quote Backlinks formatting <span class=\"warning\" data-feature=\"Quote Backlinks\">is disabled.</span></legend><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></fieldset><fieldset><legend>File Info Formatting <span class=\"warning\" data-feature=\"File Info Formatting\">is disabled.</span></legend><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></fieldset><fieldset><legend>Unread Favicon <span class=\"warning\" data-feature=\"Unread Favicon\">is disabled.</span></legend><select name=\"favicon\"><option value=\"ferongr\">ferongr</option><option value=\"xat-\">xat-</option><option value=\"4chanJS\">4chanJS</option><option value=\"Mayhem\">Mayhem</option><option value=\"Original\">Original</option><option value=\"Metro\">Metro</option></select><span class=\"favicon-preview\"></span></fieldset><fieldset><legend>Known Banners</legend><div>List of known banners, used for click-to-change feature.</div><textarea hidden name=\"knownBanners\" class=\"field\" spellcheck=\"false\"></textarea></fieldset>"});
       Settings.setupSiteStyleMirror(section);
       ref2 = $$('.warning', section);
       for (l = 0, len2 = ref2.length; l < len2; l++) {
@@ -22052,7 +21851,7 @@ CustomCSS = (function() {
     generatedHighlightCSS: function() {
       var styles;
       styles = this.generatedHighlightSettings();
-      return "/* Auto-generated Highlight Styles (4chan-eX) */\n:root .watched {\n  background: " + styles.watchedRGBA + " !important;\n  color: " + styles.watchedTextColor + " !important;\n}\n:root .watched a,\n:root .watched .quotelink,\n:root .watched .deadlink,\n:root .watched .postNum > a:last-child {\n  color: " + styles.watchedLinkColor + " !important;\n}\n:root .watched .postNum > a:first-child,\n:root .watched .name,\n:root .watched .dateTime,\n:root .watched .postNum {\n  color: inherit !important;\n}\n:root .watched .quote {\n  color: " + styles.watchedQuoteColor + " !important;\n}\n:root .watched .subject {\n  color: " + styles.watchedSubjectColor + " !important;\n}\n\n:root .watched:has(> .yourPost) {\n  background: " + styles.yourPostRGBA + " !important;\n}\n\n:root .watched > .yourPost {\n  background: " + styles.yourPostRGBA + " !important;\n}\n\n:root .watched:has(> .yourPost) > .yourPost {\n  background: transparent !important;\n}\n:root .watched:has(> .yourPost) .subject,\n:root .watched > .yourPost .subject {\n  color: " + styles.yourPostSubjectColor + " !important;\n}\n\n:root :not(.watched) > .yourPost:not(.opContainer) div.post {\n  background: " + styles.yourPostRGBA + " !important;\n  color: " + styles.yourPostTextColor + " !important;\n}\n:root :not(.watched) > .yourPost:not(.opContainer) div.post a,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .quotelink,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .deadlink,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a:last-child {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a:first-child,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .name,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .dateTime,\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum {\n  color: inherit !important;\n}\n:root :not(.watched) > .yourPost:not(.opContainer) div.post .quote {\n  color: " + styles.yourPostQuoteColor + " !important;\n}\n\n:root.highlight-own.highlight-own.highlight-own .yourPost > .op,\n:root.highlight-own.highlight-own.highlight-own .yourPost > .reply {\n  border-left: 3px dashed " + styles.yourPostBorderRGBA + " !important;\n}\n\n:root.highlight-you .replyContainer.quotesYou > .reply,\n:root.highlight-you .postContainer.quotesYou > .reply,\n:root.highlight-you .opContainer.quotesYou > .op {\n  background: " + styles.quotesYouRGBA + " !important;\n  color: " + styles.quotesYouTextColor + " !important;\n}\n:root.highlight-you.highlight-you.highlight-you .quotesYou > .op,\n:root.highlight-you.highlight-you.highlight-you .quotesYou > .reply {\n  border-left: 3px solid " + styles.quotesYouBorderRGBA + " !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply a,\n:root.highlight-you .postContainer.quotesYou > .reply a,\n:root.highlight-you .opContainer.quotesYou > .op a,\n:root.highlight-you .replyContainer.quotesYou > .reply .quotelink,\n:root.highlight-you .postContainer.quotesYou > .reply .quotelink,\n:root.highlight-you .opContainer.quotesYou > .op .quotelink,\n:root.highlight-you .replyContainer.quotesYou > .reply .deadlink,\n:root.highlight-you .postContainer.quotesYou > .reply .deadlink,\n:root.highlight-you .opContainer.quotesYou > .op .deadlink {\n  color: " + styles.quotesYouLinkColor + " !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply .postNum > a:first-child,\n:root.highlight-you .postContainer.quotesYou > .reply .postNum > a:first-child,\n:root.highlight-you .opContainer.quotesYou > .op .postNum > a:first-child,\n:root.highlight-you .replyContainer.quotesYou > .reply .name,\n:root.highlight-you .postContainer.quotesYou > .reply .name,\n:root.highlight-you .opContainer.quotesYou > .op .name,\n:root.highlight-you .replyContainer.quotesYou > .reply .dateTime,\n:root.highlight-you .postContainer.quotesYou > .reply .dateTime,\n:root.highlight-you .opContainer.quotesYou > .op .dateTime,\n:root.highlight-you .replyContainer.quotesYou > .reply .postNum,\n:root.highlight-you .postContainer.quotesYou > .reply .postNum,\n:root.highlight-you .opContainer.quotesYou > .op .postNum {\n  color: inherit !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply .quote,\n:root.highlight-you .postContainer.quotesYou > .reply .quote,\n:root.highlight-you .opContainer.quotesYou > .op .quote {\n  color: " + styles.quotesYouQuoteColor + " !important;\n}";
+      return "/* Auto-generated Highlight Styles (4chan-eX) */\n:root .watched {\n  background: " + styles.watchedRGBA + " !important;\n  color: " + styles.watchedTextColor + " !important;\n}\n:root .watched a,\n:root .watched .quotelink,\n:root .watched .deadlink {\n  color: " + styles.watchedLinkColor + " !important;\n}\n:root .watched .postNum > a,\n:root .watched .name,\n:root .watched .dateTime,\n:root .watched .postNum {\n  color: inherit !important;\n}\n:root .watched .quote {\n  color: " + styles.watchedQuoteColor + " !important;\n}\n:root .watched .subject {\n  color: " + styles.watchedSubjectColor + " !important;\n}\n\n:root.highlight-own .watched:has(> .yourPost) {\n  background: " + styles.yourPostRGBA + " !important;\n}\n\n:root.highlight-own .watched > .yourPost {\n  background: " + styles.yourPostRGBA + " !important;\n}\n\n:root.highlight-own .watched:has(> .yourPost) > .yourPost {\n  background: transparent !important;\n}\n:root.highlight-own .watched:has(> .yourPost) .subject,\n:root.highlight-own .watched > .yourPost .subject {\n  color: " + styles.yourPostSubjectColor + " !important;\n}\n\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post {\n  background: " + styles.yourPostRGBA + " !important;\n  color: " + styles.yourPostTextColor + " !important;\n}\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post a,\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .quotelink,\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .deadlink {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a,\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .name,\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .dateTime,\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .postNum {\n  color: inherit !important;\n}\n:root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .quote {\n  color: " + styles.yourPostQuoteColor + " !important;\n}\n\n:root.highlight-own.highlight-own.highlight-own .yourPost > .op,\n:root.highlight-own.highlight-own.highlight-own .yourPost > .reply {\n  border-left: 3px dashed " + styles.yourPostBorderRGBA + " !important;\n}\n\n:root.highlight-you .replyContainer.quotesYou > .reply,\n:root.highlight-you .postContainer.quotesYou > .reply,\n:root.highlight-you .opContainer.quotesYou > .op {\n  background: " + styles.quotesYouRGBA + " !important;\n  color: " + styles.quotesYouTextColor + " !important;\n}\n:root.highlight-you.highlight-you.highlight-you .quotesYou > .op,\n:root.highlight-you.highlight-you.highlight-you .quotesYou > .reply {\n  border-left: 3px solid " + styles.quotesYouBorderRGBA + " !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply a,\n:root.highlight-you .postContainer.quotesYou > .reply a,\n:root.highlight-you .opContainer.quotesYou > .op a,\n:root.highlight-you .replyContainer.quotesYou > .reply .quotelink,\n:root.highlight-you .postContainer.quotesYou > .reply .quotelink,\n:root.highlight-you .opContainer.quotesYou > .op .quotelink,\n:root.highlight-you .replyContainer.quotesYou > .reply .deadlink,\n:root.highlight-you .postContainer.quotesYou > .reply .deadlink,\n:root.highlight-you .opContainer.quotesYou > .op .deadlink {\n  color: " + styles.quotesYouLinkColor + " !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply .postNum > a,\n:root.highlight-you .postContainer.quotesYou > .reply .postNum > a,\n:root.highlight-you .opContainer.quotesYou > .op .postNum > a,\n:root.highlight-you .replyContainer.quotesYou > .reply .name,\n:root.highlight-you .postContainer.quotesYou > .reply .name,\n:root.highlight-you .opContainer.quotesYou > .op .name,\n:root.highlight-you .replyContainer.quotesYou > .reply .dateTime,\n:root.highlight-you .postContainer.quotesYou > .reply .dateTime,\n:root.highlight-you .opContainer.quotesYou > .op .dateTime,\n:root.highlight-you .replyContainer.quotesYou > .reply .postNum,\n:root.highlight-you .postContainer.quotesYou > .reply .postNum,\n:root.highlight-you .opContainer.quotesYou > .op .postNum {\n  color: inherit !important;\n}\n:root.highlight-you .replyContainer.quotesYou > .reply .quote,\n:root.highlight-you .postContainer.quotesYou > .reply .quote,\n:root.highlight-you .opContainer.quotesYou > .op .quote {\n  color: " + styles.quotesYouQuoteColor + " !important;\n}";
     },
     generatedHighlightPreviewCSS: function() {
       var styles;
@@ -33184,9 +32983,17 @@ QuoteYou = (function() {
       if (Conf['Highlight Own Posts']) {
         $.addClass(doc, 'highlight-own');
       }
+      $.sync('Highlight Own Posts', function(enabled) {
+        Conf['Highlight Own Posts'] = enabled;
+        return doc.classList.toggle('highlight-own', enabled);
+      });
       if (Conf['Highlight Posts Quoting You']) {
         $.addClass(doc, 'highlight-you');
       }
+      $.sync('Highlight Posts Quoting You', function(enabled) {
+        Conf['Highlight Posts Quoting You'] = enabled;
+        return doc.classList.toggle('highlight-you', enabled);
+      });
       if (Conf['Comment Expansion']) {
         ExpandComment.callbacks.push(this.node);
       }

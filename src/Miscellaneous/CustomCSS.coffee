@@ -163,38 +163,38 @@ CustomCSS =
         color: #{styles.watchedSubjectColor} !important;
       }
 
-      :root .watched:has(> .yourPost) {
+      :root.highlight-own .watched:has(> .yourPost) {
         background: #{styles.yourPostRGBA} !important;
       }
 
-      :root .watched > .yourPost {
+      :root.highlight-own .watched > .yourPost {
         background: #{styles.yourPostRGBA} !important;
       }
 
-      :root .watched:has(> .yourPost) > .yourPost {
+      :root.highlight-own .watched:has(> .yourPost) > .yourPost {
         background: transparent !important;
       }
-      :root .watched:has(> .yourPost) .subject,
-      :root .watched > .yourPost .subject {
+      :root.highlight-own .watched:has(> .yourPost) .subject,
+      :root.highlight-own .watched > .yourPost .subject {
         color: #{styles.yourPostSubjectColor} !important;
       }
 
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post {
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post {
         background: #{styles.yourPostRGBA} !important;
         color: #{styles.yourPostTextColor} !important;
       }
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post a,
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .quotelink,
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .deadlink {
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post a,
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .quotelink,
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .deadlink {
         color: #{styles.yourPostLinkColor} !important;
       }
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a,
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .name,
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .dateTime,
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .postNum {
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .postNum > a,
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .name,
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .dateTime,
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .postNum {
         color: inherit !important;
       }
-      :root :not(.watched) > .yourPost:not(.opContainer) div.post .quote {
+      :root.highlight-own :not(.watched) > .yourPost:not(.opContainer) div.post .quote {
         color: #{styles.yourPostQuoteColor} !important;
       }
 

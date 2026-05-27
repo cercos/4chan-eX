@@ -807,7 +807,6 @@ Config =
   'Highlight Link Color': '#99c3ff'
   'Custom CSS on Homepage': true
   'CSS Highlight Theme': 'auto'
-  'Settings Theme': 'site'
   'Work around CORB Bug': true
   'Enable Native Flash Embedding': true
   'Thread Title': 'excerpt'
