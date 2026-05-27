@@ -579,10 +579,12 @@ ThreadWatcher =
 
     if ThreadWatcher.showThumbnails()
       thumb = if data.thumbURL
-        $.el 'img',
+        img = $.el 'img',
           src: data.thumbURL
           alt: ''
           className: 'watcher-thumb'
+        $.on img, 'load', ThreadWatcher.onThumbLoad
+        img
       else
         $.el 'span',
           className: 'watcher-thumb watcher-thumb-missing'
@@ -697,9 +699,38 @@ ThreadWatcher =
 
   estimateStorage: ->
     try
-      JSON.stringify(ThreadWatcher.db.data).length
+      bytes = JSON.stringify(ThreadWatcher.db.data).length
+      bytes += ThreadWatcher.estimateThumbBytes()
+      bytes
     catch
       0
+
+  onThumbLoad: ->
+    clearTimeout ThreadWatcher.thumbLoadTimer if ThreadWatcher.thumbLoadTimer
+    ThreadWatcher.thumbLoadTimer = setTimeout (->
+      ThreadWatcher.thumbLoadTimer = null
+      total = 0
+      for siteID, boards of ThreadWatcher.db.data when typeof boards is 'object' and boards?.boards
+        for boardID, threads of boards.boards
+          for threadID, data of threads when data and typeof data is 'object'
+            total++
+      ThreadWatcher.refreshFooter total
+    ), 250
+
+  estimateThumbBytes: ->
+    return 0 unless ThreadWatcher.showThumbnails()
+    loaded = new Set()
+    total = 0
+    if ThreadWatcher.dialog
+      for img in ThreadWatcher.dialog.querySelectorAll('img.watcher-thumb')
+        if img.naturalWidth and img.naturalHeight
+          total += img.naturalWidth * img.naturalHeight * 4
+          loaded.add img.src if img.src
+    for siteID, boards of ThreadWatcher.db.data when typeof boards is 'object' and boards?.boards
+      for boardID, threads of boards.boards
+        for threadID, data of threads when data?.thumbURL and not loaded.has(data.thumbURL)
+          total += 8192
+    total
 
   formatBytes: (n) ->
     return '0 B' unless n > 0
