@@ -53,7 +53,9 @@ SW.yotsuba =
       isClosed:   '.closedIcon'
       isArchived: '.archivedIcon'
     file:
-      text:  '.file > :first-child'
+      # `.fileInfo` covers /f/ posts; `.fileText` everything else. Avoids the
+      # `<meta>` element 4chan now injects as the first child of `.file`.
+      text:  '.file > .fileInfo, .file > .fileText'
       link:  '.fileText > a'
       thumb: 'a.fileThumb > [data-md5]'
     thumbLink: 'a.fileThumb'
