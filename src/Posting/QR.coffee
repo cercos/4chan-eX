@@ -245,6 +245,136 @@ QR =
   texPreviewHide: ->
     $.rmClass QR.nodes.el, 'tex-preview'
 
+  livePreviewEscape: (s) ->
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+  livePreviewRenderInline: (text) ->
+    # Quote links: >>>/board/123 and >>123
+    parts = text.split /(>>>\/[a-zA-Z\d]+\/\d+|>>\d+)/g
+    out = ''
+    for part, i in parts
+      if i % 2 is 1
+        out += "<a class=\"quotelink\" href=\"javascript:;\">#{QR.livePreviewEscape part}</a>"
+      else
+        out += QR.livePreviewEscape part
+    out
+
+  livePreviewSupportedTags: ->
+    config = g.BOARD?.config or {}
+    isQst = g.BOARD?.ID is 'qst'
+    tags = $.dict()
+    tags.spoiler = ['<s>', '</s>'] if config.spoilers
+    tags.code    = ['<pre class="prettyprint">', '</pre>'] if config.code_tags
+    tags.math    = ['<span class="math">[math]', '[/math]</span>'] if config.math_tags
+    tags.eqn     = ['<span class="math">[eqn]', '[/eqn]</span>'] if config.math_tags
+    tags.sjis    = ['<span class="sjis">', '</span>'] if config.sjis_tags
+    if isQst
+      tags.red   = ['<span class="qst-color qst-red">', '</span>']
+      tags.green = ['<span class="qst-color qst-green">', '</span>']
+      tags.blue  = ['<span class="qst-color qst-blue">', '</span>']
+    tags
+
+  livePreviewRender: ->
+    return unless QR.nodes and QR.nodes.livePreview
+    return if QR.nodes.livePreview.hidden
+    text = QR.nodes.com.value or ''
+    htmlTags = QR.livePreviewSupportedTags()
+    # Only build a regex for tags this board supports — unsupported tags fall through as literal text.
+    tagNames = Object.keys(htmlTags)
+    tokens = []
+    if tagNames.length
+      tagRE = new RegExp "\\[(\\/?)(#{tagNames.join '|'})\\]", 'gi'
+      last = 0
+      while m = tagRE.exec text
+        tokens.push {type: 'text', value: text.slice(last, m.index)} if m.index > last
+        tokens.push {type: 'tag', close: m[1] is '/', name: m[2].toLowerCase(), raw: m[0]}
+        last = tagRE.lastIndex
+      tokens.push {type: 'text', value: text.slice(last)} if last < text.length
+    else
+      tokens.push {type: 'text', value: text}
+
+    stack = []
+    htmlParts = []
+    insideCode = -> 'code' in stack
+    for tok in tokens
+      if tok.type is 'tag' and not (insideCode() and tok.name isnt 'code')
+        if tok.close
+          if (idx = stack.lastIndexOf tok.name) >= 0
+            while stack.length > idx
+              closed = stack.pop()
+              htmlParts.push htmlTags[closed][1]
+          else
+            htmlParts.push QR.livePreviewEscape tok.raw
+        else
+          stack.push tok.name
+          htmlParts.push htmlTags[tok.name][0]
+      else
+        value = if tok.type is 'tag' then tok.raw else tok.value
+        if insideCode()
+          htmlParts.push QR.livePreviewEscape(value)
+        else
+          # Render line by line so we can apply greentext on lines starting with > (but not >>).
+          lines = value.split '\n'
+          for line, i in lines
+            isQuoteLink = /^>>(?:>\/[a-zA-Z\d]+\/)?\d/.test line
+            isGreentext = line[0] is '>' and not isQuoteLink and stack.length is 0
+            inner = QR.livePreviewRenderInline line
+            if isGreentext
+              htmlParts.push "<span class=\"quote\">#{inner}</span>"
+            else
+              htmlParts.push inner
+            htmlParts.push '<br>' if i < lines.length - 1
+
+    # Close any unclosed tags.
+    while stack.length
+      closed = stack.pop()
+      htmlParts.push htmlTags[closed][1]
+
+    QR.nodes.livePreview.innerHTML = htmlParts.join ''
+    if g.BOARD?.config?.math_tags and /\[(math|eqn)\]/i.test(text)
+      $.event 'mathjax', null, QR.nodes.livePreview
+
+  livePreviewPositions: ['button', 'bottom', 'top', 'left', 'right']
+
+  livePreviewApplyMode: ->
+    return unless QR.nodes
+    enabled = !!Conf['Comment Preview']
+    pos = Conf['Comment Preview Position']
+    pos = 'button' unless pos in QR.livePreviewPositions
+    {classList} = QR.nodes.el
+    classList.toggle 'has-live-preview', enabled
+    for p in QR.livePreviewPositions
+      classList.toggle "qr-preview-pos-#{p}", enabled and pos is p
+    if enabled and pos isnt 'button'
+      # Always-on modes: preview is permanently visible, no toggle state.
+      classList.remove 'preview-on'
+      QR.nodes.livePreview.hidden = false
+      QR.livePreviewRender()
+    else
+      # Button mode (or feature disabled): preview only shown when explicitly toggled.
+      isOn = enabled and $.hasClass(QR.nodes.el, 'preview-on')
+      classList.toggle 'preview-on', isOn
+      QR.nodes.livePreview.hidden = !isOn
+      QR.livePreviewRender() if isOn
+
+  livePreviewToggleAvailable: (enabled) ->
+    Conf['Comment Preview'] = !!enabled
+    QR.livePreviewApplyMode()
+
+  livePreviewSetPosition: (pos) ->
+    pos = 'button' unless pos in QR.livePreviewPositions
+    Conf['Comment Preview Position'] = pos
+    QR.livePreviewApplyMode()
+
+  livePreviewClick: ->
+    return unless QR.nodes
+    pos = Conf['Comment Preview Position']
+    return unless (pos is 'button') or not (pos in QR.livePreviewPositions)
+    QR.nodes.el.classList.toggle 'preview-on'
+    isOn = $.hasClass QR.nodes.el, 'preview-on'
+    QR.nodes.livePreview.hidden = !isOn
+    QR.livePreviewRender() if isOn
+
   addPost: ->
     wasOpen = (QR.nodes and !QR.nodes.el.hidden)
     QR.open()
@@ -586,6 +716,7 @@ QR =
     setNode 'form',           'form'
     setNode 'sjisToggle',     '#sjis-toggle'
     setNode 'texButton',      '#tex-preview-button'
+    setNode 'livePreviewBtn', '#live-preview-toggle'
     setNode 'name',           '[data-name=name]'
     setNode 'email',          '[data-name=email]'
     setNode 'sub',            '[data-name=sub]'
@@ -593,6 +724,7 @@ QR =
     setNode 'charCount',      '#char-count'
     setNode 'splitPost',      '#split-post'
     setNode 'texPreview',     '#tex-preview'
+    setNode 'livePreview',    '#qr-live-preview'
     setNode 'dumpList',       '#dump-list'
     setNode 'addPost',        '#add-post'
     setNode 'oekaki',         '.oekaki'
@@ -620,6 +752,8 @@ QR =
     classList.toggle 'has-math',     !!config.math_tags
     classList.toggle 'sjis-preview', !!config.sjis_tags and Conf['sjisPreview']
     classList.toggle 'show-new-thread-option', Conf['Show New Thread Option in Threads']
+    QR.nodes.livePreview.hidden = true
+    QR.livePreviewApplyMode()
 
     if parseInt(Conf['customCooldown'], 10) > 0
       $.addClass QR.nodes.fileSubmit, 'custom-cooldown'
@@ -650,6 +784,10 @@ QR =
     $.on nodes.customCooldown, 'click',     QR.toggleCustomCooldown
     $.on nodes.dumpButton,     'click',     -> nodes.el.classList.toggle 'dump'
     $.on nodes.fileInput,      'change',    QR.handleFiles
+    $.on nodes.com,            'input',     QR.livePreviewRender
+    $.on nodes.livePreviewBtn, 'click',     QR.livePreviewClick
+    $.sync 'Comment Preview', QR.livePreviewToggleAvailable
+    $.sync 'Comment Preview Position', QR.livePreviewSetPosition
 
     window.addEventListener 'focus', QR.focus, true
     window.addEventListener 'blur',  QR.focus, true

@@ -1098,11 +1098,38 @@ div[data-checked="false"] > .suboption-list {
 #sauce-doc-expand + .riceCheck {
   display: none;
 }
+.section-media .sauces-field,
 .section-sauce textarea {
   height: 430px;
+  width: 100%;
 }
+.section-interface .field[name="boardnav"],
 .section-advanced .field[name="boardnav"] {
   width: 100%;
+}
+.section-interface .field[name="boardnav"] {
+  height: 90px;
+}
+.section-interface .boardnav-help {
+  margin-top: .5em;
+  font-size: .95em;
+  opacity: .9;
+}
+.section-interface .boardnav-help code {
+  white-space: nowrap;
+}
+#boardnav-doc-expand:not(:checked) ~ #boardnav-doc {
+  max-height: 130px;
+  overflow: auto;
+}
+#boardnav-doc > label {
+  float: right;
+  margin: 0 5px;
+  cursor: pointer;
+}
+/* XXX for OneeChan */
+#boardnav-doc-expand + .riceCheck {
+  display: none;
 }
 .section-advanced textarea {
   height: 150px;
@@ -2852,9 +2879,53 @@ body:not(.board_f) #qr select[name="filetag"],
 #qr.reply-to-thread select[name="filetag"],
 #qr:not(.has-sjis) #sjis-toggle,
 #qr:not(.has-math) #tex-preview-button,
+#qr:not(.has-live-preview) #live-preview-toggle,
+#qr.has-live-preview:not(.qr-preview-pos-button) #live-preview-toggle,
 #qr.tex-preview .textarea > :not(#tex-preview),
-#qr:not(.tex-preview) #tex-preview {
+#qr:not(.tex-preview) #tex-preview,
+#qr.qr-preview-pos-button.preview-on textarea[data-name="com"],
+#qr.qr-preview-pos-button.preview-on #char-count,
+#qr.qr-preview-pos-button.preview-on #split-post {
   display: none;
+}
+
+/* Always-on preview layouts */
+#qr.qr-preview-pos-bottom .textarea,
+#qr.qr-preview-pos-top    .textarea {
+  flex-direction: column;
+}
+#qr.qr-preview-pos-bottom #qr-live-preview {
+  order: 9;
+  margin-top: 3px;
+}
+#qr.qr-preview-pos-top #qr-live-preview {
+  order: -1;
+  margin-bottom: 3px;
+}
+#qr.qr-preview-pos-left .textarea {
+  flex-direction: row;
+}
+#qr.qr-preview-pos-left #qr-live-preview {
+  order: -1;
+  margin-right: 3px;
+}
+#qr.qr-preview-pos-right .textarea {
+  flex-direction: row;
+}
+#qr.qr-preview-pos-right #qr-live-preview {
+  order: 9;
+  margin-left: 3px;
+}
+#qr.qr-preview-pos-left #qr-live-preview,
+#qr.qr-preview-pos-right #qr-live-preview {
+  flex: 1 1 0;
+  width: 0;
+  align-self: stretch;
+}
+#qr.qr-preview-pos-left  textarea[data-name="com"],
+#qr.qr-preview-pos-right textarea[data-name="com"] {
+  flex: 1 1 0;
+  width: 0;
 }
 .persona button {
   -webkit-flex: 0 0 23px;
@@ -2879,6 +2950,67 @@ body:not(.board_f) #qr select[name="filetag"],
 }
 #tex-preview {
   white-space: pre-line;
+}
+#qr-live-preview[hidden] {
+  display: none;
+}
+#qr-live-preview {
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px 6px;
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 2px;
+  width: 100%;
+  height: 14.8em;
+  min-height: 9em;
+  overflow-y: auto;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  font-size: inherit;
+  line-height: 1.3;
+  background: rgba(128, 128, 128, 0.06);
+}
+#qr.has-captcha #qr-live-preview {
+  height: 9em;
+}
+#qr-live-preview:empty::before {
+  content: 'Nothing to preview - switch back with the eye button.';
+  opacity: 0.5;
+  font-style: italic;
+}
+#qr #live-preview-toggle {
+  font-size: 12px;
+}
+#qr.preview-on #live-preview-toggle {
+  background: #DCDCDC;
+}
+#qr-live-preview .quote {
+  color: #789922;
+}
+#qr-live-preview .quotelink {
+  color: inherit;
+  text-decoration: underline;
+}
+#qr-live-preview .qst-color.qst-red   { color: #b91919; }
+#qr-live-preview .qst-color.qst-green { color: #789922; }
+#qr-live-preview .qst-color.qst-blue  { color: #2a5db0; }
+#qr-live-preview pre {
+  white-space: pre-wrap;
+  font-family: monospace;
+  margin: 2px 0;
+}
+#qr-live-preview s {
+  background: #000;
+  color: #000;
+}
+#qr-live-preview s:hover {
+  color: #fff;
+}
+#qr.sjis-preview #qr-live-preview {
+  font-family: "IPAMonaPGothic","Mona","MS PGothic",monospace;
+  font-size: 16px;
+  line-height: 17px;
 }
 #qr textarea.field {
   height: 14.8em;

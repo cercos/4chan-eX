@@ -513,6 +513,11 @@ Config =
         'Indicate the remaining time before posting again.'
         1
       ]
+      'Comment Preview': [
+        false
+        'Show a live WYSIWYG preview of your post in the Quick Reply. Only formatting actually supported by the current board is rendered (e.g. [code] only on /g/, [math] only on /sci/, [red]/[green]/[blue] only on /qst/); unsupported tags appear as plain text, matching how the post will display.'
+        1
+      ]
       'Posting Success Notifications': [
         true
         'Show notifications on successful post creation or file uploading.'
@@ -851,6 +856,7 @@ Config =
 
   'Custom CSS': true
   'Open Filters Mode': 'remember'
+  'Comment Preview Position': 'button'
   'Generated Highlight Styles': true
   'Highlight Watched Color': '#08357d'
   'Highlight Watched Opacity': '1'

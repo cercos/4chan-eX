@@ -529,7 +529,7 @@ Settings =
 
       if keyFS is 'Posting and Captchas'
         for [legendTitle, keys, baseLevel] in [
-          ['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Pass Link'], 0]
+          ['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Comment Preview', 'Pass Link'], 0]
           ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio'], 1]
           ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]
         ]
@@ -540,6 +540,15 @@ Settings =
           if legendTitle is 'Captcha'
             $.add fs, $.el 'p',
               `<%= html('For more info on captcha options and issues, see the <a href="' + meta.captchaFAQ + '" target="_blank">captcha FAQ</a>.') %>`
+          if legendTitle is 'Workflow'
+            posDiv = $.el 'div',
+              className: 'suboption-list'
+            $.extend posDiv, `<%= html('<label>Comment preview position: <select class="field" name="Comment Preview Position"><option value="button">Toggle button (replaces textarea)</option><option value="bottom">Always shown — below textarea</option><option value="top">Always shown — above textarea</option><option value="left">Always shown — left of textarea</option><option value="right">Always shown — right of textarea</option></select></label>') %>`
+            posSel = $ 'select[name="Comment Preview Position"]', posDiv
+            posSel.value = Conf['Comment Preview Position'] or 'button'
+            posSel.value = 'button' unless posSel.value in ['button', 'bottom', 'top', 'left', 'right']
+            $.on posSel, 'change', $.cb.value
+            $.add fs, posDiv
           $.add section, fs
         continue
 
@@ -719,6 +728,54 @@ Settings =
     items = $.dict()
     inputs = $.dict()
 
+    # Custom Board Navigation (moved from Advanced) - shown at top of Interface
+    fsNav = $.el 'fieldset',
+      `<%= html('<legend>Board Navigation</legend>') %>`
+    textarea = $.el 'textarea',
+      name: 'boardnav'
+      className: 'field boardnav-field'
+      spellcheck: false
+    $.on textarea, 'change', $.cb.value
+    $.on textarea, 'change', Settings.boardnav
+    items['boardnav'] = Conf['boardnav']
+    inputs['boardnav'] = textarea
+    $.add fsNav, textarea
+    $.add fsNav, $.el 'input',
+      type: 'checkbox'
+      id: 'boardnav-doc-expand'
+      hidden: true
+    $.add fsNav, $.el 'div',
+      id: 'boardnav-doc'
+      className: 'boardnav-help'
+      `<%= html(
+        '<label for="boardnav-doc-expand">[expand]</label>' +
+        '<span class="note">New lines will be converted into spaces.</span><br><br>' +
+        '<div class="note">In the following examples for /g/, <code>g</code> can be changed to a different board ID (<code>a</code>, <code>b</code>, etc...), the current board (<code>current</code>), or the Twitter link (<code>@</code>).</div>' +
+        '<div>Board link: <code>g</code></div>' +
+        '<div>Archive link: <code>g-archive</code></div>' +
+        '<div>Internal archive link: <code>g-expired</code></div>' +
+        '<div>Title link: <code>g-title</code></div>' +
+        '<div>Board link (Replace with title when on that board): <code>g-replace</code></div>' +
+        '<div>Full text link: <code>g-full</code></div>' +
+        '<div>Custom text link: <code>g-text:&quot;Install Gentoo&quot;</code></div>' +
+        '<div>Index-only link: <code>g-index</code></div>' +
+        '<div>Catalog-only link: <code>g-catalog</code></div>' +
+        '<div>Index mode: <code>g-mode:&quot;infinite scrolling&quot;</code></div>' +
+        '<div>Index sort: <code>g-sort:&quot;creation date rev&quot;</code></div>' +
+        '<div>External link: <code>external-text:&quot;Google&quot;,&quot;http://www.google.com&quot;</code></div>' +
+        '<div>Open in new tab: <code>g-nt</code></div>' +
+        '<div>Combinations are possible: <code>g-index-text:&quot;Technology Index&quot;</code></div>' +
+        '<div>Full board list toggle: <code>toggle-all</code></div>' +
+        '<br>' +
+        '<div class="note">' +
+        '<code>[ toggle-all ] [current-title] [g-title / a-title / jp-title] [x / wsg / h] [t-text:&quot;Piracy&quot;]</code><br>' +
+        'will give you<br>' +
+        '<code>[ + ] [Technology] [Technology / Anime &amp; Manga / Otaku Culture] [x / wsg / h] [Piracy]</code><br>' +
+        'if you are on /g/.' +
+        '</div>'
+      ) %>`
+    $.add section, fsNav
+
     Settings.renderMainGroups section,
       categories: [
         {
@@ -734,20 +791,6 @@ Settings =
       includeWarnings: false
       includeJSONIndex: false
       includeHiddenCount: false
-
-    # Custom Board Navigation (moved from Advanced)
-    fsNav = $.el 'fieldset',
-      `<%= html('<legend>Board Navigation</legend>') %>`
-    textarea = $.el 'textarea',
-      name: 'boardnav'
-      className: 'field'
-      spellcheck: false
-    $.on textarea, 'change', $.cb.value
-    $.on textarea, 'change', Settings.boardnav
-    items['boardnav'] = Conf['boardnav']
-    inputs['boardnav'] = textarea
-    $.add fsNav, textarea
-    $.add section, fsNav
 
     $.get items, (items) ->
       for key, val of items
@@ -867,9 +910,23 @@ Settings =
     
     # Quick Reply Personas (moved from Advanced)
     fs = $.el 'fieldset',
-      `<%= html('<legend>Personas</legend>') %>`
+      `<%= html('<legend>Quick Reply Personas</legend>') %>`
     div = $.el 'div',
-      `<%= html('<textarea name="QR.personas" class="field" spellcheck="false"></textarea><p class="description">One persona per line (e.g. name:"Name";options:"sage"). See Advanced for more details.</p>') %>`
+      `<%= html(
+        '<textarea name="QR.personas" class="personafield field" spellcheck="false"></textarea>' +
+        '<p>' +
+          'One item per line.<br>' +
+          'Items will be added in the relevant input&#039;s auto-completion list.<br>' +
+          'Password items will always be used, since there is no password input.<br>' +
+          'Lines starting with a <code>#</code> will be ignored.' +
+        '</p>' +
+        '<ul>You can use these settings with each item, separate them with semicolons:' +
+          '<li>Possible items are: <code>name</code>, <code>options</code> (or equivalently <code>email</code>), <code>subject</code> and <code>password</code>.</li>' +
+          '<li>Wrap values of items with quotes, like this: <code>options:&quot;sage&quot;</code>.</li>' +
+          '<li>Force values as defaults with the <code>always</code> keyword, for example: <code>options:&quot;sage&quot;;always</code>.</li>' +
+          '<li>Select specific boards for an item, separated with commas, for example: <code>options:&quot;sage&quot;;boards:jp;always</code>.</li>' +
+        '</ul>'
+      ) %>`
     div.dataset.name = 'QR.personas'
     div.dataset.settingTitle = 'Personas'
     textarea = $ 'textarea', div
