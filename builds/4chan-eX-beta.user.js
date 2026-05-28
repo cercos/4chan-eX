@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX beta
-// @version      1.1.2
+// @version      1.1.3
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -234,7 +234,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1.1.2',
+  VERSION:   '1.1.3',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)
@@ -323,6 +323,8 @@ Config = (function() {
         'Filtered Backlinks': [false, 'When enabled, shows backlinks to filtered posts with a line-through decoration. Otherwise, hides the backlinks.', 1],
         'Filter in Native Catalog': [true, 'Apply 4chan-eX filters in native catalog.', 1],
         'MD5 Quick Filter Notifications': [true, 'Show notification when quick filtering MD5s using the button or keybind.', 1],
+        'Catalog Shift-Click Image MD5': [true, 'In catalog view, shift-clicking an image toggles filtering by its MD5. When disabled, normal catalog shift-click thread actions apply everywhere on the tile.', 1],
+        'Thread Shift-Click Image MD5': [true, 'In thread/index view, shift-clicking an image toggles filtering by its MD5 and marks matching posts/images.', 1],
         'Recursive Hiding': [true, 'Hide replies of hidden posts, recursively.'],
         'Thread Hiding Buttons': [true, 'Add buttons to hide entire threads.'],
         'Reply Hiding Buttons': [true, 'Add buttons to hide single replies.'],
@@ -398,8 +400,14 @@ Config = (function() {
         'Auto-process Images': [true, 'Automatically convert unsupported image formats and resize oversized image uploads in Quick Reply.', 1],
         'Show Upload Progress': [true, 'Track progress of file uploads as percentage in submit button.', 1],
         'Strip Video Audio': [true, 'Remove audio from MP4 and WebM uploads in Quick Reply on boards that do not allow audio.', 1],
+        'Strip All Media Metadata': [false, 'Strip metadata from all uploaded media in Quick Reply, regardless of type.', 1],
+        'Image Metadata': [true, 'Strip metadata from image uploads in Quick Reply when "Strip All Media Metadata" is disabled.', 2],
+        'Video Metadata': [true, 'Strip metadata from video uploads in Quick Reply when "Strip All Media Metadata" is disabled.', 2],
+        'Audio Metadata': [false, 'Strip metadata from audio uploads in Quick Reply when "Strip All Media Metadata" is disabled.', 2],
+        'Other Metadata': [false, 'Strip metadata from non-image/video/audio uploads in Quick Reply when "Strip All Media Metadata" is disabled and supported in-browser.', 2],
         'Open Post in New Tab': [true, 'Open new threads in a new tab, and open replies in a new tab if you\'re not already in the thread.', 1],
         'Cooldown': [true, 'Indicate the remaining time before posting again.', 1],
+        'Comment Preview': [false, 'Show a live WYSIWYG preview of your post in the Quick Reply. Only formatting actually supported by the current board is rendered (e.g. [code] only on /g/, [math] only on /sci/, [red]/[green]/[blue] only on /qst/); unsupported tags appear as plain text, matching how the post will display.', 1],
         'Posting Success Notifications': [true, 'Show notifications on successful post creation or file uploading.', 1],
         'Auto-load captcha': [false, 'Automatically load the captcha in the QR even if your post is empty.', 1],
         'Post on Captcha Completion': [false, 'Submit the post immediately when the captcha is completed.', 1],
@@ -455,11 +463,14 @@ Config = (function() {
       'Auto Prune': [false, 'Automatically remove dead threads.'],
       'Show Page': [true, 'Show what page watched threads are on.'],
       'Show Unread Count': [true, 'Show number of unread posts in watched threads.'],
+      'Show Mark All Read Icon': [true, 'Show the Mark all read icon in the thread watcher header.'],
+      'Show Mark Thread Read Icons': [true, 'Show per-thread Mark as read icons in the thread watcher list.'],
       'Show Site Prefix': [true, 'When multiple sites are shown in the thread watcher, add a prefix to board names to distinguish them.'],
       'Show OP Thumbnails': [false, 'Show OP thumbnails in watched thread entries.'],
       'Require OP Quote Link': [false, 'For purposes of thread watcher highlighting, only consider posts with a quote link to the OP as replies to the OP.']
     },
     'Thread Watcher Thumbnail Size': 40,
+    'Thread Watcher Max Height': 420,
     filter: {
       general: '',
       postID: "# Highlight dubs on [s4s]:\n#/(\\d)\\1$/;highlight;top:no;boards:s4s",
@@ -487,6 +498,7 @@ Config = (function() {
     },
     'Custom CSS': true,
     'Open Filters Mode': 'remember',
+    'Comment Preview Position': 'button',
     'Generated Highlight Styles': true,
     'Highlight Watched Color': '#08357d',
     'Highlight Watched Opacity': '1',
@@ -1459,7 +1471,7 @@ a[href=\"javascript:;\"] {\n\
 body.hasDropDownNav{\n\
   margin-top: 5px;\n\
 }\n\
-:root:not(.keyboard-focus) a {\n\
+a:focus:not(:focus-visible) {\n\
   outline: none;\n\
 }\n\
 .painted {\n\
@@ -1990,6 +2002,17 @@ audio.controls-added {\n\
 .settings-title {\n\
   font-weight: 700;\n\
 }\n\
+.settings-global-collapse-controls {\n\
+  font-size: 11px;\n\
+  margin-left: auto;\n\
+}\n\
+.settings-global-collapse-controls > a {\n\
+  text-decoration: none;\n\
+}\n\
+.settings-global-collapse-controls > a.disabled {\n\
+  opacity: .45;\n\
+  pointer-events: none;\n\
+}\n\
 .settings-body {\n\
   -webkit-flex: 1;\n\
   flex: 1;\n\
@@ -2007,8 +2030,11 @@ audio.controls-added {\n\
   display: flex;\n\
   -webkit-flex-direction: column;\n\
   flex-direction: column;\n\
-  -webkit-flex: 0 0 180px;\n\
-  flex: 0 0 180px;\n\
+  -webkit-flex: 0 0 auto;\n\
+  flex: 0 0 auto;\n\
+  width: max-content;\n\
+  min-width: 148px;\n\
+  max-width: min(26vw, 230px);\n\
 }\n\
 #fourchanx-settings > .settings-body > nav a {\n\
   text-decoration: none;\n\
@@ -2020,6 +2046,8 @@ audio.controls-added {\n\
   -moz-box-sizing: border-box;\n\
   box-sizing: border-box;\n\
   width: 100%;\n\
+  padding: 2px 4px;\n\
+  font-size: 12px;\n\
 }\n\
 .section-container {\n\
   -webkit-flex: 1;\n\
@@ -2072,8 +2100,9 @@ audio.controls-added {\n\
   overflow: auto;\n\
 }\n\
 .sections-list > a {\n\
+  white-space: nowrap;\n\
   border-radius: 3px;\n\
-  padding: 4px 6px;\n\
+  padding: 3px 5px;\n\
 }\n\
 .sections-list > a:hover,\n\
 .sections-list > a:focus {\n\
@@ -2140,18 +2169,6 @@ audio.controls-added {\n\
   margin: 0 0 0 10px;\n\
   white-space: nowrap;\n\
 }\n\
-#fourchanx-settings.settings-layout-classic .credits {\n\
-  position: absolute;\n\
-  left: 6px;\n\
-  right: 6px;\n\
-  bottom: 6px;\n\
-  border-top: 1px solid;\n\
-  margin-left: 0;\n\
-  margin-top: 0;\n\
-  padding-top: 6px;\n\
-  white-space: nowrap;\n\
-  overflow: auto hidden;\n\
-}\n\
 .export, .import, .reset {\n\
   cursor: pointer;\n\
   text-decoration: none !important;\n\
@@ -2160,16 +2177,42 @@ audio.controls-added {\n\
   background: rgba(128, 128, 128, .18);\n\
   font-weight: 700;\n\
 }\n\
-.credits {\n\
-  border-top: 1px solid;\n\
+.settings-footer {\n\
+  border-top: 1px solid rgba(128, 128, 128, .25);\n\
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);\n\
   font-size: 11px;\n\
-  line-height: 1.7;\n\
-  margin-top: auto;\n\
-  padding-top: 7px;\n\
+  line-height: 1.6;\n\
+  padding: 6px 8px;\n\
+  display: -webkit-flex;\n\
+  display: flex;\n\
+  -webkit-flex-wrap: wrap;\n\
+  flex-wrap: wrap;\n\
+  -webkit-align-items: center;\n\
+  align-items: center;\n\
+  gap: 4px 12px;\n\
+}\n\
+.settings-actions {\n\
+  white-space: nowrap;\n\
+}\n\
+.credits {\n\
+  white-space: nowrap;\n\
+  margin-left: auto;\n\
 }\n\
 .imp-exp-result {\n\
   font-size: 11px;\n\
-  margin: 6px 0;\n\
+  margin: 0;\n\
+}\n\
+#fourchanx-settings.settings-layout-classic .settings-footer {\n\
+  position: absolute;\n\
+  left: 6px;\n\
+  right: 6px;\n\
+  bottom: 6px;\n\
+  padding: 6px 0 0;\n\
+  border-top: 1px solid;\n\
+}\n\
+#fourchanx-settings.settings-layout-classic .settings-actions,\n\
+#fourchanx-settings.settings-layout-classic .credits {\n\
+  overflow: auto hidden;\n\
 }\n\
 .settings-section-header {\n\
   display: none;\n\
@@ -2243,14 +2286,14 @@ audio.controls-added {\n\
 .section-posting li:not(:first-of-type) {\n\
   margin-top: 4px;\n\
 }\n\
-#fourchanx-settings section fieldset {\n\
+#fourchanx-settings section .settings-fieldset {\n\
   background: rgba(128, 128, 128, .06);\n\
 }\n\
-.section-main fieldset > div,\n\
-.section-general fieldset > div,\n\
-.section-threads-posts fieldset > div,\n\
-.section-media fieldset > div,\n\
-.section-posting fieldset > div {\n\
+.section-main .settings-fieldset > div,\n\
+.section-general .settings-fieldset > div,\n\
+.section-threads-posts .settings-fieldset > div,\n\
+.section-media .settings-fieldset > div,\n\
+.section-posting .settings-fieldset > div {\n\
   line-height: 1.35;\n\
   padding: 2px 0;\n\
 }\n\
@@ -2266,8 +2309,47 @@ audio.controls-added {\n\
   margin: 10px 0 4px;\n\
   opacity: .8;\n\
 }\n\
+.section-threads-posts .settings-formatting-fieldset .settings-group-heading {\n\
+  margin: 12px 0 6px;\n\
+  padding-top: 6px;\n\
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);\n\
+  opacity: .9;\n\
+}\n\
+.section-threads-posts .settings-formatting-fieldset .settings-group-heading:first-of-type {\n\
+  margin-top: 6px;\n\
+  padding-top: 0;\n\
+  border-top: 0;\n\
+}\n\
+.section-threads-posts .settings-formatting-fieldset > div[data-name] {\n\
+  display: grid;\n\
+  grid-template-columns: minmax(240px, 1fr) minmax(280px, 1.4fr);\n\
+  align-items: start;\n\
+  column-gap: 12px;\n\
+  row-gap: 2px;\n\
+  padding: 4px 0;\n\
+}\n\
+.section-threads-posts .settings-formatting-fieldset > div[data-name] > .description {\n\
+  display: block;\n\
+  margin: 0;\n\
+}\n\
+.section-threads-posts .settings-formatting-fieldset > div[data-name] > .description::before {\n\
+  content: none;\n\
+}\n\
+.section-threads-posts .settings-formatting-fieldset .suboption-list > div[data-name] {\n\
+  display: block;\n\
+  padding: 2px 0;\n\
+}\n\
+.section-threads-posts .settings-formatting-details .formatting-toggle-group {\n\
+  margin: 2px 0 6px;\n\
+}\n\
+.section-threads-posts .settings-formatting-details .formatting-detail-fieldset.formatting-detail-disabled > :not(summary):not(.formatting-toggle-group) {\n\
+  opacity: .45;\n\
+}\n\
 div[data-checked=\"false\"] > .suboption-list {\n\
   display: none;\n\
+}\n\
+div.no-suboption-collapse[data-checked=\"false\"] > .suboption-list {\n\
+  display: block;\n\
 }\n\
 .suboption-list {\n\
   position: relative;\n\
@@ -2485,11 +2567,38 @@ div[data-checked=\"false\"] > .suboption-list {\n\
 #sauce-doc-expand + .riceCheck {\n\
   display: none;\n\
 }\n\
+.section-media .sauces-field,\n\
 .section-sauce textarea {\n\
   height: 430px;\n\
+  width: 100%;\n\
 }\n\
+.section-interface .field[name=\"boardnav\"],\n\
 .section-advanced .field[name=\"boardnav\"] {\n\
   width: 100%;\n\
+}\n\
+.section-interface .field[name=\"boardnav\"] {\n\
+  height: 90px;\n\
+}\n\
+.section-interface .boardnav-help {\n\
+  margin-top: .5em;\n\
+  font-size: .95em;\n\
+  opacity: .9;\n\
+}\n\
+.section-interface .boardnav-help code {\n\
+  white-space: nowrap;\n\
+}\n\
+#boardnav-doc-expand:not(:checked) ~ #boardnav-doc {\n\
+  max-height: 130px;\n\
+  overflow: auto;\n\
+}\n\
+#boardnav-doc > label {\n\
+  float: right;\n\
+  margin: 0 5px;\n\
+  cursor: pointer;\n\
+}\n\
+/* XXX for OneeChan */\n\
+#boardnav-doc-expand + .riceCheck {\n\
+  display: none;\n\
 }\n\
 .section-advanced textarea {\n\
   height: 150px;\n\
@@ -2876,10 +2985,10 @@ div[data-checked=\"false\"] > .suboption-list {\n\
 .section-styling .custom-css-editor .custom-css-controls {\n\
   margin-top: 8px;\n\
 }\n\
-.section-styling fieldset > .settings-group-heading:first-of-type {\n\
+.section-styling .settings-fieldset > .settings-group-heading:first-of-type {\n\
   margin-top: 8px;\n\
 }\n\
-.section-styling fieldset {\n\
+.section-styling .settings-fieldset {\n\
   min-width: 0;\n\
   overflow-x: hidden;\n\
 }\n\
@@ -2962,9 +3071,9 @@ div[data-checked=\"false\"] > .suboption-list {\n\
 }\n\
 #fourchanx-settings textarea,\n\
 #fourchanx-settings .field {\n\
-  background-color: color-mix(in srgb, currentColor 8%, transparent);\n\
-  color: inherit;\n\
-  border-color: color-mix(in srgb, currentColor 28%, transparent);\n\
+  background-color: var(--settings-input-bg, color-mix(in srgb, currentColor 8%, transparent));\n\
+  color: var(--settings-input-fg, inherit);\n\
+  border-color: var(--settings-input-border, color-mix(in srgb, currentColor 28%, transparent));\n\
 }\n\
 /* CSS Highlight Editor — pre background matches textarea */\n\
 #fourchanx-settings .css-hl-pre {\n\
@@ -3081,17 +3190,96 @@ div[data-checked=\"false\"] > .suboption-list {\n\
 .section-keybinds .field {\n\
   font-family: monospace;\n\
 }\n\
-#fourchanx-settings fieldset {\n\
+#fourchanx-settings .settings-fieldset {\n\
+  --settings-collapsed-preview-height: 42px;\n\
+  --settings-legend-height: 34px;\n\
+  --settings-expanded-max-height: 2400px;\n\
   border: 1px solid rgba(128, 128, 128, .3);\n\
   border: 1px solid color-mix(in srgb, currentColor 22%, transparent);\n\
-  border-radius: 3px;\n\
-  padding: 0.5em 0.75em 0.85em;\n\
+  border-radius: 4px;\n\
+  padding: 0 0.75em 0.85em;\n\
   margin: 0 0 8px;\n\
+  position: relative;\n\
+  max-height: var(--settings-expanded-max-height);\n\
+  overflow: hidden;\n\
+  -webkit-transition: max-height 180ms ease;\n\
+  transition: max-height 180ms ease;\n\
 }\n\
-#fourchanx-settings legend {\n\
+#fourchanx-settings .settings-legend {\n\
+  list-style: none;\n\
+  display: -webkit-flex;\n\
+  display: flex;\n\
+  -webkit-align-items: center;\n\
+  align-items: center;\n\
+  -webkit-justify-content: space-between;\n\
+  justify-content: space-between;\n\
+  gap: 0.5em;\n\
   font-weight: 700;\n\
   color: inherit;\n\
-  padding: 0 4px;\n\
+  padding: 6px 8px;\n\
+  margin: 0 -0.75em 6px;\n\
+  cursor: pointer;\n\
+  user-select: none;\n\
+  border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);\n\
+}\n\
+#fourchanx-settings .settings-legend::-webkit-details-marker,\n\
+#fourchanx-settings .settings-legend::marker {\n\
+  display: none;\n\
+  content: '';\n\
+}\n\
+#fourchanx-settings .settings-legend::after {\n\
+  content: '\\25BE';\n\
+  font-size: 0.85em;\n\
+  line-height: 1;\n\
+  opacity: .55;\n\
+  -webkit-transition: -webkit-transform 120ms ease, opacity 120ms ease;\n\
+  transition: transform 120ms ease, opacity 120ms ease;\n\
+}\n\
+#fourchanx-settings .settings-legend:hover {\n\
+  background: color-mix(in srgb, currentColor 8%, transparent);\n\
+}\n\
+#fourchanx-settings .settings-legend:hover::after {\n\
+  opacity: 1;\n\
+}\n\
+#fourchanx-settings .settings-fieldset.settings-collapsed > .settings-legend {\n\
+  margin-bottom: 0;\n\
+}\n\
+#fourchanx-settings .settings-fieldset.settings-collapsed > .settings-legend::after {\n\
+  -webkit-transform: rotate(-90deg);\n\
+          transform: rotate(-90deg);\n\
+}\n\
+#fourchanx-settings .settings-fieldset.settings-collapsed {\n\
+  max-height: calc(var(--settings-legend-height) + var(--settings-collapsed-preview-height));\n\
+}\n\
+#fourchanx-settings .settings-fieldset.settings-collapsed::after {\n\
+  content: '';\n\
+  position: absolute;\n\
+  left: 0;\n\
+  right: 0;\n\
+  top: var(--settings-legend-height);\n\
+  bottom: 0;\n\
+  pointer-events: none;\n\
+  border-radius: 0 0 4px 4px;\n\
+  box-shadow:\n\
+    inset 0 0 0 1px color-mix(in srgb, currentColor 12%, transparent),\n\
+    inset 0 0 14px color-mix(in srgb, currentColor 14%, transparent),\n\
+    inset 0 -12px 14px color-mix(in srgb, currentColor 18%, transparent);\n\
+}\n\
+#fourchanx-settings .settings-no-collapse > .settings-legend {\n\
+  cursor: default;\n\
+}\n\
+#fourchanx-settings .settings-no-collapse > .settings-legend::after {\n\
+  content: none;\n\
+}\n\
+#fourchanx-settings .settings-collapse-controls {\n\
+  display: none;\n\
+}\n\
+#fourchanx-settings .settings-collapse-controls > a {\n\
+  text-decoration: none;\n\
+}\n\
+#fourchanx-settings .settings-collapse-controls > a.disabled {\n\
+  opacity: .45;\n\
+  pointer-events: none;\n\
 }\n\
 #fourchanx-settings textarea {\n\
   font-family: monospace;\n\
@@ -3588,10 +3776,12 @@ textarea.copy-text-element {\n\
   white-space: nowrap;\n\
   min-width: 146px;\n\
   --watcher-thumb-size: 40px;\n\
+  --watcher-max-height: 420px;\n\
 }\n\
 #watched-threads {\n\
   overflow-x: hidden;\n\
   overflow-y: auto;\n\
+  max-height: var(--watcher-max-height);\n\
 }\n\
 #thread-watcher .refresh {\n\
   padding: 0px 4px;\n\
@@ -3609,11 +3799,10 @@ textarea.copy-text-element {\n\
 }\n\
 :root.fixed-watcher #watched-threads {\n\
   /* XXX https://code.google.com/p/chromium/issues/detail?id=168840, https://bugs.webkit.org/show_bug.cgi?id=94158 */\n\
-  max-height: 85vh;\n\
-  max-height: calc(100vh - 75px);\n\
+  max-height: min(var(--watcher-max-height), calc(100vh - 75px));\n\
 }\n\
 :root:not(.fixed-watcher) #watched-threads:not(:hover) {\n\
-  max-height: 210px;\n\
+  max-height: min(210px, var(--watcher-max-height));\n\
   overflow-y: hidden;\n\
 }\n\
 #thread-watcher > .move {\n\
@@ -3987,6 +4176,21 @@ input[name=\"Default Volume\"] {\n\
 :root.werkTyme.catalog-hover-expand .catalog-thread.watched > .catalog-container:hover > .catalog-post {\n\
   border: 2px solid rgba(255, 0, 0, .75);\n\
 }\n\
+.md5-filtered-post$site$highlightable$op,\n\
+.md5-filtered-post$site$highlightable$reply {\n\
+  box-shadow: inset 5px 0 rgba(72, 153, 216, .7);\n\
+}\n\
+:root:not(.werkTyme) .catalog-thread.md5-filtered-post .catalog-thumb,\n\
+:root.werkTyme .catalog-thread.md5-filtered-post:not(:hover),\n\
+:root.werkTyme:not(.catalog-hover-expand) .catalog-thread.md5-filtered-post,\n\
+:root.werkTyme.catalog-hover-expand .catalog-thread.md5-filtered-post > .catalog-container:hover > .catalog-post,\n\
+:root.catalog $site$catalog$thread.md5-filtered-post$site$highlightable$catalog {\n\
+  box-shadow: 0 0 3px 3px rgba(72, 153, 216, .6);\n\
+}\n\
+.md5-filtered-image {\n\
+  outline: 2px solid rgba(72, 153, 216, .7);\n\
+  outline-offset: -2px;\n\
+}\n\
 /* Ghost posts (fetched from archive) */\n\
 .ghost-post .postInfo > strong.warning {\n\
   display: none;\n\
@@ -4214,9 +4418,52 @@ body:not(.board_f) #qr select[name=\"filetag\"],\n\
 #qr.reply-to-thread select[name=\"filetag\"],\n\
 #qr:not(.has-sjis) #sjis-toggle,\n\
 #qr:not(.has-math) #tex-preview-button,\n\
+#qr:not(.has-live-preview) #live-preview-toggle,\n\
+#qr.has-live-preview:not(.qr-preview-pos-button) #live-preview-toggle,\n\
 #qr.tex-preview .textarea > :not(#tex-preview),\n\
-#qr:not(.tex-preview) #tex-preview {\n\
+#qr:not(.tex-preview) #tex-preview,\n\
+#qr.qr-preview-pos-button.preview-on textarea[data-name=\"com\"],\n\
+#qr.qr-preview-pos-button.preview-on #char-count,\n\
+#qr.qr-preview-pos-button.preview-on #split-post {\n\
   display: none;\n\
+}\n\
+/* Always-on preview layouts */\n\
+#qr.qr-preview-pos-bottom .textarea,\n\
+#qr.qr-preview-pos-top    .textarea {\n\
+  flex-direction: column;\n\
+}\n\
+#qr.qr-preview-pos-bottom #qr-live-preview {\n\
+  order: 9;\n\
+  margin-top: 3px;\n\
+}\n\
+#qr.qr-preview-pos-top #qr-live-preview {\n\
+  order: -1;\n\
+  margin-bottom: 3px;\n\
+}\n\
+#qr.qr-preview-pos-left .textarea {\n\
+  flex-direction: row;\n\
+}\n\
+#qr.qr-preview-pos-left #qr-live-preview {\n\
+  order: -1;\n\
+  margin-right: 3px;\n\
+}\n\
+#qr.qr-preview-pos-right .textarea {\n\
+  flex-direction: row;\n\
+}\n\
+#qr.qr-preview-pos-right #qr-live-preview {\n\
+  order: 9;\n\
+  margin-left: 3px;\n\
+}\n\
+#qr.qr-preview-pos-left #qr-live-preview,\n\
+#qr.qr-preview-pos-right #qr-live-preview {\n\
+  flex: 1 1 0;\n\
+  width: 0;\n\
+  align-self: stretch;\n\
+}\n\
+#qr.qr-preview-pos-left  textarea[data-name=\"com\"],\n\
+#qr.qr-preview-pos-right textarea[data-name=\"com\"] {\n\
+  flex: 1 1 0;\n\
+  width: 0;\n\
 }\n\
 .persona button {\n\
   -webkit-flex: 0 0 23px;\n\
@@ -4241,6 +4488,67 @@ body:not(.board_f) #qr select[name=\"filetag\"],\n\
 }\n\
 #tex-preview {\n\
   white-space: pre-line;\n\
+}\n\
+#qr-live-preview[hidden] {\n\
+  display: none;\n\
+}\n\
+#qr-live-preview {\n\
+  display: block;\n\
+  box-sizing: border-box;\n\
+  margin: 0;\n\
+  padding: 4px 6px;\n\
+  border: 1px solid rgba(128, 128, 128, 0.4);\n\
+  border-radius: 2px;\n\
+  width: 100%;\n\
+  height: 14.8em;\n\
+  min-height: 9em;\n\
+  overflow-y: auto;\n\
+  word-wrap: break-word;\n\
+  white-space: pre-wrap;\n\
+  font-size: inherit;\n\
+  line-height: 1.3;\n\
+  background: rgba(128, 128, 128, 0.06);\n\
+}\n\
+#qr.has-captcha #qr-live-preview {\n\
+  height: 9em;\n\
+}\n\
+#qr-live-preview:empty::before {\n\
+  content: 'Nothing to preview - switch back with the eye button.';\n\
+  opacity: 0.5;\n\
+  font-style: italic;\n\
+}\n\
+#qr #live-preview-toggle {\n\
+  font-size: 12px;\n\
+}\n\
+#qr.preview-on #live-preview-toggle {\n\
+  background: #DCDCDC;\n\
+}\n\
+#qr-live-preview .quote {\n\
+  color: #789922;\n\
+}\n\
+#qr-live-preview .quotelink {\n\
+  color: inherit;\n\
+  text-decoration: underline;\n\
+}\n\
+#qr-live-preview .qst-color.qst-red   { color: #b91919; }\n\
+#qr-live-preview .qst-color.qst-green { color: #789922; }\n\
+#qr-live-preview .qst-color.qst-blue  { color: #2a5db0; }\n\
+#qr-live-preview pre {\n\
+  white-space: pre-wrap;\n\
+  font-family: monospace;\n\
+  margin: 2px 0;\n\
+}\n\
+#qr-live-preview s {\n\
+  background: #000;\n\
+  color: #000;\n\
+}\n\
+#qr-live-preview s:hover {\n\
+  color: #fff;\n\
+}\n\
+#qr.sjis-preview #qr-live-preview {\n\
+  font-family: \"IPAMonaPGothic\",\"Mona\",\"MS PGothic\",monospace;\n\
+  font-size: 16px;\n\
+  line-height: 17px;\n\
 }\n\
 #qr textarea.field {\n\
   height: 14.8em;\n\
@@ -4533,14 +4841,15 @@ input[type=\"checkbox\"]:checked ~ .checkbox-letter {\n\
   width: 100%;\n\
 }\n\
 #qr .qr-flag-toggle::after {\n\
-  content: '▾';\n\
+  content: '\\f107'; /* fa-angle-down */\n\
+  font-family: FontAwesome;\n\
   font-size: 11px;\n\
   pointer-events: none;\n\
   position: absolute;\n\
   right: 6px;\n\
 }\n\
 #qr .qr-flag-picker.open .qr-flag-toggle::after {\n\
-  content: '▴';\n\
+  content: '\\f106'; /* fa-angle-up */\n\
 }\n\
 .qr-flag-menu {\n\
   background: #fff;\n\
@@ -5030,26 +5339,9 @@ a:only-of-type > .remove {\n\
   margin: 2px;\n\
   position: relative;\n\
 }\n\
-.gal-start i {\n\
-  border-left:   10px solid;\n\
-  border-top:    6px solid transparent;\n\
-  border-bottom: 6px solid transparent;\n\
-  bottom: 1px;\n\
-}\n\
-.gal-stop i {\n\
-  border: 5px solid;\n\
-  bottom: 2px;\n\
-}\n\
 .gal-buttons.gal-playing > .gal-start,\n\
 .gal-buttons:not(.gal-playing) > .gal-stop {\n\
   display: none;\n\
-}\n\
-.gal-buttons .menu-button i {\n\
-  border-top:   10px solid;\n\
-  border-right:  6px solid transparent;\n\
-  border-left:   6px solid transparent;\n\
-  bottom: 2px;\n\
-  vertical-align: baseline;\n\
 }\n\
 .gal-labels {\n\
   position: fixed;\n\
@@ -6066,12 +6358,17 @@ report:
 /* Archive reports */\n\
 #archive-report {\n\
   padding: 3px;\n\
+  border: 1px solid #888;\n\
+  border-radius: 3px;\n\
+  margin: 4px 0;\n\
 }\n\
 #archive-report-enabled {\n\
   vertical-align: middle;\n\
 }\n\
-#archive-report > label {\n\
+#archive-report > label,\n\
+#archive-report > .archive-report-header {\n\
   display: block;\n\
+  font-weight: 700;\n\
 }\n\
 #archive-report-reason {\n\
   display: block;\n\
@@ -10889,6 +11186,10 @@ Filter = (function() {
         line = ref2[j];
         this.parseFilterLine('general', line);
       }
+      Callbacks.Post.push({
+        name: 'Quick Filter MD5 Click',
+        cb: this.bindQuickFilterMD5Click
+      });
       if (!Object.keys(this.filters).length) {
         return;
       }
@@ -11269,6 +11570,12 @@ Filter = (function() {
         return Unread.openNotification(this, ' triggered a notification filter');
       }
     },
+    bindQuickFilterMD5Click: function() {
+      if (this.isClone) {
+        return;
+      }
+      return $.on(this.nodes.root, 'click', Filter.quickFilterMD5Click);
+    },
     catalog: function() {
       var base, url;
       if (!(url = typeof (base = g.SITE.urls).catalogJSON === "function" ? base.catalogJSON(g.BOARD) : void 0)) {
@@ -11461,7 +11768,7 @@ Filter = (function() {
       });
     },
     quickFilterMD5: function() {
-      var files, filter, links, msg, notice, origin, post;
+      var files, filters, origin, post;
       post = Get.postFromNode(this);
       files = post.files.filter(function(f) {
         return f.MD5;
@@ -11469,38 +11776,170 @@ Filter = (function() {
       if (!files.length) {
         return;
       }
-      filter = files.map(function(f) {
+      filters = files.map(function(f) {
         return "/" + f.MD5 + "/";
-      }).join('\n');
-      Filter.addFilter('MD5', filter);
+      });
       origin = post.origin || post;
       if (origin.isReply) {
         PostHiding.hide(origin);
       } else if (g.VIEW === 'index') {
         ThreadHiding.hide(origin.thread);
       }
+      return Filter.quickFilterMD5Apply(filters, [origin], post);
+    },
+    quickFilterMD5Value: function(md5) {
+      if (!md5) {
+        return;
+      }
+      return Filter.quickFilterMD5Apply(["/" + md5 + "/"]);
+    },
+    hasMD5Filter: function(md5) {
+      var line;
+      if (!md5) {
+        return false;
+      }
+      line = "/" + md5 + "/";
+      return Conf['MD5'].split('\n').some(function(x) {
+        return x.trim() === line;
+      });
+    },
+    toggleMD5Filter: function(md5, cbAdded, cbRemoved) {
+      var line;
+      if (!md5) {
+        return;
+      }
+      line = "/" + md5 + "/";
+      return $.get('MD5', Conf['MD5'], function(item) {
+        var hadLine, i, l, len, lines, next, save;
+        lines = item['MD5'].split('\n');
+        hadLine = false;
+        next = [];
+        for (i = 0, len = lines.length; i < len; i++) {
+          l = lines[i];
+          if (l.trim() === line) {
+            hadLine = true;
+          } else {
+            next.push(l);
+          }
+        }
+        save = hadLine ? next.join('\n') : item['MD5'] ? item['MD5'] + "\n" + line : line;
+        return $.set('MD5', save, function() {
+          if (hadLine) {
+            return typeof cbRemoved === "function" ? cbRemoved() : void 0;
+          } else {
+            return typeof cbAdded === "function" ? cbAdded() : void 0;
+          }
+        });
+      });
+    },
+    markMD5Filtered: function(post) {
+      var i, len, match, node, ref, ref1, ref2, ref3, ref4, ref5, ref6, results;
+      if (!(post != null ? (ref = post.nodes) != null ? ref.root : void 0 : void 0)) {
+        return;
+      }
+      match = (ref1 = post.files) != null ? ref1.some(function(f) {
+        return f.MD5 && Filter.hasMD5Filter(f.MD5);
+      }) : void 0;
+      post.nodes.root.classList.toggle('md5-filtered-post', !!match);
+      if ((ref2 = post.thread) != null) {
+        if ((ref3 = ref2.catalogView) != null) {
+          if ((ref4 = ref3.nodes) != null) {
+            if ((ref5 = ref4.root) != null) {
+              ref5.classList.toggle('md5-filtered-post', !!match);
+            }
+          }
+        }
+      }
+      ref6 = $$('[data-md5]', post.nodes.root);
+      results = [];
+      for (i = 0, len = ref6.length; i < len; i++) {
+        node = ref6[i];
+        results.push(node.classList.toggle('md5-filtered-image', !!(match && Filter.hasMD5Filter(node.dataset.md5))));
+      }
+      return results;
+    },
+    quickFilterMD5Apply: function(filters, posts, post) {
+      var i, len, p;
+      if (posts == null) {
+        posts = [];
+      }
+      if (post == null) {
+        post = null;
+      }
+      if (!(filters != null ? filters.length : void 0)) {
+        return;
+      }
+      Filter.addFilter('MD5', filters.join('\n'));
+      for (i = 0, len = posts.length; i < len; i++) {
+        p = posts[i];
+        Filter.markMD5Filtered(p);
+      }
+      return Filter.quickFilterMD5Notify(filters, posts, post);
+    },
+    quickFilterMD5Notify: function(filters, posts, post) {
+      var links, msg, notice, ref, ref1;
+      if (posts == null) {
+        posts = [];
+      }
+      if (post == null) {
+        post = null;
+      }
+      if (!(filters != null ? filters.length : void 0)) {
+        return;
+      }
       if (!Conf['MD5 Quick Filter Notifications']) {
-        if (post.nodes.post.getBoundingClientRect().height) {
+        if (!post || post.nodes.post.getBoundingClientRect().height) {
           new Notice('info', 'MD5 filtered.', 2);
         }
         return;
       }
       notice = Filter.quickFilterMD5.notice;
       if (notice) {
-        notice.filters.push(filter);
-        notice.posts.push(origin);
+        (ref = notice.filters).push.apply(ref, filters);
+        (ref1 = notice.posts).push.apply(ref1, posts);
         return $('span', notice.el).textContent = notice.filters.length + " MD5s filtered.";
       } else {
         msg = $.el('div', {innerHTML: "<span>MD5 filtered.</span> [<a href=\"javascript:;\">show</a>] [<a href=\"javascript:;\">undo</a>]"});
         notice = Filter.quickFilterMD5.notice = new Notice('info', msg, void 0, function() {
           return delete Filter.quickFilterMD5.notice;
         });
-        notice.filters = [filter];
-        notice.posts = [origin];
+        notice.filters = slice.call(filters);
+        notice.posts = slice.call(posts);
         links = $$('a', msg);
         $.on(links[0], 'click', Filter.quickFilterCB.show.bind(notice));
         return $.on(links[1], 'click', Filter.quickFilterCB.undo.bind(notice));
       }
+    },
+    quickFilterMD5Click: function(e) {
+      var md5, origin, post, ref, target;
+      if (!Conf['Thread Shift-Click Image MD5']) {
+        return;
+      }
+      if (!(e.button === 0 && e.shiftKey)) {
+        return;
+      }
+      target = $.x('ancestor-or-self::*[@data-md5]', e.target);
+      if (!(target != null ? (ref = target.dataset) != null ? ref.md5 : void 0 : void 0)) {
+        return;
+      }
+      md5 = target.dataset.md5;
+      post = Get.postFromNode(e.target);
+      origin = (post != null ? post.origin : void 0) || post;
+      Filter.toggleMD5Filter(md5, (function() {
+        if (origin) {
+          Filter.markMD5Filtered(origin);
+          return Filter.quickFilterMD5Notify(["/" + md5 + "/"], [origin], post);
+        } else {
+          return Filter.quickFilterMD5Notify(["/" + md5 + "/"]);
+        }
+      }), (function() {
+        if (origin) {
+          Filter.markMD5Filtered(origin);
+        }
+        return new Notice('info', 'MD5 unfiltered.', 2);
+      }));
+      e.preventDefault();
+      return e.stopPropagation();
     },
     quickFilterCB: {
       show: function() {
@@ -11508,16 +11947,17 @@ Filter = (function() {
         return this.close();
       },
       undo: function() {
-        var i, len, post, ref;
+        var i, len, post, ref, ref1;
         Filter.removeFilters('MD5', this.filters);
         ref = this.posts;
         for (i = 0, len = ref.length; i < len; i++) {
           post = ref[i];
           if (post.isReply) {
             PostHiding.show(post);
-          } else if (g.VIEW === 'index') {
+          } else if (post.thread && ((ref1 = g.VIEW) === 'index' || ref1 === 'catalog')) {
             ThreadHiding.show(post.thread);
           }
+          Filter.markMD5Filtered(post);
         }
         return this.close();
       }
@@ -13284,7 +13724,7 @@ Index = (function() {
       this.navLinks = $.el('div', {
         className: 'navLinks json-index'
       });
-      $.extend(this.navLinks, {innerHTML: "<span class=\"brackets-wrap indexlink\"><a href=\"#index\">Index</a></span> <span class=\"brackets-wrap cataloglink\"><a href=\"#catalog\">Catalog</a></span> <span class=\"brackets-wrap archlistlink\"><a href=\"./archive\">Archive</a></span> <span class=\"brackets-wrap bottomlink\"><a href=\"#bottom\">Bottom</a></span> <span class=\"brackets-wrap\" id=\"index-last-refresh\"><a href=\"javascript:;\"><time title=\"Last index refresh\">...</time></a></span> <input type=\"search\" id=\"index-search\" class=\"field\" placeholder=\"Search\"><a id=\"index-search-clear\" href=\"javascript:;\" title=\"Clear search\">×</a><span id=\"hidden-label\" hidden> &mdash; <span id=\"hidden-count\"></span> <span id=\"hidden-toggle\">[<a href=\"javascript:;\">Show</a>]</span></span><span id=\"index-options\"><input type=\"checkbox\" id=\"index-rev\" name=\"Reverse Sort\" title=\"Reverse sort order\"><span id=\"lastlong-options\" hidden><input type=\"text\" title=\"Minimum letter count (without image)\"><input type=\"text\" title=\"Minimum letter count (with image)\"></span><select id=\"index-sort\" name=\"Index Sort\"><option disabled>Index Sort</option><option value=\"bump\">Bump order</option><option value=\"lastreply\">Last reply</option><option value=\"lastlong\">Last long reply</option><option value=\"birth\">Creation date</option><option value=\"replycount\">Reply count</option><option value=\"filecount\">File count</option><option value=\"activity\">Posts per minute</option></select><select id=\"index-size\" name=\"Index Size\"><option disabled>Image Size</option><option value=\"small\">Small</option><option value=\"large\">Large</option></select><select id=\"index-mode\" name=\"Index Mode\"><option disabled>Index Mode</option><option value=\"paged\">Paged</option><option value=\"infinite\">Infinite scrolling</option><option value=\"all pages\">All threads</option><option value=\"catalog\">Catalog</option></select></span>"});
+      $.extend(this.navLinks, {innerHTML: "<span class=\"brackets-wrap indexlink\"><a href=\"#index\">Index</a></span> <span class=\"brackets-wrap cataloglink\"><a href=\"#catalog\">Catalog</a></span> <span class=\"brackets-wrap archlistlink\"><a href=\"./archive\">Archive</a></span> <span class=\"brackets-wrap bottomlink\"><a href=\"#bottom\">Bottom</a></span> <span class=\"brackets-wrap\" id=\"index-last-refresh\"><a href=\"javascript:;\"><time title=\"Last index refresh\">...</time></a></span> <input type=\"search\" id=\"index-search\" class=\"field\" placeholder=\"Search\"><a id=\"index-search-clear\" class=\"fa fa-times\" href=\"javascript:;\" title=\"Clear search\"></a><span id=\"hidden-label\" hidden> &mdash; <span id=\"hidden-count\"></span> <span id=\"hidden-toggle\">[<a href=\"javascript:;\">Show</a>]</span></span><span id=\"index-options\"><input type=\"checkbox\" id=\"index-rev\" name=\"Reverse Sort\" title=\"Reverse sort order\"><span id=\"lastlong-options\" hidden><input type=\"text\" title=\"Minimum letter count (without image)\"><input type=\"text\" title=\"Minimum letter count (with image)\"></span><select id=\"index-sort\" name=\"Index Sort\"><option disabled>Index Sort</option><option value=\"bump\">Bump order</option><option value=\"lastreply\">Last reply</option><option value=\"lastlong\">Last long reply</option><option value=\"birth\">Creation date</option><option value=\"replycount\">Reply count</option><option value=\"filecount\">File count</option><option value=\"activity\">Posts per minute</option></select><select id=\"index-size\" name=\"Index Size\"><option disabled>Image Size</option><option value=\"small\">Small</option><option value=\"large\">Large</option></select><select id=\"index-mode\" name=\"Index Mode\"><option disabled>Index Mode</option><option value=\"paged\">Paged</option><option value=\"infinite\">Infinite scrolling</option><option value=\"all pages\">All threads</option><option value=\"catalog\">Catalog</option></select></span>"});
       $('.cataloglink a', this.navLinks).href = CatalogLinks.catalog();
       if (!BoardConfig.isArchived(g.BOARD.ID)) {
         $('.archlistlink', this.navLinks).hidden = true;
@@ -13451,8 +13891,32 @@ Index = (function() {
     catalogNode: function() {
       return $.on(this.nodes.root, 'mousedown click', (function(_this) {
         return function(e) {
-          var hideBind, watchBind;
+          var hideBind, md5, op, ref, ref1, ref2, ref3, thread, watchBind;
           if (e.button !== 0) {
+            return;
+          }
+          if (Conf['Catalog Shift-Click Image MD5'] && e.shiftKey && $.x('ancestor-or-self::img[contains(concat(" ", @class, " "), " catalog-thumb ")]', e.target)) {
+            md5 = ((ref = $.x('ancestor-or-self::*[@data-md5]', e.target)) != null ? (ref1 = ref.dataset) != null ? ref1.md5 : void 0 : void 0) || ((ref2 = _this.thread.OP.file) != null ? ref2.MD5 : void 0);
+            if (!md5) {
+              return;
+            }
+            if (e.type === 'click') {
+              thread = _this.thread;
+              op = (ref3 = _this.thread) != null ? ref3.OP : void 0;
+              if (!(op && thread)) {
+                return;
+              }
+              Filter.toggleMD5Filter(md5, (function() {
+                ThreadHiding.hide(thread);
+                Filter.markMD5Filtered(op);
+                return Filter.quickFilterMD5Notify(["/" + md5 + "/"], [op], op);
+              }), (function() {
+                ThreadHiding.show(thread);
+                Filter.markMD5Filtered(op);
+                return new Notice('info', 'MD5 unfiltered.', 2);
+              }));
+            }
+            e.preventDefault();
             return;
           }
           hideBind = Index.parseClickBinding(Conf['Catalog Hide Click']);
@@ -14671,6 +15135,10 @@ Settings = (function() {
   Settings = {
     init: function() {
       var add, link;
+      Settings.collapsedFieldsets = {};
+      $.get('settings.collapsedFieldsets', {}, function(states) {
+        return Settings.collapsedFieldsets = states || {};
+      });
       link = $.el('a', {
         className: 'settings-link fa fa-wrench',
         textContent: 'Settings',
@@ -14731,12 +15199,13 @@ Settings = (function() {
       $.event('CloseMenu');
       Settings.dialog = dialog = $.el('div', {
         id: 'overlay'
-      }, {innerHTML: "<div id=\"fourchanx-settings\" class=\"dialog\"><a href=\"javascript:;\" class=\"close fa fa-times\" title=\"Close\"></a><div class=\"settings-titlebar\"><span class=\"settings-title\">4chan-eX Settings</span></div><div class=\"settings-body\"><nav><div class=\"settings-search\"><input type=\"search\" placeholder=\"Search settings\" autocomplete=\"off\"></div><div class=\"sections-list\"></div><p class=\"imp-exp-result warning\"></p><div class=\"credits\"><a class=\"export\">Export</a>&nbsp|&nbsp<a class=\"import\">Import</a>&nbsp|&nbsp<a class=\"reset\">Reset Settings</a>&nbsp|&nbsp<input type=\"file\" hidden><a href=\"https://www.4chan-eX.net/\" target=\"_blank\">4chan-eX</a>&nbsp|&nbsp<a href=\"https://github.com/cercos/4chan-eX/blob/master/CHANGELOG.md\" target=\"_blank\">" + E(g.VERSION) + "</a>&nbsp|&nbsp<a href=\"https://github.com/cercos/4chan-eX/issues\" target=\"_blank\">Issues</a></div></nav><div class=\"section-container\"></div></div></div>"});
+      }, {innerHTML: "<div id=\"fourchanx-settings\" class=\"dialog\"><a href=\"javascript:;\" class=\"close fa fa-times\" title=\"Close\"></a><div class=\"settings-titlebar\"><span class=\"settings-title\">4chan-eX Settings</span></div><div class=\"settings-body\"><nav><div class=\"settings-search\"><input type=\"search\" placeholder=\"Search settings\" autocomplete=\"off\"></div><div class=\"sections-list\"></div></nav><div class=\"section-container\"></div></div><div class=\"settings-footer\"><div class=\"settings-actions\"><a class=\"export\">Export</a>&nbsp|&nbsp<a class=\"import\">Import</a>&nbsp|&nbsp<a class=\"reset\">Reset Settings</a><input type=\"file\" hidden></div><p class=\"imp-exp-result warning\"></p><div class=\"credits\"><a href=\"https://www.4chan-eX.net/\" target=\"_blank\">4chan-eX</a>&nbsp|&nbsp<a href=\"https://github.com/cercos/4chan-eX/blob/master/CHANGELOG.md\" target=\"_blank\">" + E(g.VERSION) + "</a>&nbsp|&nbsp<a href=\"https://github.com/cercos/4chan-eX/issues\" target=\"_blank\">Issues</a></div></div></div>"});
       $.on($('.export', dialog), 'click', Settings["export"]);
       $.on($('.import', dialog), 'click', Settings["import"]);
       $.on($('.reset', dialog), 'click', Settings.reset);
       $.on($('input[type=file]', dialog), 'change', Settings.onImport);
       $.on($('.settings-search input', dialog), 'input', Settings.onSearchInput);
+      Settings.ensureGlobalCollapseControls(dialog);
       links = [];
       container = $('.section-container', dialog);
       ref = Settings.sections;
@@ -14858,7 +15327,94 @@ Settings = (function() {
         }
       });
       Settings.watchSize(win);
-      return Settings.setDragHandle(win);
+      Settings.setDragHandle(win);
+      return Settings.refreshInputContrast();
+    },
+    refreshInputContrast: function() {
+      var bg, isLight, luminance, win;
+      if (!Settings.dialog) {
+        return;
+      }
+      win = Settings.dialog.firstElementChild;
+      if (!win) {
+        return;
+      }
+      bg = Settings.detectBackgroundColor($('.section-container', win) || win);
+      if (!bg) {
+        return;
+      }
+      luminance = Settings.relativeLuminance(bg.r, bg.g, bg.b);
+      isLight = luminance >= 0.55;
+      if (isLight) {
+        win.style.setProperty('--settings-input-bg', 'rgba(255, 255, 255, 0.94)');
+        win.style.setProperty('--settings-input-fg', '#111');
+        return win.style.setProperty('--settings-input-border', 'rgba(0, 0, 0, 0.28)');
+      } else {
+        win.style.setProperty('--settings-input-bg', 'rgba(20, 20, 20, 0.92)');
+        win.style.setProperty('--settings-input-fg', '#e9e9e9');
+        return win.style.setProperty('--settings-input-border', 'rgba(255, 255, 255, 0.28)');
+      }
+    },
+    detectBackgroundColor: function(el) {
+      var color, node, parsed;
+      node = el;
+      while (node && node.nodeType === 1) {
+        color = getComputedStyle(node).backgroundColor;
+        parsed = Settings.parseRGBA(color);
+        if (parsed && parsed.a > 0) {
+          return parsed;
+        }
+        node = node.parentElement;
+      }
+      return {
+        r: 34,
+        g: 34,
+        b: 34,
+        a: 1
+      };
+    },
+    parseRGBA: function(value) {
+      var a, b, g, m, parts, r, ref;
+      if (!value) {
+        return null;
+      }
+      m = value.match(/^rgba?\(([^)]+)\)$/);
+      if (!m) {
+        return null;
+      }
+      parts = m[1].split(',').map(function(x) {
+        return x.trim();
+      });
+      if ((ref = parts.length) !== 3 && ref !== 4) {
+        return null;
+      }
+      r = parseFloat(parts[0]);
+      g = parseFloat(parts[1]);
+      b = parseFloat(parts[2]);
+      a = parts[3] != null ? parseFloat(parts[3]) : 1;
+      if ([r, g, b, a].some(function(x) {
+        return isNaN(x);
+      })) {
+        return null;
+      }
+      return {
+        r: r,
+        g: g,
+        b: b,
+        a: a
+      };
+    },
+    relativeLuminance: function(r, g, b) {
+      var toLinear;
+      toLinear = function(c) {
+        c /= 255;
+        if (c <= 0.03928) {
+          return c / 12.92;
+        } else {
+          return Math.pow((c + 0.055) / 1.055, 2.4);
+        }
+      };
+      return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
     },
     applyLayoutMode: function(win) {
       return win.classList.remove('settings-layout-classic');
@@ -15029,10 +15585,70 @@ Settings = (function() {
         this.open(this.el, g);
         this.rendered = true;
         Settings.restoreSectionHeader(this);
+        Settings.setupCollapsibleFieldsets(this.el);
       }
       this.el.scrollTop = 0;
       Settings.applySearch();
+      Settings.refreshInputContrast();
+      Settings.refreshGlobalCollapseControlsState();
       return $.event('OpenSettings', null, this.el);
+    },
+    ensureGlobalCollapseControls: function(dialog) {
+      var collapseAll, controls, expandAll, titlebar;
+      titlebar = $('.settings-titlebar', dialog);
+      if (!titlebar) {
+        return;
+      }
+      if ($('.settings-global-collapse-controls', titlebar)) {
+        return;
+      }
+      controls = $.el('span', {
+        className: 'settings-global-collapse-controls'
+      });
+      collapseAll = $.el('a', {
+        className: 'settings-global-collapse-all',
+        href: 'javascript:;',
+        textContent: 'Collapse all'
+      });
+      expandAll = $.el('a', {
+        className: 'settings-global-expand-all',
+        href: 'javascript:;',
+        textContent: 'Expand all'
+      });
+      $.on(collapseAll, 'click', Settings.collapseAllInActiveSection);
+      $.on(expandAll, 'click', Settings.expandAllInActiveSection);
+      $.add(controls, [collapseAll, $.tn(' | '), expandAll]);
+      $.add(titlebar, controls);
+      return Settings.refreshGlobalCollapseControlsState();
+    },
+    getActiveSectionEl: function() {
+      var j, len, ref, section;
+      ref = Settings.sections;
+      for (j = 0, len = ref.length; j < len; j++) {
+        section = ref[j];
+        if (section.el && !section.el.hidden) {
+          return section.el;
+        }
+      }
+      return null;
+    },
+    collapseAllInActiveSection: function(e) {
+      var section;
+      e.preventDefault();
+      section = Settings.getActiveSectionEl();
+      if (!section) {
+        return;
+      }
+      return Settings.setAllFieldsetsCollapsed(section, true);
+    },
+    expandAllInActiveSection: function(e) {
+      var section;
+      e.preventDefault();
+      section = Settings.getActiveSectionEl();
+      if (!section) {
+        return;
+      }
+      return Settings.setAllFieldsetsCollapsed(section, false);
     },
     restoreSectionHeader: function(sectionObj) {
       var el, h2;
@@ -15047,7 +15663,7 @@ Settings = (function() {
       return el.insertBefore(h2, el.firstChild);
     },
     applySearch: function() {
-      var activeSection, child, el, fs, hasMatch, haystack, heading, hit, i1, isPreview, j, l, len, len1, len10, len11, len2, len3, len4, len5, len6, len7, len8, len9, matchTarget, n, node, q, query, r, ref, ref1, ref10, ref11, ref12, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, results, row, s, section, sectionObj, selectedTab, t, u, v, w, win, y, z;
+      var activeSection, child, el, fs, hasMatch, haystack, heading, hit, i1, isPreview, j, j1, l, len, len1, len10, len11, len2, len3, len4, len5, len6, len7, len8, len9, matchTarget, n, node, q, query, ref, ref1, ref10, ref11, ref12, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, results, row, s, section, sectionObj, selectedTab, t, u, v, w, win, y, z;
       if (!Settings.dialog) {
         return;
       }
@@ -15073,10 +15689,12 @@ Settings = (function() {
         if (!section) {
           continue;
         }
+        Settings.updateFieldsetCollapseForSearch(section, !!query);
         if (query && !sectionObj.rendered) {
           sectionObj.open(section, g);
           sectionObj.rendered = true;
           Settings.restoreSectionHeader(sectionObj);
+          Settings.setupCollapsibleFieldsets(section);
         }
         ref2 = $$('.settings-search-hidden', section);
         for (n = 0, len2 = ref2.length; n < len2; n++) {
@@ -15085,15 +15703,15 @@ Settings = (function() {
         }
         Settings.highlightSettingRow(section, query);
         if (query) {
-          ref3 = $$('div[data-name], tr[data-name], .generated-highlight-group, .generated-highlight-auto-group, .generated-highlight-auto-row, fieldset, .settings-group-heading, table, thead, tbody, legend, h4', section);
+          ref3 = $$('div[data-name], tr[data-name], .generated-highlight-group, .generated-highlight-auto-group, .generated-highlight-auto-row, details.settings-fieldset, .settings-group-heading, table, thead, tbody, summary.settings-legend, h4', section);
           for (q = 0, len3 = ref3.length; q < len3; q++) {
             el = ref3[q];
             $.addClass(el, 'settings-search-hidden');
           }
           hasMatch = false;
           ref4 = $$('div[data-name], tr[data-name]', section);
-          for (r = 0, len4 = ref4.length; r < len4; r++) {
-            row = ref4[r];
+          for (t = 0, len4 = ref4.length; t < len4; t++) {
+            row = ref4[t];
             haystack = ((row.dataset.name || '') + " " + row.dataset.settingTitle + " " + (row.dataset.settingDescription || '') + " " + (row.dataset.searchKeywords || '')).toLowerCase();
             if (haystack.indexOf(query) >= 0) {
               hasMatch = true;
@@ -15103,15 +15721,15 @@ Settings = (function() {
                 node = node.parentElement;
               }
               ref5 = $$('.settings-search-hidden', row);
-              for (t = 0, len5 = ref5.length; t < len5; t++) {
-                child = ref5[t];
+              for (u = 0, len5 = ref5.length; u < len5; u++) {
+                child = ref5[u];
                 child.classList.remove('settings-search-hidden');
               }
             }
           }
-          ref6 = $$('.generated-highlight-group, .generated-highlight-auto-group, legend, th, h4, .generated-highlight-help', section);
-          for (u = 0, len6 = ref6.length; u < len6; u++) {
-            el = ref6[u];
+          ref6 = $$('.generated-highlight-group, .generated-highlight-auto-group, summary.settings-legend, th, h4, .generated-highlight-help', section);
+          for (v = 0, len6 = ref6.length; v < len6; v++) {
+            el = ref6[v];
             if (el.closest('.generated-highlight-preview') || el.closest('.custom-css-editor')) {
               continue;
             }
@@ -15123,15 +15741,15 @@ Settings = (function() {
                 node = node.parentElement;
               }
               ref7 = $$('.settings-search-hidden', el);
-              for (v = 0, len7 = ref7.length; v < len7; v++) {
-                child = ref7[v];
+              for (w = 0, len7 = ref7.length; w < len7; w++) {
+                child = ref7[w];
                 child.classList.remove('settings-search-hidden');
               }
             }
           }
           ref8 = $$('.settings-group-heading', section);
-          for (w = 0, len8 = ref8.length; w < len8; w++) {
-            heading = ref8[w];
+          for (y = 0, len8 = ref8.length; y < len8; y++) {
+            heading = ref8[y];
             hit = heading.textContent.toLowerCase().indexOf(query) >= 0;
             if (hit) {
               hasMatch = true;
@@ -15140,27 +15758,27 @@ Settings = (function() {
               while (node && !node.classList.contains('settings-group-heading')) {
                 node.classList.remove('settings-search-hidden');
                 ref9 = $$('.settings-search-hidden', node);
-                for (y = 0, len9 = ref9.length; y < len9; y++) {
-                  child = ref9[y];
+                for (z = 0, len9 = ref9.length; z < len9; z++) {
+                  child = ref9[z];
                   child.classList.remove('settings-search-hidden');
                 }
                 node = node.nextElementSibling;
               }
             }
           }
-          ref10 = $$('fieldset', section);
-          for (z = 0, len10 = ref10.length; z < len10; z++) {
-            fs = ref10[z];
+          ref10 = $$('details.settings-fieldset', section);
+          for (i1 = 0, len10 = ref10.length; i1 < len10; i1++) {
+            fs = ref10[i1];
             isPreview = fs.classList.contains('generated-highlight-preview') || fs.classList.contains('custom-css-editor');
             if (!isPreview) {
-              matchTarget = ((ref11 = $('legend', fs)) != null ? ref11.textContent : void 0) || fs.textContent;
+              matchTarget = ((ref11 = $('summary.settings-legend', fs)) != null ? ref11.textContent : void 0) || fs.textContent;
               hit = matchTarget.toLowerCase().indexOf(query) >= 0;
               if (hit) {
                 hasMatch = true;
                 fs.classList.remove('settings-search-hidden');
                 ref12 = $$('.settings-search-hidden', fs);
-                for (i1 = 0, len11 = ref12.length; i1 < len11; i1++) {
-                  child = ref12[i1];
+                for (j1 = 0, len11 = ref12.length; j1 < len11; j1++) {
+                  child = ref12[j1];
                   child.classList.remove('settings-search-hidden');
                 }
               }
@@ -15173,9 +15791,288 @@ Settings = (function() {
       }
       return results;
     },
+    setupCollapsibleFieldsets: function(section) {
+      var collapseCount, fs, j, len, ref;
+      collapseCount = 0;
+      ref = $$('details.settings-fieldset', section);
+      for (j = 0, len = ref.length; j < len; j++) {
+        fs = ref[j];
+        Settings.setupCollapsibleFieldset(fs);
+        collapseCount++;
+      }
+      return Settings.ensureSectionCollapseControls(section, collapseCount > 0);
+    },
+    ensureSectionCollapseControls: function(section, hasCollapsible) {
+      var collapseAll, controls, expandAll;
+      controls = $('.settings-collapse-controls', section);
+      if (!controls) {
+        controls = $.el('div', {
+          className: 'settings-collapse-controls'
+        });
+        collapseAll = $.el('a', {
+          className: 'settings-collapse-all',
+          href: 'javascript:;',
+          textContent: 'Collapse all'
+        });
+        expandAll = $.el('a', {
+          className: 'settings-expand-all',
+          href: 'javascript:;',
+          textContent: 'Expand all'
+        });
+        $.on(collapseAll, 'click', Settings.collapseAllFieldsets);
+        $.on(expandAll, 'click', Settings.expandAllFieldsets);
+        $.add(controls, [collapseAll, $.tn(' | '), expandAll]);
+        section.insertBefore(controls, section.firstChild);
+      }
+      controls.hidden = true;
+      if (hasCollapsible) {
+        return Settings.refreshCollapseControlsState(section);
+      }
+    },
+    setupCollapsibleFieldset: function(fs) {
+      var isCollapsed, summary;
+      if (fs.classList.contains('settings-collapsible-ready')) {
+        return;
+      }
+      summary = $('summary.settings-legend', fs);
+      if (!summary) {
+        return;
+      }
+      fs.classList.add('settings-collapsible-ready');
+      fs.open = true;
+      Settings.updateFieldsetLegendHeight(fs);
+      isCollapsed = Settings.isFieldsetStoredCollapsed(fs);
+      fs.classList.toggle('settings-collapsed', isCollapsed);
+      summary.title = isCollapsed ? 'Expand section' : 'Collapse section';
+      $.on(summary, 'click', Settings.toggleFieldsetCollapsed);
+      $.on(summary, 'keydown', Settings.toggleFieldsetCollapsedOnKey);
+      return $.on(summary, 'click', Settings.suppressToggleOnInteractive);
+    },
+    suppressToggleOnInteractive: function(e) {
+      if (e.target.closest('a, input, button, textarea, select, code')) {
+        return e.preventDefault();
+      }
+    },
+    toggleFieldsetCollapsed: function(e) {
+      var fs;
+      e.preventDefault();
+      fs = $.x('ancestor::details[1]', this);
+      if (!(fs != null ? fs.classList.contains('settings-collapsible-ready') : void 0)) {
+        return;
+      }
+      fs.classList.toggle('settings-collapsed');
+      this.title = fs.classList.contains('settings-collapsed') ? 'Expand section' : 'Collapse section';
+      Settings.saveCollapsedFieldsetState(fs);
+      return Settings.refreshCollapseControlsState($.x('ancestor::section[1]', fs));
+    },
+    toggleFieldsetCollapsedOnKey: function(e) {
+      if (!(e.key === 'Enter' || e.key === ' ')) {
+        return;
+      }
+      return Settings.toggleFieldsetCollapsed.call(this, e);
+    },
+    countCollapsibleRows: function(fs) {
+      var count, el, j, l, len, len1, ref, row, rows;
+      rows = $$('div[data-name], tr[data-name], p, li, .settings-group-heading, .generated-highlight-group, .generated-highlight-auto-group', fs);
+      count = 0;
+      for (j = 0, len = rows.length; j < len; j++) {
+        row = rows[j];
+        if (row.hidden) {
+          continue;
+        }
+        if (row.closest('summary')) {
+          continue;
+        }
+        count++;
+      }
+      if (count === 0) {
+        ref = fs.children;
+        for (l = 0, len1 = ref.length; l < len1; l++) {
+          el = ref[l];
+          if (el.nodeName === 'SUMMARY') {
+            continue;
+          }
+          if (el.hidden) {
+            continue;
+          }
+          count++;
+        }
+      }
+      return count;
+    },
+    updateFieldsetCollapseForSearch: function(section, searching) {
+      var changed, fs, j, len, ref, summary;
+      changed = false;
+      ref = $$('details.settings-fieldset.settings-collapsible-ready', section);
+      for (j = 0, len = ref.length; j < len; j++) {
+        fs = ref[j];
+        if (searching) {
+          fs.classList.add('settings-search-expand');
+          if (fs.classList.contains('settings-collapsed')) {
+            changed = true;
+            fs.classList.remove('settings-collapsed');
+            summary = $('summary.settings-legend', fs);
+            if (summary) {
+              summary.title = 'Collapse section';
+            }
+          }
+        } else {
+          fs.classList.remove('settings-search-expand');
+        }
+      }
+      if (changed || !searching) {
+        return Settings.refreshCollapseControlsState(section);
+      }
+    },
+    collapseAllFieldsets: function(e) {
+      var section;
+      e.preventDefault();
+      section = $.x('ancestor::section[1]', this);
+      if (!section) {
+        return;
+      }
+      return Settings.setAllFieldsetsCollapsed(section, true);
+    },
+    expandAllFieldsets: function(e) {
+      var section;
+      e.preventDefault();
+      section = $.x('ancestor::section[1]', this);
+      if (!section) {
+        return;
+      }
+      return Settings.setAllFieldsetsCollapsed(section, false);
+    },
+    setAllFieldsetsCollapsed: function(section, collapsed) {
+      var fs, j, len, ref, summary;
+      ref = $$('details.settings-fieldset.settings-collapsible-ready', section);
+      for (j = 0, len = ref.length; j < len; j++) {
+        fs = ref[j];
+        if (fs.classList.contains('settings-search-expand')) {
+          continue;
+        }
+        fs.classList.toggle('settings-collapsed', collapsed);
+        summary = $('summary.settings-legend', fs);
+        summary.title = collapsed ? 'Expand section' : summary ? 'Collapse section' : void 0;
+        Settings.saveCollapsedFieldsetState(fs, true);
+      }
+      Settings.persistCollapsedFieldsetStates();
+      return Settings.refreshCollapseControlsState(section);
+    },
+    refreshCollapseControlsState: function(section) {
+      var collapseLink, collapsedCount, expandLink, fs, j, len, ref, total;
+      Settings.refreshGlobalCollapseControlsState();
+      if (!section) {
+        return;
+      }
+      collapseLink = $('.settings-collapse-all', section);
+      expandLink = $('.settings-expand-all', section);
+      if (!(collapseLink && expandLink)) {
+        return;
+      }
+      total = 0;
+      collapsedCount = 0;
+      ref = $$('details.settings-fieldset.settings-collapsible-ready', section);
+      for (j = 0, len = ref.length; j < len; j++) {
+        fs = ref[j];
+        if (fs.classList.contains('settings-search-expand')) {
+          continue;
+        }
+        total++;
+        if (fs.classList.contains('settings-collapsed')) {
+          collapsedCount++;
+        }
+      }
+      if (total === 0) {
+        collapseLink.classList.add('disabled');
+        expandLink.classList.add('disabled');
+        return;
+      }
+      collapseLink.classList.toggle('disabled', collapsedCount === total);
+      return expandLink.classList.toggle('disabled', collapsedCount === 0);
+    },
+    refreshGlobalCollapseControlsState: function() {
+      var collapseLink, collapsedCount, dialog, expandLink, fs, j, len, ref, section, total;
+      dialog = Settings.dialog;
+      if (!dialog) {
+        return;
+      }
+      collapseLink = $('.settings-global-collapse-all', dialog);
+      expandLink = $('.settings-global-expand-all', dialog);
+      if (!(collapseLink && expandLink)) {
+        return;
+      }
+      section = Settings.getActiveSectionEl();
+      total = 0;
+      collapsedCount = 0;
+      if (section) {
+        ref = $$('details.settings-fieldset.settings-collapsible-ready', section);
+        for (j = 0, len = ref.length; j < len; j++) {
+          fs = ref[j];
+          if (fs.classList.contains('settings-search-expand')) {
+            continue;
+          }
+          total++;
+          if (fs.classList.contains('settings-collapsed')) {
+            collapsedCount++;
+          }
+        }
+      }
+      if (total === 0) {
+        collapseLink.classList.add('disabled');
+        expandLink.classList.add('disabled');
+        return;
+      }
+      collapseLink.classList.toggle('disabled', collapsedCount === total);
+      return expandLink.classList.toggle('disabled', collapsedCount === 0);
+    },
+    updateFieldsetLegendHeight: function(fs) {
+      var summary;
+      summary = $('summary.settings-legend', fs);
+      if (!summary) {
+        return;
+      }
+      return fs.style.setProperty('--settings-legend-height', (Math.ceil(summary.offsetHeight)) + "px");
+    },
+    fieldsetStateKey: function(fs) {
+      var i, index, j, legend, len, other, ref, ref1, ref2, section, sectionName;
+      section = $.x('ancestor::section[1]', fs);
+      sectionName = ((section != null ? section.className.match(/\bsection-[^\s]+\b/) : void 0) || ['section-unknown'])[0];
+      legend = ((ref = $('summary.settings-legend', fs)) != null ? (ref1 = ref.textContent) != null ? ref1.trim() : void 0 : void 0) || 'untitled';
+      index = 0;
+      if (section) {
+        i = 0;
+        ref2 = $$('details.settings-fieldset', section);
+        for (j = 0, len = ref2.length; j < len; j++) {
+          other = ref2[j];
+          if (other === fs) {
+            index = i;
+            break;
+          }
+          i++;
+        }
+      }
+      return sectionName + "::" + index + "::" + legend;
+    },
+    isFieldsetStoredCollapsed: function(fs) {
+      return Settings.collapsedFieldsets[Settings.fieldsetStateKey(fs)] === true;
+    },
+    saveCollapsedFieldsetState: function(fs, deferPersist) {
+      var key;
+      if (deferPersist == null) {
+        deferPersist = false;
+      }
+      key = Settings.fieldsetStateKey(fs);
+      Settings.collapsedFieldsets[key] = fs.classList.contains('settings-collapsed');
+      if (!deferPersist) {
+        return Settings.persistCollapsedFieldsetStates();
+      }
+    },
+    persistCollapsedFieldsetStates: function() {
+      return $.set('settings.collapsedFieldsets', Settings.collapsedFieldsets);
+    },
     highlightSettingRow: function(row, query) {
       var el, j, len, raw, ref, results, rx;
-      ref = $$('.setting-title, .setting-description, legend, th, h4, .generated-highlight-help', row);
+      ref = $$('.setting-title, .setting-description, summary.settings-legend, th, h4, .generated-highlight-help', row);
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         el = ref[j];
@@ -15222,7 +16119,7 @@ Settings = (function() {
         });
       }
     },
-    stylingOptionNames: ['Time Formatting', 'Relative Post Dates', 'Relative Date Title', 'File Info Formatting', 'Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID', 'Remove Spoilers', 'Reveal Spoilers', 'Highlight Posts Quoting You', 'Highlight Own Posts'],
+    stylingOptionNames: ['Time Formatting', 'Relative Post Dates', 'Relative Date Title', 'File Info Formatting', 'Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID', 'Remove Spoilers', 'Reveal Spoilers', 'Quote Backlinks', 'Highlight Posts Quoting You', 'Highlight Own Posts', 'Highlight Ghost Posts'],
     searchKeywords: {
       'Replace Thumbnails': 'replace gif jpg jpeg png webm mp4 ogv thumbnails original media',
       'Detailed Thread Stats': 'ip count page count purge position'
@@ -15289,6 +16186,67 @@ Settings = (function() {
       }
       return count;
     },
+    linkMediaMetadataToggles: function(inputs) {
+      var child, children, j, key, len, parent, setChecked, syncChildrenFromParent, syncParentFromChildren, syncing;
+      parent = inputs['Strip All Media Metadata'];
+      if (!parent) {
+        return;
+      }
+      parent.parentNode.parentNode.classList.add('no-suboption-collapse');
+      children = (function() {
+        var j, len, ref, results;
+        ref = ['Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'];
+        results = [];
+        for (j = 0, len = ref.length; j < len; j++) {
+          key = ref[j];
+          if (inputs[key]) {
+            results.push(inputs[key]);
+          }
+        }
+        return results;
+      })();
+      if (!children.length) {
+        return;
+      }
+      syncing = false;
+      setChecked = function(input, checked) {
+        input.checked = checked;
+        input.parentNode.parentNode.dataset.checked = checked;
+        return $.cb.checked.call(input);
+      };
+      syncChildrenFromParent = function() {
+        var child, j, len;
+        if (syncing) {
+          return;
+        }
+        syncing = true;
+        for (j = 0, len = children.length; j < len; j++) {
+          child = children[j];
+          setChecked(child, parent.checked);
+        }
+        return syncing = false;
+      };
+      syncParentFromChildren = function() {
+        if (syncing) {
+          return;
+        }
+        syncing = true;
+        setChecked(parent, children.every(function(child) {
+          return child.checked;
+        }));
+        return syncing = false;
+      };
+      $.on(parent, 'change', syncChildrenFromParent);
+      for (j = 0, len = children.length; j < len; j++) {
+        child = children[j];
+        $.on(child, 'change', syncParentFromChildren);
+      }
+      if (parent.checked) {
+        return syncChildrenFromParent();
+      } else {
+        return syncParentFromChildren();
+      }
+    },
     selectGroup: function(obj, keys, baseLevel) {
       var adjustedLevel, arr, defaultValue, description, group, j, key, len, level;
       if (baseLevel == null) {
@@ -15307,15 +16265,17 @@ Settings = (function() {
       return group;
     },
     renderMainGroups: function(section, options) {
-      var addWarning, baseLevel, button, cat, categories, div, el, fs, group, hideLegendFor, includeHiddenCount, includeJSONIndex, includeWarnings, inputs, items, j, key, keyFS, keys, l, legendTitle, len, len1, len2, len3, lookup, n, obj, q, ref, ref1, ref2, ref3, root, stubs, styleNames, subgroups, warning, warnings;
+      var addWarning, baseLevel, button, cat, categories, div, el, fs, group, hideLegendFor, includeHiddenCount, includeJSONIndex, includeWarnings, inputs, items, j, key, keyFS, keys, l, legendTitle, len, len1, len2, len3, lookup, n, obj, posDiv, posSel, q, ref, ref1, ref2, ref3, ref4, root, stubs, styleNames, subgroups, warning, warnings;
       categories = options.categories, includeWarnings = options.includeWarnings, includeJSONIndex = options.includeJSONIndex, includeHiddenCount = options.includeHiddenCount, hideLegendFor = options.hideLegendFor;
       if (hideLegendFor == null) {
         hideLegendFor = [];
       }
       if (includeWarnings) {
-        warnings = $.el('fieldset', {
-          hidden: true
-        }, {innerHTML: "<legend>Warnings</legend><ul></ul>"});
+        warnings = $.el('details', {
+          className: 'settings-fieldset',
+          hidden: true,
+          open: true
+        }, {innerHTML: "<summary class=\"settings-legend\">Warnings</summary><ul></ul>"});
         addWarning = function(item) {
           $.add($('ul', warnings), item);
           return warnings.hidden = false;
@@ -15349,7 +16309,10 @@ Settings = (function() {
           }
           for (l = 0, len1 = subgroups.length; l < len1; l++) {
             ref1 = subgroups[l], legendTitle = ref1[0], keys = ref1[1];
-            fs = $.el('fieldset', {innerHTML: "<legend>" + E(legendTitle) + "</legend>"});
+            fs = $.el('details', {
+              className: 'settings-fieldset',
+              open: true
+            }, {innerHTML: "<summary class=\"settings-legend\">" + E(legendTitle) + "</summary>"});
             group = $.dict();
             for (n = 0, len2 = keys.length; n < len2; n++) {
               key = keys[n];
@@ -15367,10 +16330,13 @@ Settings = (function() {
           continue;
         }
         if (keyFS === 'Posting and Captchas') {
-          ref2 = [['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Pass Link'], 0], ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio'], 1], ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]];
+          ref2 = [['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Comment Preview', 'Pass Link'], 0], ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio', 'Strip All Media Metadata', 'Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'], 1], ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]];
           for (q = 0, len3 = ref2.length; q < len3; q++) {
             ref3 = ref2[q], legendTitle = ref3[0], keys = ref3[1], baseLevel = ref3[2];
-            fs = $.el('fieldset', {innerHTML: "<legend>" + E(legendTitle) + "</legend>"});
+            fs = $.el('details', {
+              className: 'settings-fieldset',
+              open: true
+            }, {innerHTML: "<summary class=\"settings-legend\">" + E(legendTitle) + "</summary>"});
             group = Settings.selectGroup(obj, keys, baseLevel);
             if (!Settings.addCheckboxes(fs, group, items, inputs, function(key) {
               return indexOf.call(styleNames, key) < 0;
@@ -15380,14 +16346,34 @@ Settings = (function() {
             if (legendTitle === 'Captcha') {
               $.add(fs, $.el('p', {innerHTML: "For more info on captcha options and issues, see the <a href=\"https://github.com/cercos/4chan-eX/wiki/Captcha-FAQ\" target=\"_blank\">captcha FAQ</a>."}));
             }
+            if (legendTitle === 'Workflow') {
+              posDiv = $.el('div', {
+                className: 'suboption-list'
+              });
+              $.extend(posDiv, {innerHTML: "<label>Comment preview position: <select class=\"field\" name=\"Comment Preview Position\"><option value=\"button\">Toggle button (replaces textarea)</option><option value=\"bottom\">Always shown — below textarea</option><option value=\"top\">Always shown — above textarea</option><option value=\"left\">Always shown — left of textarea</option><option value=\"right\">Always shown — right of textarea</option></select></label>"});
+              posSel = $('select[name="Comment Preview Position"]', posDiv);
+              posSel.value = Conf['Comment Preview Position'] || 'button';
+              if ((ref4 = posSel.value) !== 'button' && ref4 !== 'bottom' && ref4 !== 'top' && ref4 !== 'left' && ref4 !== 'right') {
+                posSel.value = 'button';
+              }
+              $.on(posSel, 'change', $.cb.value);
+              $.add(fs, posDiv);
+            }
             $.add(section, fs);
           }
           continue;
         }
         legendTitle = keyFS === 'Filtering' ? 'Content Controls' : keyFS;
-        fs = $.el('fieldset');
-        if (indexOf.call(hideLegendFor, keyFS) < 0) {
-          $.extend(fs, {innerHTML: "<legend>" + E(legendTitle) + "</legend>"});
+        if (indexOf.call(hideLegendFor, keyFS) >= 0) {
+          fs = $.el('div', {
+            className: 'settings-fieldset settings-no-collapse'
+          });
+        } else {
+          fs = $.el('details', {
+            className: 'settings-fieldset',
+            open: true
+          });
+          $.extend(fs, {innerHTML: "<summary class=\"settings-legend\">" + E(legendTitle) + "</summary>"});
         }
         if (!Settings.addCheckboxes(fs, obj, items, inputs, function(key) {
           return indexOf.call(styleNames, key) < 0;
@@ -15413,6 +16399,7 @@ Settings = (function() {
           inputs[key].checked = val;
           inputs[key].parentNode.parentNode.dataset.checked = val;
         }
+        Settings.linkMediaMetadataToggles(inputs);
       });
       if (!includeHiddenCount) {
         return;
@@ -15423,30 +16410,30 @@ Settings = (function() {
         hiddenThreads: $.dict(),
         hiddenPosts: $.dict()
       }, function(arg) {
-        var ID, board, hiddenNum, hiddenPosts, hiddenThreads, ref4, ref5, ref6, ref7, site, thread;
+        var ID, board, hiddenNum, hiddenPosts, hiddenThreads, ref5, ref6, ref7, ref8, site, thread;
         hiddenThreads = arg.hiddenThreads, hiddenPosts = arg.hiddenPosts;
         hiddenNum = 0;
         for (ID in hiddenThreads) {
           site = hiddenThreads[ID];
           if (ID !== 'boards') {
-            ref4 = site.boards;
-            for (ID in ref4) {
-              board = ref4[ID];
+            ref5 = site.boards;
+            for (ID in ref5) {
+              board = ref5[ID];
               hiddenNum += Object.keys(board).length;
             }
           }
         }
-        ref5 = hiddenThreads.boards;
-        for (ID in ref5) {
-          board = ref5[ID];
+        ref6 = hiddenThreads.boards;
+        for (ID in ref6) {
+          board = ref6[ID];
           hiddenNum += Object.keys(board).length;
         }
         for (ID in hiddenPosts) {
           site = hiddenPosts[ID];
           if (ID !== 'boards') {
-            ref6 = site.boards;
-            for (ID in ref6) {
-              board = ref6[ID];
+            ref7 = site.boards;
+            for (ID in ref7) {
+              board = ref7[ID];
               for (ID in board) {
                 thread = board[ID];
                 hiddenNum += Object.keys(thread).length;
@@ -15454,9 +16441,9 @@ Settings = (function() {
             }
           }
         }
-        ref7 = hiddenPosts.boards;
-        for (ID in ref7) {
-          board = ref7[ID];
+        ref8 = hiddenPosts.boards;
+        for (ID in ref8) {
+          board = ref8[ID];
           for (ID in board) {
             thread = board[ID];
             hiddenNum += Object.keys(thread).length;
@@ -15467,10 +16454,10 @@ Settings = (function() {
       $.on(button, 'click', function() {
         this.textContent = 'Hidden: 0';
         return $.get('hiddenThreads', $.dict(), function(arg) {
-          var boardID, hiddenThreads, ref4;
+          var boardID, hiddenThreads, ref5;
           hiddenThreads = arg.hiddenThreads;
           if ($.hasStorage && g.SITE.software === 'yotsuba') {
-            for (boardID in (ref4 = hiddenThreads['4chan.org']) != null ? ref4.boards : void 0) {
+            for (boardID in (ref5 = hiddenThreads['4chan.org']) != null ? ref5.boards : void 0) {
               localStorage.removeItem("4chan-hide-t-" + boardID);
             }
             for (boardID in hiddenThreads.boards) {
@@ -15488,7 +16475,10 @@ Settings = (function() {
     },
     addSelectFieldset: function(section, title, rows) {
       var div, fs, inputs, items, j, l, label, len, len1, option, ref, row, select;
-      fs = $.el('fieldset', {innerHTML: "<legend>" + E(title) + "</legend>"});
+      fs = $.el('details', {
+        className: 'settings-fieldset',
+        open: true
+      }, {innerHTML: "<summary class=\"settings-legend\">" + E(title) + "</summary>"});
       items = $.dict();
       inputs = $.dict();
       for (j = 0, len = rows.length; j < len; j++) {
@@ -15537,7 +16527,10 @@ Settings = (function() {
     },
     addThreadWatcherFieldset: function(section) {
       var conf, description, div, fs, input, inputs, items, name, ref, sizeDiv, sizeInput;
-      fs = $.el('fieldset', {innerHTML: "<legend>Thread Watcher</legend>"});
+      fs = $.el('details', {
+        className: 'settings-fieldset',
+        open: true
+      }, {innerHTML: "<summary class=\"settings-legend\">Thread Watcher</summary>"});
       items = $.dict();
       inputs = $.dict();
       ref = Config.threadWatcher;
@@ -15630,6 +16623,30 @@ Settings = (function() {
       var fsNav, inputs, items, textarea;
       items = $.dict();
       inputs = $.dict();
+      fsNav = $.el('details', {
+        className: 'settings-fieldset',
+        open: true
+      }, {innerHTML: "<summary class=\"settings-legend\">Board Navigation</summary>"});
+      textarea = $.el('textarea', {
+        name: 'boardnav',
+        className: 'field boardnav-field',
+        spellcheck: false
+      });
+      $.on(textarea, 'change', $.cb.value);
+      $.on(textarea, 'change', Settings.boardnav);
+      items['boardnav'] = Conf['boardnav'];
+      inputs['boardnav'] = textarea;
+      $.add(fsNav, textarea);
+      $.add(fsNav, $.el('input', {
+        type: 'checkbox',
+        id: 'boardnav-doc-expand',
+        hidden: true
+      }));
+      $.add(fsNav, $.el('div', {
+        id: 'boardnav-doc',
+        className: 'boardnav-help'
+      }, {innerHTML: "<label for=\"boardnav-doc-expand\">[expand]</label><span class=\"note\">New lines will be converted into spaces.</span><br><br><div class=\"note\">In the following examples for /g/, <code>g</code> can be changed to a different board ID (<code>a</code>, <code>b</code>, etc...), the current board (<code>current</code>), or the Twitter link (<code>@</code>).</div><div>Board link: <code>g</code></div><div>Archive link: <code>g-archive</code></div><div>Internal archive link: <code>g-expired</code></div><div>Title link: <code>g-title</code></div><div>Board link (Replace with title when on that board): <code>g-replace</code></div><div>Full text link: <code>g-full</code></div><div>Custom text link: <code>g-text:&quot;Install Gentoo&quot;</code></div><div>Index-only link: <code>g-index</code></div><div>Catalog-only link: <code>g-catalog</code></div><div>Index mode: <code>g-mode:&quot;infinite scrolling&quot;</code></div><div>Index sort: <code>g-sort:&quot;creation date rev&quot;</code></div><div>External link: <code>external-text:&quot;Google&quot;,&quot;http://www.google.com&quot;</code></div><div>Open in new tab: <code>g-nt</code></div><div>Combinations are possible: <code>g-index-text:&quot;Technology Index&quot;</code></div><div>Full board list toggle: <code>toggle-all</code></div><br><div class=\"note\"><code>[ toggle-all ] [current-title] [g-title / a-title / jp-title] [x / wsg / h] [t-text:&quot;Piracy&quot;]</code><br>will give you<br><code>[ + ] [Technology] [Technology / Anime &amp; Manga / Otaku Culture] [x / wsg / h] [Piracy]</code><br>if you are on /g/.</div>"}));
+      $.add(section, fsNav);
       Settings.renderMainGroups(section, {
         categories: [
           {
@@ -15641,18 +16658,6 @@ Settings = (function() {
         includeJSONIndex: false,
         includeHiddenCount: false
       });
-      fsNav = $.el('fieldset', {innerHTML: "<legend>Board Navigation</legend>"});
-      textarea = $.el('textarea', {
-        name: 'boardnav',
-        className: 'field',
-        spellcheck: false
-      });
-      $.on(textarea, 'change', $.cb.value);
-      $.on(textarea, 'change', Settings.boardnav);
-      items['boardnav'] = Conf['boardnav'];
-      inputs['boardnav'] = textarea;
-      $.add(fsNav, textarea);
-      $.add(section, fsNav);
       return $.get(items, function(items) {
         var input, key, val;
         for (key in items) {
@@ -15668,12 +16673,15 @@ Settings = (function() {
       });
     },
     threadsAndPosts: function(section) {
-      var cooldownInput, divCooldown, divInterval, fs, group, inputs, intervalInput, items, j, key, keys, l, len, len1, lookup, ref, ref1, title;
+      var addFormattingToggles, cooldownInput, divCooldown, divInterval, event, fn, formattingDetails, fs, group, input, inputs, intervalInput, items, j, key, keys, l, len, len1, len2, len3, len4, lookup, n, q, ref, ref1, ref2, ref3, ref4, ref5, refreshFormattingDetailsState, t, title, toggleName, warning;
       items = $.dict();
       inputs = $.dict();
-      fs = $.el('fieldset', {innerHTML: "<legend>Formatting</legend>"});
+      fs = $.el('details', {
+        className: 'settings-fieldset settings-formatting-fieldset',
+        open: true
+      }, {innerHTML: "<summary class=\"settings-legend\">Formatting</summary>"});
       lookup = Settings.getMainSettingLookup();
-      ref = [['Time and Formatting', ['Time Formatting', 'Relative Post Dates', 'Relative Date Title', 'File Info Formatting']], ['Board and ID Display', ['Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID']], ['Spoiler Display', ['Remove Spoilers', 'Reveal Spoilers']]];
+      ref = [['Board and ID Display', ['Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID']], ['Spoiler Display', ['Remove Spoilers', 'Reveal Spoilers']]];
       for (j = 0, len = ref.length; j < len; j++) {
         ref1 = ref[j], title = ref1[0], keys = ref1[1];
         group = $.dict();
@@ -15693,6 +16701,72 @@ Settings = (function() {
         Settings.addCheckboxes(fs, group, items, inputs);
       }
       $.add(section, fs);
+      formattingDetails = $.el('div', {
+        className: 'settings-formatting-details'
+      });
+      $.extend(formattingDetails, {innerHTML: "<details class=\"settings-fieldset formatting-detail-fieldset\" data-main-toggle=\"Time Formatting\" open><summary class=\"settings-legend\">Time Formatting</summary><div class=\"formatting-toggle-group time-formatting-toggles\"></div><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></details><details class=\"settings-fieldset formatting-detail-fieldset\" data-main-toggle=\"Quote Backlinks\" open><summary class=\"settings-legend\">Quote Backlinks formatting</summary><div class=\"formatting-toggle-group quote-backlinks-toggles\"></div><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></details><details class=\"settings-fieldset formatting-detail-fieldset\" data-main-toggle=\"File Info Formatting\" open><summary class=\"settings-legend\">File Info Formatting</summary><div class=\"formatting-toggle-group file-info-formatting-toggles\"></div><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></details>"});
+      ref2 = $$('.warning', formattingDetails);
+      for (n = 0, len2 = ref2.length; n < len2; n++) {
+        warning = ref2[n];
+        warning.hidden = Conf[warning.dataset.feature];
+      }
+      addFormattingToggles = function(selector, keys) {
+        var len3, q, root;
+        root = $(selector, formattingDetails);
+        if (!root) {
+          return;
+        }
+        group = $.dict();
+        for (q = 0, len3 = keys.length; q < len3; q++) {
+          key = keys[q];
+          if (lookup[key]) {
+            group[key] = lookup[key];
+          }
+        }
+        return Settings.addCheckboxes(root, group, items, inputs);
+      };
+      addFormattingToggles('.time-formatting-toggles', ['Time Formatting', 'Relative Post Dates', 'Relative Date Title']);
+      addFormattingToggles('.quote-backlinks-toggles', ['Quote Backlinks']);
+      addFormattingToggles('.file-info-formatting-toggles', ['File Info Formatting']);
+      ref3 = $$('[name]', formattingDetails);
+      for (q = 0, len3 = ref3.length; q < len3; q++) {
+        input = ref3[q];
+        if (!(!(input.name in inputs))) {
+          continue;
+        }
+        inputs[input.name] = input;
+        items[input.name] = Conf[input.name];
+        event = (input.nodeName === 'SELECT' || ((ref4 = input.type) === 'checkbox' || ref4 === 'radio') || (input.nodeName === 'TEXTAREA' && !(input.name in Settings))) ? 'change' : 'input';
+        $.on(input, event, $.cb[input.type === 'checkbox' ? 'checked' : 'value']);
+        if (input.name in Settings) {
+          $.on(input, event, Settings[input.name]);
+        }
+      }
+      refreshFormattingDetailsState = function() {
+        var enabled, len4, ref5, ref6, results, t, toggleName;
+        ref5 = $$('.formatting-detail-fieldset', formattingDetails);
+        results = [];
+        for (t = 0, len4 = ref5.length; t < len4; t++) {
+          fs = ref5[t];
+          toggleName = fs.dataset.mainToggle;
+          enabled = !!((ref6 = inputs[toggleName]) != null ? ref6.checked : void 0);
+          results.push(fs.classList.toggle('formatting-detail-disabled', !enabled));
+        }
+        return results;
+      };
+      ref5 = ['Time Formatting', 'Quote Backlinks', 'File Info Formatting'];
+      fn = function(toggleName) {
+        input = inputs[toggleName];
+        if (!input) {
+          return;
+        }
+        return $.on(input, 'change', refreshFormattingDetailsState);
+      };
+      for (t = 0, len4 = ref5.length; t < len4; t++) {
+        toggleName = ref5[t];
+        fn(toggleName);
+      }
+      $.add(section, formattingDetails);
       Settings.renderMainGroups(section, {
         categories: ['Filtering', 'Monitoring', 'Quote Links'],
         includeWarnings: false,
@@ -15713,7 +16787,10 @@ Settings = (function() {
           options: [['always', 'Always show count'], ['hide-zero', 'Hide zero count'], ['quoted', 'Show quote marker'], ['quoted-hide-zero', 'Quote marker and hide zero']]
         }
       ]);
-      fs = $.el('fieldset', {innerHTML: "<legend>Updater & Cooldown</legend>"});
+      fs = $.el('details', {
+        className: 'settings-fieldset',
+        open: true
+      }, {innerHTML: "<summary class=\"settings-legend\">Updater & Cooldown</summary>"});
       divInterval = $.el('div', {innerHTML: "<label><span class=\"setting-title\">Update Interval: </span><input type=\"number\" name=\"Interval\" class=\"field\" min=\"1\"></label><span class=\"description\">: Seconds between updates.</span>"});
       divInterval.dataset.name = 'Interval';
       divInterval.dataset.settingTitle = 'Update Interval';
@@ -15732,7 +16809,7 @@ Settings = (function() {
       $.add(fs, divCooldown);
       $.add(section, fs);
       return $.get(items, function(items) {
-        var input, val;
+        var val;
         for (key in items) {
           val = items[key];
           input = inputs[key];
@@ -15743,14 +16820,50 @@ Settings = (function() {
             input.value = val;
           }
         }
+        refreshFormattingDetailsState();
       });
     },
     media: function(section) {
+      var fs, group, inputs, items, j, key, keys, l, legendTitle, len, len1, lookup, ref, ref1;
+      items = $.dict();
+      inputs = $.dict();
+      lookup = Settings.getMainSettingLookup();
+      ref = [['General', ['Image Expansion', 'Image Hover', 'Image Hover in Catalog', 'Replace Thumbnails', 'Restart when Opened']], ['Images', ['Gallery', 'Fullscreen Gallery', 'PDF in Gallery', 'Sauce', 'Reveal Spoiler Thumbnails', 'Image Prefetching', 'Fappe Tyme', 'Werk Tyme']], ['Videos', ['WEBM Metadata', 'Autoplay', 'Show Controls', 'Click Passthrough', 'Allow Sound', 'Mouse Wheel Volume', 'Loop in New Tab', 'Volume in New Tab']]];
+      for (j = 0, len = ref.length; j < len; j++) {
+        ref1 = ref[j], legendTitle = ref1[0], keys = ref1[1];
+        fs = $.el('details', {
+          className: 'settings-fieldset',
+          open: true
+        }, {innerHTML: "<summary class=\"settings-legend\">" + E(legendTitle) + "</summary>"});
+        group = $.dict();
+        for (l = 0, len1 = keys.length; l < len1; l++) {
+          key = keys[l];
+          if (lookup[key]) {
+            group[key] = lookup[key];
+          }
+        }
+        if (!Settings.addCheckboxes(fs, group, items, inputs)) {
+          continue;
+        }
+        $.add(section, fs);
+      }
       Settings.renderMainGroups(section, {
-        categories: ['Images and Videos', 'Linkification'],
+        categories: ['Linkification'],
         includeWarnings: false,
         includeJSONIndex: false,
         includeHiddenCount: false
+      });
+      $.get(items, function(items) {
+        var input, val;
+        for (key in items) {
+          val = items[key];
+          input = inputs[key];
+          if (!input) {
+            continue;
+          }
+          input.checked = val;
+          input.parentNode.parentNode.dataset.checked = val;
+        }
       });
       return Settings.sauce(section);
     },
@@ -15762,8 +16875,11 @@ Settings = (function() {
         includeJSONIndex: false,
         includeHiddenCount: false
       });
-      fs = $.el('fieldset', {innerHTML: "<legend>Personas</legend>"});
-      div = $.el('div', {innerHTML: "<textarea name=\"QR.personas\" class=\"field\" spellcheck=\"false\"></textarea><p class=\"description\">One persona per line (e.g. name:\"Name\";options:\"sage\"). See Advanced for more details.</p>"});
+      fs = $.el('details', {
+        className: 'settings-fieldset',
+        open: true
+      }, {innerHTML: "<summary class=\"settings-legend\">Quick Reply Personas</summary>"});
+      div = $.el('div', {innerHTML: "<textarea name=\"QR.personas\" class=\"personafield field\" spellcheck=\"false\"></textarea><p>One item per line.<br>Items will be added in the relevant input&#039;s auto-completion list.<br>Password items will always be used, since there is no password input.<br>Lines starting with a <code>#</code> will be ignored.</p><ul>You can use these settings with each item, separate them with semicolons:<li>Possible items are: <code>name</code>, <code>options</code> (or equivalently <code>email</code>), <code>subject</code> and <code>password</code>.</li><li>Wrap values of items with quotes, like this: <code>options:&quot;sage&quot;</code>.</li><li>Force values as defaults with the <code>always</code> keyword, for example: <code>options:&quot;sage&quot;;always</code>.</li><li>Select specific boards for an item, separated with commas, for example: <code>options:&quot;sage&quot;;boards:jp;always</code>.</li></ul>"});
       div.dataset.name = 'QR.personas';
       div.dataset.settingTitle = 'Personas';
       textarea = $('textarea', div);
@@ -15779,7 +16895,7 @@ Settings = (function() {
       var applyCSS, customCSS, customCSSHome, event, input, inputs, items, j, l, len, len1, name, randomizeGeneratedHighlights, ref, ref1, ref2, restoreGeneratedHighlights, warning;
       items = $.dict();
       inputs = $.dict();
-      $.extend(section, {innerHTML: "<fieldset class=\"styling-theme\"><legend>Theme</legend><div class=\"site-theme-controls\"><label>Site Style:<select class=\"site-style-mirror\"></select></label><label><input type=\"checkbox\" name=\"Apply Style on Homepage\"> Apply on home page</label></div></fieldset><fieldset class=\"post-highlights\"><legend>Post Highlights</legend><label><input type=\"checkbox\" name=\"Highlight Posts Quoting You\"> Highlight posts that quote you</label><label><input type=\"checkbox\" name=\"Highlight Own Posts\"> Highlight your own posts</label><label><input type=\"checkbox\" name=\"Highlight Ghost Posts\"> Highlight ghost (deleted) posts</label></fieldset><fieldset class=\"generated-highlight-styles\"><legend>Highlight Styles</legend><div class=\"generated-highlight-toggle\"><label><input type=\"checkbox\" name=\"Generated Highlight Styles\"> Enable built-in highlight styling</label></div><div class=\"generated-highlight-quotes\"><div class=\"generated-highlight-quotes-header\"><button type=\"button\" class=\"randomize-generated-highlights\" title=\"Generate new highlight colors that contrast with your current theme\">Randomize Highlights</button><button type=\"button\" class=\"restore-generated-highlights\" title=\"Restore the highlight post colors to their defaults\">Restore to Default</button></div></div><div class=\"generated-highlight-grid\"><div class=\"generated-highlight-group\"><h4>Watched Catalog</h4><div class=\"generated-highlight-help\">Used for watched thread tiles in the catalog preview and catalog view.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Watched Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Watched Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Watched Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Your Post</h4><div class=\"generated-highlight-help\">Used for posts and threads that are marked as yours.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Your Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Your Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Your Post Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Quotes You</h4><div class=\"generated-highlight-help\">Used for posts that quote you (when quote highlighting is enabled).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Quotes You Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Quotes You Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Quotes You Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Ghost Posts</h4><div class=\"generated-highlight-help\">Used for deleted posts fetched from the archive (Fetch Ghost Posts).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Ghost Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Ghost Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Ghost Post Opacity\"></span></label></div></div><div class=\"generated-highlight-auto-row\"><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Text Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Text Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Text Color\" data-auto-color-for=\"Highlight Auto Text Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Greentext Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Greentext Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Greentext Color\" data-auto-color-for=\"Highlight Auto Greentext Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Title Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Title Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Title Color\" data-auto-color-for=\"Highlight Auto Title Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Link Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Link Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Link Color\" data-auto-color-for=\"Highlight Auto Link Color\"></label></div></div><div class=\"generated-highlight-preview\"><div class=\"generated-highlight-preview-column ghs-catalog-preview\"><h4>Catalog Preview</h4><div class=\"ghs-catalog-grid\"><div class=\"ghs-catalog-thread watched ghs-watched-only\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-a/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">24</span> / <span class=\"file-count\">6</span> / <span class=\"page-count\">9</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Sample Catalog Title</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread sample preview.</blockquote></div></div></div><div class=\"ghs-catalog-thread watched ghs-watched-you\"><div class=\"yourPost\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-b/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">45</span> / <span class=\"file-count\">3</span> / <span class=\"page-count\">4</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Your Thread Title Sample</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread that you created.</blockquote></div></div></div></div></div></div><div class=\"generated-highlight-preview-column ghs-thread-preview highlight-you\"><h4>Thread Preview</h4><div class=\"postContainer replyContainer yourPost noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\">Your post sample in thread view.<br><a href=\"javascript:;\" class=\"quotelink\">&gt;&gt;108904436</a><br><span class=\"quote\">&gt;sample quote line</span><br><a href=\"javascript:;\">sample link</a></blockquote></div></div><div class=\"postContainer replyContainer quotesYou noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\"><a href=\"javascript:;\" class=\"quotelink you\">&gt;&gt;108900390<span class=\"qmark-you\">&nbsp;(You)</span><span class=\"qmark-op\">&nbsp;(OP)</span></a><br><span class=\"quote\">&gt;sample quote line</span><br>Reply quoting you sample.<br><a href=\"javascript:;\">sample link</a></blockquote></div></div></div></div></fieldset><fieldset class=\"custom-css-editor\"><legend>Custom CSS</legend><div class=\"custom-css-enable-controls\"><label><input type=\"checkbox\" name=\"Custom CSS\"> Enable Custom CSS</label><label><input type=\"checkbox\" name=\"Custom CSS on Homepage\"> Load Custom CSS on home page</label></div><div class=\"custom-css-note\">For more information about customizing 4chan-eX&#039;s CSS, see the <a href=\"https://github.com/cercos/4chan-eX/wiki/Styling-Guide\" target=\"_blank\">styling guide</a>.</div><div class=\"custom-css-note\"><strong>Note:</strong> Custom CSS can override the classes and styles used by built-in Highlight Styles.</div><div class=\"custom-css-controls\"><label>Theme:<select name=\"CSS Highlight Theme\"><option value=\"auto\">Auto</option><option value=\"vscode-dark\">VS Code Dark</option><option value=\"monokai\">Monokai</option><option value=\"github-light\">GitHub Light</option><option value=\"dracula\">Dracula</option></select></label><button id=\"apply-css\">Apply CSS</button></div><textarea hidden name=\"usercss\" class=\"field\" spellcheck=\"false\"></textarea></fieldset><fieldset><legend>Time Formatting <span class=\"warning\" data-feature=\"Time Formatting\">is disabled.</span></legend><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></fieldset><fieldset><legend>Quote Backlinks formatting <span class=\"warning\" data-feature=\"Quote Backlinks\">is disabled.</span></legend><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></fieldset><fieldset><legend>File Info Formatting <span class=\"warning\" data-feature=\"File Info Formatting\">is disabled.</span></legend><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></fieldset><fieldset><legend>Unread Favicon <span class=\"warning\" data-feature=\"Unread Favicon\">is disabled.</span></legend><select name=\"favicon\"><option value=\"ferongr\">ferongr</option><option value=\"xat-\">xat-</option><option value=\"4chanJS\">4chanJS</option><option value=\"Mayhem\">Mayhem</option><option value=\"Original\">Original</option><option value=\"Metro\">Metro</option></select><span class=\"favicon-preview\"></span></fieldset><fieldset><legend>Known Banners</legend><div>List of known banners, used for click-to-change feature.</div><textarea hidden name=\"knownBanners\" class=\"field\" spellcheck=\"false\"></textarea></fieldset>"});
+      $.extend(section, {innerHTML: "<details class=\"settings-fieldset styling-theme\" open><summary class=\"settings-legend\">Theme</summary><div class=\"site-theme-controls\"><label>Site Style:<select class=\"site-style-mirror\"></select></label><label><input type=\"checkbox\" name=\"Apply Style on Homepage\"> Apply on home page</label></div></details><details class=\"settings-fieldset post-highlights\" open><summary class=\"settings-legend\">Post Highlights</summary><label><input type=\"checkbox\" name=\"Highlight Posts Quoting You\"> Highlight posts that quote you</label><label><input type=\"checkbox\" name=\"Highlight Own Posts\"> Highlight your own posts</label><label><input type=\"checkbox\" name=\"Highlight Ghost Posts\"> Highlight ghost (deleted) posts</label></details><details class=\"settings-fieldset generated-highlight-styles\" open><summary class=\"settings-legend\">Highlight Styles</summary><div class=\"generated-highlight-toggle\"><label><input type=\"checkbox\" name=\"Generated Highlight Styles\"> Enable built-in highlight styling</label></div><div class=\"generated-highlight-quotes\"><div class=\"generated-highlight-quotes-header\"><button type=\"button\" class=\"randomize-generated-highlights\" title=\"Generate new highlight colors that contrast with your current theme\">Randomize Highlights</button><button type=\"button\" class=\"restore-generated-highlights\" title=\"Restore the highlight post colors to their defaults\">Restore to Default</button></div></div><div class=\"generated-highlight-grid\"><div class=\"generated-highlight-group\"><h4>Watched Catalog</h4><div class=\"generated-highlight-help\">Used for watched thread tiles in the catalog preview and catalog view.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Watched Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Watched Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Watched Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Your Post</h4><div class=\"generated-highlight-help\">Used for posts and threads that are marked as yours.</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Your Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Your Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Your Post Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Quotes You</h4><div class=\"generated-highlight-help\">Used for posts that quote you (when quote highlighting is enabled).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Quotes You Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Quotes You Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Quotes You Opacity\"></span></label></div><div class=\"generated-highlight-group\"><h4>Ghost Posts</h4><div class=\"generated-highlight-help\">Used for deleted posts fetched from the archive (Fetch Ghost Posts).</div><label class=\"generated-highlight-row generated-highlight-row-color\"><span class=\"generated-highlight-label-text\">Background</span><input type=\"color\" name=\"Highlight Ghost Post Color\"></label><label class=\"generated-highlight-row generated-highlight-row-opacity\"><span class=\"generated-highlight-label-text\">Opacity</span><input type=\"range\" name=\"Highlight Ghost Post Opacity\" min=\"0\" max=\"1\" step=\"0.01\"><span class=\"generated-highlight-value\" data-generated-value=\"Highlight Ghost Post Opacity\"></span></label></div></div><div class=\"generated-highlight-auto-row\"><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Text Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Text Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Text Color\" data-auto-color-for=\"Highlight Auto Text Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Greentext Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Greentext Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Greentext Color\" data-auto-color-for=\"Highlight Auto Greentext Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Title Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Title Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Title Color\" data-auto-color-for=\"Highlight Auto Title Color\"></label></div><div class=\"generated-highlight-auto-group\"><div class=\"generated-highlight-auto-header\"><h4>Link Color</h4><label class=\"generated-highlight-auto-toggle\"><input type=\"checkbox\" name=\"Highlight Auto Link Color\"><span>Auto</span></label></div><label class=\"generated-highlight-auto-picker-row\"><span class=\"generated-highlight-label-text\">Color</span><input type=\"color\" name=\"Highlight Link Color\" data-auto-color-for=\"Highlight Auto Link Color\"></label></div></div><div class=\"generated-highlight-preview\"><div class=\"generated-highlight-preview-column ghs-catalog-preview\"><h4>Catalog Preview</h4><div class=\"ghs-catalog-grid\"><div class=\"ghs-catalog-thread watched ghs-watched-only\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-a/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">24</span> / <span class=\"file-count\">6</span> / <span class=\"page-count\">9</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Sample Catalog Title</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread sample preview.</blockquote></div></div></div><div class=\"ghs-catalog-thread watched ghs-watched-you\"><div class=\"yourPost\"><div class=\"ghs-catalog-container\"><div class=\"ghs-catalog-post\"><a class=\"ghs-catalog-link\" href=\"javascript:;\"><img src=\"https://picsum.photos/seed/4chanx-catalog-b/500/272\" class=\"ghs-catalog-thumb\" alt=\"\"></a><div class=\"ghs-catalog-stats\"><span class=\"post-count\">45</span> / <span class=\"file-count\">3</span> / <span class=\"page-count\">4</span></div><div class=\"ghs-catalog-meta\"><span class=\"subject ghs-catalog-subject\">Your Thread Title Sample</span><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span></div><blockquote class=\"ghs-catalog-comment\">Watched thread that you created.</blockquote></div></div></div></div></div></div><div class=\"generated-highlight-preview-column ghs-thread-preview highlight-you highlight-ghost\"><h4>Thread Preview</h4><div class=\"postContainer replyContainer yourPost noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)19:21:16</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108906528</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\">Your post sample in thread view.<br><a href=\"javascript:;\" class=\"quotelink\">&gt;&gt;108904436</a><br><span class=\"quote\">&gt;sample quote line</span><br><a href=\"javascript:;\">sample link</a></blockquote></div></div><div class=\"postContainer replyContainer quotesYou noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/25/26(Mon)13:53:57</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108904436</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\"><a href=\"javascript:;\" class=\"quotelink you\">&gt;&gt;108900390<span class=\"qmark-you\">&nbsp;(You)</span><span class=\"qmark-op\">&nbsp;(OP)</span></a><br><span class=\"quote\">&gt;sample quote line</span><br>Reply quoting you sample.<br><a href=\"javascript:;\">sample link</a></blockquote></div></div><div class=\"postContainer replyContainer ghost-post noFile\"><div class=\"replacedSideArrows\"><a class=\"hide-reply-button\" href=\"javascript:;\"><span class=\"fa fa-minus-square-o\"></span></a></div><div class=\"post reply\"><div class=\"postInfo desktop\"><input type=\"checkbox\" disabled><span class=\"nameBlock\"><span class=\"name\">Anonymous</span></span><span class=\"dateTime\">05/26/26(Tue)02:14:03</span><span class=\"postNum desktop\"><a href=\"javascript:;\">No.</a><a href=\"javascript:;\">108910031</a></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><span class=\"container\"></span></div><blockquote class=\"postMessage\">Ghost (deleted) post preview sample from archive.<br><a href=\"javascript:;\" class=\"quotelink\">&gt;&gt;108906528</a><br><span class=\"quote\">&gt;sample quote line</span><br><a href=\"javascript:;\">sample link</a></blockquote></div></div></div></div></details><details class=\"settings-fieldset custom-css-editor\" open><summary class=\"settings-legend\">Custom CSS</summary><div class=\"custom-css-enable-controls\"><label><input type=\"checkbox\" name=\"Custom CSS\"> Enable Custom CSS</label><label><input type=\"checkbox\" name=\"Custom CSS on Homepage\"> Load Custom CSS on home page</label></div><div class=\"custom-css-note\">For more information about customizing 4chan-eX&#039;s CSS, see the <a href=\"https://github.com/cercos/4chan-eX/wiki/Styling-Guide\" target=\"_blank\">styling guide</a>.</div><div class=\"custom-css-note\"><strong>Note:</strong> Custom CSS can override the classes and styles used by built-in Highlight Styles.</div><div class=\"custom-css-controls\"><label>Theme:<select name=\"CSS Highlight Theme\"><option value=\"auto\">Auto</option><option value=\"vscode-dark\">VS Code Dark</option><option value=\"monokai\">Monokai</option><option value=\"github-light\">GitHub Light</option><option value=\"dracula\">Dracula</option></select></label><button id=\"apply-css\">Apply CSS</button></div><textarea hidden name=\"usercss\" class=\"field\" spellcheck=\"false\"></textarea></details><details class=\"settings-fieldset\" open><summary class=\"settings-legend\">Unread Favicon <span class=\"warning\" data-feature=\"Unread Favicon\">is disabled.</span></summary><select name=\"favicon\"><option value=\"ferongr\">ferongr</option><option value=\"xat-\">xat-</option><option value=\"4chanJS\">4chanJS</option><option value=\"Mayhem\">Mayhem</option><option value=\"Original\">Original</option><option value=\"Metro\">Metro</option></select><span class=\"favicon-preview\"></span></details><details class=\"settings-fieldset\" open><summary class=\"settings-legend\">Known Banners</summary><div>List of known banners, used for click-to-change feature.</div><textarea hidden name=\"knownBanners\" class=\"field\" spellcheck=\"false\"></textarea></details>"});
       Settings.setupSiteStyleMirror(section);
       ref = $$('.warning', section);
       for (j = 0, len = ref.length; j < len; j++) {
@@ -17391,7 +18507,7 @@ Settings = (function() {
       }
     },
     renderFilterStats: function(type, textarea, panel) {
-      var details, entries, entry, hidesThread, href, i, idx, j, l, len, len1, len2, li, line, lineText, lines, link, list, match, matchCount, maxThreads, n, parsed, ref, ref1, ref2, ref3, result, row, stat, stats, summary, summaryEl, summaryText, text, totalHidden, totalMatches, trimmed;
+      var activeLines, details, entries, entry, hidesThread, href, i, idx, j, l, len, len1, len2, len3, li, line, lineText, lines, link, list, match, matchCount, maxThreads, n, parsed, q, ref, ref1, ref2, ref3, result, row, stat, stats, summary, summaryEl, summaryText, text, totalHidden, totalMatches, trimmed;
       $.rmAll(panel);
       if (!(((ref = g.BOARD) != null ? ref.threads : void 0) && ((ref1 = g.VIEW) === 'index' || ref1 === 'thread' || ref1 === 'catalog'))) {
         $.add(panel, $.el('div', {
@@ -17409,10 +18525,27 @@ Settings = (function() {
         return;
       }
       lines = textarea.value.split('\n');
+      if (type === 'MD5') {
+        activeLines = 0;
+        for (j = 0, len = lines.length; j < len; j++) {
+          line = lines[j];
+          trimmed = line.trim();
+          if (trimmed && trimmed[0] !== '#') {
+            activeLines++;
+          }
+        }
+        if (activeLines > 250) {
+          $.add(panel, $.el('div', {
+            className: 'filter-stats-empty',
+            textContent: "Preview disabled for MD5 while " + activeLines + " lines are loaded."
+          }));
+          return;
+        }
+      }
       stats = [];
       totalMatches = 0;
       totalHidden = 0;
-      for (i = j = 0, len = lines.length; j < len; i = ++j) {
+      for (i = l = 0, len1 = lines.length; l < len1; i = ++l) {
         line = lines[i];
         trimmed = line.trim();
         if (!trimmed) {
@@ -17453,8 +18586,8 @@ Settings = (function() {
       });
       $.add(panel, summary);
       maxThreads = 50;
-      for (l = 0, len1 = stats.length; l < len1; l++) {
-        stat = stats[l];
+      for (n = 0, len2 = stats.length; n < len2; n++) {
+        stat = stats[n];
         row = $.el('div', {
           className: 'filter-stat-row'
         });
@@ -17493,7 +18626,7 @@ Settings = (function() {
             className: 'filter-stat-threads'
           });
           ref2 = stat.matches;
-          for (idx = n = 0, len2 = ref2.length; n < len2; idx = ++n) {
+          for (idx = q = 0, len3 = ref2.length; q < len3; idx = ++q) {
             match = ref2[idx];
             if (!(idx < maxThreads)) {
               continue;
@@ -17784,7 +18917,7 @@ Settings = (function() {
     sauce: function(section) {
       var div, ta;
       div = $.el('div');
-      $.extend(div, {innerHTML: "<div class=\"warning\"><code>Sauce</code> is disabled.</div><input id=\"sauce-doc-expand\" type=\"checkbox\" hidden><div id=\"sauce-doc\"><label for=\"sauce-doc-expand\">[expand]</label><div>These parameters will be replaced by their corresponding values in the URL and displayed text:</div><ul><li><code>%IMG</code>: Full image URL for GIF, JPG, and PNG; thumbnail URL for other types.</li><li><code>%URL</code>: Full image URL.</li><li><code>%TURL</code>: Thumbnail URL.</li><li><code>%name</code>: Original file name.</li><li><code>%board</code>: Current board.</li><li><code>%MD5</code>: MD5 hash in base64.</li><li><code>%sMD5</code>: MD5 hash in base64 using <code>-</code> and <code>_</code>.</li><li><code>%hMD5</code>: MD5 hash in hexadecimal.</li><li><code>%$0</code>: Matched regular expression within the filename.</li><li><code>%$1</code>, <code>%$2</code>, <code>%$3</code>, ... : Subexpressions within the matched regular expression.</li><li><code>%%</code>, <code>%semi</code>: Literal <code>%</code> and <code>;</code>.</li></ul><div>Lines starting with a <code>#</code> will be ignored.</div><div>You can specify a display text by appending <code>;text:[text]</code> to the URL.</div><div>You can specify the applicable boards/sites by appending <code>;boards:[board1],[board2]</code>. See the Filter guide for details.</div><div>You can specify the applicable file types by appending <code>;types:[extension1],[extension2]</code>.</div><div>You can specify a regular expression the filename must match by appending <code>;regexp:[regular expression]</code>.</div></div><textarea hidden name=\"sauces\" class=\"field\" spellcheck=\"false\"></textarea>"});
+      $.extend(div, {innerHTML: "<details class=\"settings-fieldset sauce-fieldset\" open><summary class=\"settings-legend\">Image Sauce &amp; Reverse Search</summary><div class=\"warning\"><code>Sauce</code> is disabled.</div><textarea hidden name=\"sauces\" class=\"field sauces-field\" spellcheck=\"false\"></textarea><input id=\"sauce-doc-expand\" type=\"checkbox\" hidden><div id=\"sauce-doc\"><label for=\"sauce-doc-expand\">[expand]</label><div>These parameters will be replaced by their corresponding values in the URL and displayed text:</div><ul><li><code>%IMG</code>: Full image URL for GIF, JPG, and PNG; thumbnail URL for other types.</li><li><code>%URL</code>: Full image URL.</li><li><code>%TURL</code>: Thumbnail URL.</li><li><code>%name</code>: Original file name.</li><li><code>%board</code>: Current board.</li><li><code>%MD5</code>: MD5 hash in base64.</li><li><code>%sMD5</code>: MD5 hash in base64 using <code>-</code> and <code>_</code>.</li><li><code>%hMD5</code>: MD5 hash in hexadecimal.</li><li><code>%$0</code>: Matched regular expression within the filename.</li><li><code>%$1</code>, <code>%$2</code>, <code>%$3</code>, ... : Subexpressions within the matched regular expression.</li><li><code>%%</code>, <code>%semi</code>: Literal <code>%</code> and <code>;</code>.</li></ul><div>Lines starting with a <code>#</code> will be ignored.</div><div>You can specify a display text by appending <code>;text:[text]</code> to the URL.</div><div>You can specify the applicable boards/sites by appending <code>;boards:[board1],[board2]</code>. See the Filter guide for details.</div><div>You can specify the applicable file types by appending <code>;types:[extension1],[extension2]</code>.</div><div>You can specify a regular expression the filename must match by appending <code>;regexp:[regular expression]</code>.</div></div></details>"});
       $.add(section, div);
       $('.warning', section).hidden = Conf['Sauce'];
       ta = $('textarea', section);
@@ -17796,7 +18929,7 @@ Settings = (function() {
     },
     advanced: function(section) {
       var boardSelect, event, input, inputs, items, itemsArchive, j, l, len, len1, len2, len3, listImageHost, n, name, q, ref, ref1, ref2, ref3, ref4, table, textContent, updateArchives, warning;
-      $.extend(section, {innerHTML: "<fieldset><legend>Archives</legend><div class=\"warning\" data-feature=\"404 Redirect\"><code>404 Redirect</code> is disabled.</div><select id=\"archive-board-select\"></select><table id=\"archive-table\"><thead><th>Thread redirection</th><th>Post fetching</th><th>File redirection</th></thead><tbody></tbody></table><br><div><b>Archive Lists</b>: Each line below should be an archive list in <a href=\"https://github.com/4chenz/archives.json/blob/gh-pages/CONTRIBUTING.md\" target=\"_blank\">this format</a> or a URL to load an archive list from.<br>Archive properties can be overriden by another item with the same <code>uid</code> (or if absent, its <code>name</code>).</div><textarea hidden name=\"archiveLists\" class=\"field\" spellcheck=\"false\"></textarea><button id=\"update-archives\">Update now</button> Last updated: <time id=\"lastarchivecheck\"></time> <label><input type=\"checkbox\" name=\"archiveAutoUpdate\"> Auto-update</label></fieldset><fieldset><legend>External Catalog</legend><div class=\"warning\" data-feature=\"External Catalog\"><code>External Catalog</code> is disabled. This will be used only as a fallback.</div><div>URLs of external catalog sites, where <code>%board</code> is to be replaced by the board name.<br>Each URL should be followed by <code>;boards:</code> and optionally <code>;exclude:</code> and a list of supported/excluded boards in the format explained in the Filter guide.</div><textarea hidden name=\"externalCatalogURLs\" class=\"field\" spellcheck=\"false\"></textarea></fieldset><fieldset><legend>Override 4chan Image Host</legend><div>Change 4chan image links to this domain. Leave blank for no change.</div><div><input name=\"fourchanImageHost\" class=\"field\" spellcheck=\"false\" list=\"list-fourchanImageHost\"></div><datalist id=\"list-fourchanImageHost\"></datalist></fieldset><fieldset><legend>Captcha Language</legend><div>Choose from <a href=\"https://developers.google.com/recaptcha/docs/language\" target=\"_blank\">list of language codes</a>. Leave blank to autoselect.</div><div><input name=\"captchaLanguage\" class=\"field\" spellcheck=\"false\"></div></fieldset><fieldset><legend>Default pasted content filename</legend><div><input name=\"pastedname\" class=\"field\" spellcheck=\"false\">.png</div></fieldset><fieldset><legend>Processed Image Extension</legend><div>Used by Quick Reply image auto-processing. Allowed: <code>jpg</code>, <code>jpeg</code>, <code>png</code>, <code>gif</code>. Invalid values fall back to <code>jpg</code>.</div><div><input name=\"processedImageExtension\" class=\"field\" spellcheck=\"false\" list=\"list-processedImageExtension\"></div><datalist id=\"list-processedImageExtension\"><option value=\"jpg\"></option><option value=\"jpeg\"></option><option value=\"png\"></option><option value=\"gif\"></option></datalist></fieldset><fieldset><legend>Javascript Whitelist</legend><div>Sources from which Javascript is allowed to be loaded by <a href=\"http://content-security-policy.com/#source_list\" target=\"_blank\">Content Security Policy</a>.<br>Lines starting with a <code>#</code> will be ignored. Remove or comment out all lines to allow everything.</div><textarea hidden name=\"jsWhitelist\" class=\"field\" spellcheck=\"false\"></textarea></fieldset>"});
+      $.extend(section, {innerHTML: "<details class=\"settings-fieldset\" open><summary class=\"settings-legend\">Archives</summary><div class=\"warning\" data-feature=\"404 Redirect\"><code>404 Redirect</code> is disabled.</div><select id=\"archive-board-select\"></select><table id=\"archive-table\"><thead><th>Thread redirection</th><th>Post fetching</th><th>File redirection</th></thead><tbody></tbody></table><br><div><b>Archive Lists</b>: Each line below should be an archive list in <a href=\"https://github.com/4chenz/archives.json/blob/gh-pages/CONTRIBUTING.md\" target=\"_blank\">this format</a> or a URL to load an archive list from.<br>Archive properties can be overriden by another item with the same <code>uid</code> (or if absent, its <code>name</code>).</div><textarea hidden name=\"archiveLists\" class=\"field\" spellcheck=\"false\"></textarea><button id=\"update-archives\">Update now</button> Last updated: <time id=\"lastarchivecheck\"></time> <label><input type=\"checkbox\" name=\"archiveAutoUpdate\"> Auto-update</label></details><details class=\"settings-fieldset\" open><summary class=\"settings-legend\">External Catalog</summary><div class=\"warning\" data-feature=\"External Catalog\"><code>External Catalog</code> is disabled. This will be used only as a fallback.</div><div>URLs of external catalog sites, where <code>%board</code> is to be replaced by the board name.<br>Each URL should be followed by <code>;boards:</code> and optionally <code>;exclude:</code> and a list of supported/excluded boards in the format explained in the Filter guide.</div><textarea hidden name=\"externalCatalogURLs\" class=\"field\" spellcheck=\"false\"></textarea></details><details class=\"settings-fieldset\" open><summary class=\"settings-legend\">Override 4chan Image Host</summary><div>Change 4chan image links to this domain. Leave blank for no change.</div><div><input name=\"fourchanImageHost\" class=\"field\" spellcheck=\"false\" list=\"list-fourchanImageHost\"></div><datalist id=\"list-fourchanImageHost\"></datalist></details><details class=\"settings-fieldset\" open><summary class=\"settings-legend\">Captcha Language</summary><div>Choose from <a href=\"https://developers.google.com/recaptcha/docs/language\" target=\"_blank\">list of language codes</a>. Leave blank to autoselect.</div><div><input name=\"captchaLanguage\" class=\"field\" spellcheck=\"false\"></div></details><details class=\"settings-fieldset\" open><summary class=\"settings-legend\">Default pasted content filename</summary><div><input name=\"pastedname\" class=\"field\" spellcheck=\"false\">.png</div></details><details class=\"settings-fieldset\" open><summary class=\"settings-legend\">Processed Image Extension</summary><div>Used by Quick Reply image auto-processing. Allowed: <code>jpg</code>, <code>jpeg</code>, <code>png</code>, <code>gif</code>. Invalid values fall back to <code>jpg</code>.</div><div><input name=\"processedImageExtension\" class=\"field\" spellcheck=\"false\" list=\"list-processedImageExtension\"></div><datalist id=\"list-processedImageExtension\"><option value=\"jpg\"></option><option value=\"jpeg\"></option><option value=\"png\"></option><option value=\"gif\"></option></datalist></details><details class=\"settings-fieldset\" open><summary class=\"settings-legend\">Javascript Whitelist</summary><div>Sources from which Javascript is allowed to be loaded by <a href=\"http://content-security-policy.com/#source_list\" target=\"_blank\">Content Security Policy</a>.<br>Lines starting with a <code>#</code> will be ignored. Remove or comment out all lines to allow everything.</div><textarea hidden name=\"jsWhitelist\" class=\"field\" spellcheck=\"false\"></textarea></details>"});
       ref = $$('.warning', section);
       for (j = 0, len = ref.length; j < len; j++) {
         warning = ref[j];
@@ -19078,7 +20211,7 @@ Gallery = (function() {
       nodes.el = dialog = $.el('div', {
         id: 'a-gallery'
       });
-      $.extend(dialog, {innerHTML: "<div class=\"gal-viewport\"><span class=\"gal-buttons\"><a href=\"javascript:;\" class=\"gal-start\" title=\"Start slideshow\"><i></i></a><a href=\"javascript:;\" class=\"gal-stop\" title=\"Stop slideshow\"><i></i></a><a href=\"javascript:;\" class=\"menu-button\"><i></i></a><a href=\"javascript:;\" class=\"gal-close\">×</a></span><div class=\"gal-labels\"><span class=\"gal-count\"><span class=\"count\"></span> / <span class=\"total\"></span></span><a class=\"gal-name\" target=\"_blank\"></a><span class=\"gal-sauce\"></span></div><div class=\"gal-prev\"></div><div class=\"gal-image\"><a href=\"javascript:;\"><img></a></div><div class=\"gal-next\"></div></div><div class=\"gal-thumbnails\"></div>"});
+      $.extend(dialog, {innerHTML: "<div class=\"gal-viewport\"><span class=\"gal-buttons\"><a href=\"javascript:;\" class=\"gal-start\" title=\"Start slideshow\"><i class=\"fa fa-play\"></i></a><a href=\"javascript:;\" class=\"gal-stop\" title=\"Stop slideshow\"><i class=\"fa fa-stop\"></i></a><a href=\"javascript:;\" class=\"menu-button\"><i class=\"fa fa-angle-down\"></i></a><a href=\"javascript:;\" class=\"gal-close fa fa-times\" title=\"Close\"></a></span><div class=\"gal-labels\"><span class=\"gal-count\"><span class=\"count\"></span> / <span class=\"total\"></span></span><a class=\"gal-name\" target=\"_blank\"></a><span class=\"gal-sauce\"></span></div><div class=\"gal-prev\"></div><div class=\"gal-image\"><a href=\"javascript:;\"><img></a></div><div class=\"gal-next\"></div></div><div class=\"gal-thumbnails\"></div>"});
       ref = {
         buttons: '.gal-buttons',
         frame: '.gal-image',
@@ -21164,7 +22297,7 @@ Embedding = (function() {
         this.types[type.key] = type;
       }
       if (Conf['Embedding'] && g.VIEW !== 'archive') {
-        this.dialog = UI.dialog('embedding', {innerHTML: "<div><div class=\"move\"></div><a href=\"javascript:;\" class=\"jump\" title=\"Jump to post\">→</a><a href=\"javascript:;\" class=\"close\" title=\"Close\">×</a></div><div id=\"media-embed\"><div></div></div>"});
+        this.dialog = UI.dialog('embedding', {innerHTML: "<div><div class=\"move\"></div><a href=\"javascript:;\" class=\"jump fa fa-long-arrow-right\" title=\"Jump to post\"></a><a href=\"javascript:;\" class=\"close fa fa-times\" title=\"Close\"></a></div><div id=\"media-embed\"><div></div></div>"});
         this.media = $('#media-embed', this.dialog);
         $.one(d, '4chanXInitFinished', this.ready);
         $.on(d, 'IndexRefreshInternal', function() {
@@ -23314,7 +24447,7 @@ CustomCSS = (function() {
     generatedHighlightPreviewCSS: function() {
       var styles;
       styles = this.generatedHighlightSettings();
-      return ".section-styling .ghs-catalog-preview,\n.section-styling .ghs-thread-preview {\n  background: transparent;\n  color: " + styles.referenceTextColor + ";\n}\n.section-styling .ghs-thread-preview > div {\n  background: transparent;\n}\n\n.section-styling .ghs-catalog-thread.watched {\n  background: " + styles.watchedRGBA + ";\n  color: " + styles.watchedTextColor + ";\n}\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-stats,\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-comment {\n  color: inherit !important;\n}\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-subject,\n.section-styling .ghs-catalog-thread.watched .subject {\n  color: " + styles.watchedSubjectColor + " !important;\n}\n\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you {\n  background: " + styles.yourPostRGBA + ";\n  color: " + styles.yourPostTextColor + " !important;\n}\n\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you > .yourPost {\n  background: transparent;\n  color: " + styles.yourPostTextColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-stats,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-comment {\n  color: " + styles.yourPostTextColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-subject,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .subject {\n  color: " + styles.yourPostSubjectColor + " !important;\n}\n\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply {\n  background: " + styles.yourPostRGBA + ";\n  color: " + styles.yourPostTextColor + ";\n  border-left: 3px dashed " + styles.yourPostBorderRGBA + " !important;\n}\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .quote {\n  color: " + styles.yourPostQuoteColor + " !important;\n}\n\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op {\n  background: " + styles.quotesYouRGBA + ";\n  color: " + styles.quotesYouTextColor + ";\n  border-left: 3px solid " + styles.quotesYouBorderRGBA + " !important;\n}\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .quote,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .quote,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .quote {\n  color: " + styles.quotesYouQuoteColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched a,\n.section-styling .ghs-catalog-thread.watched .quotelink,\n.section-styling .ghs-catalog-thread.watched .deadlink {\n  color: " + styles.watchedLinkColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you a,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .quotelink,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .deadlink {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply a,\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .quotelink,\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .deadlink {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply a,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply a,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op a,\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .deadlink,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .deadlink,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .deadlink {\n  color: " + styles.quotesYouLinkColor + " !important;\n}";
+      return ".section-styling .ghs-catalog-preview,\n.section-styling .ghs-thread-preview {\n  background: transparent;\n  color: " + styles.referenceTextColor + ";\n}\n.section-styling .ghs-thread-preview > div {\n  background: transparent;\n}\n\n.section-styling .ghs-catalog-thread.watched {\n  background: " + styles.watchedRGBA + ";\n  color: " + styles.watchedTextColor + ";\n}\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-stats,\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-comment {\n  color: inherit !important;\n}\n.section-styling .ghs-catalog-thread.watched .ghs-catalog-subject,\n.section-styling .ghs-catalog-thread.watched .subject {\n  color: " + styles.watchedSubjectColor + " !important;\n}\n\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you {\n  background: " + styles.yourPostRGBA + ";\n  color: " + styles.yourPostTextColor + " !important;\n}\n\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you > .yourPost {\n  background: transparent;\n  color: " + styles.yourPostTextColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-stats,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-comment {\n  color: " + styles.yourPostTextColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .ghs-catalog-subject,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .subject {\n  color: " + styles.yourPostSubjectColor + " !important;\n}\n\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply {\n  background: " + styles.yourPostRGBA + ";\n  color: " + styles.yourPostTextColor + ";\n  border-left: 3px dashed " + styles.yourPostBorderRGBA + " !important;\n}\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .quote {\n  color: " + styles.yourPostQuoteColor + " !important;\n}\n\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op {\n  background: " + styles.quotesYouRGBA + ";\n  color: " + styles.quotesYouTextColor + ";\n  border-left: 3px solid " + styles.quotesYouBorderRGBA + " !important;\n}\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .quote,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .quote,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .quote {\n  color: " + styles.quotesYouQuoteColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched a,\n.section-styling .ghs-catalog-thread.watched .quotelink,\n.section-styling .ghs-catalog-thread.watched .deadlink {\n  color: " + styles.watchedLinkColor + " !important;\n}\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you a,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .quotelink,\n.section-styling .ghs-catalog-thread.watched.ghs-watched-you .deadlink {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply a,\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .quotelink,\n.section-styling .ghs-thread-preview .postContainer.replyContainer.yourPost:not(.opContainer) .post.reply .deadlink {\n  color: " + styles.yourPostLinkColor + " !important;\n}\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply a,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply a,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op a,\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .quotelink,\n.section-styling .ghs-thread-preview.highlight-you .replyContainer.quotesYou > .reply .deadlink,\n.section-styling .ghs-thread-preview.highlight-you .postContainer.quotesYou > .reply .deadlink,\n.section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .deadlink {\n  color: " + styles.quotesYouLinkColor + " !important;\n}\n\n.section-styling .ghs-thread-preview.highlight-ghost .ghost-post > .post,\n.section-styling .ghs-thread-preview.highlight-ghost .ghost-post.opContainer > .post.op {\n  background: " + styles.ghostPostRGBA + " !important;\n  border-left: 3px dotted " + styles.ghostPostBorderRGBA + " !important;\n}";
     },
     normalizeHexColor: function(color, fallback) {
       if (typeof color !== 'string') {
@@ -25184,11 +26317,11 @@ Nav = (function() {
         id: 'navlinks'
       });
       prev = $.el('a', {
-        textContent: '▲',
+        className: 'fa fa-chevron-up',
         href: 'javascript:;'
       });
       next = $.el('a', {
-        textContent: '▼',
+        className: 'fa fa-chevron-down',
         href: 'javascript:;'
       });
       $.on(prev, 'click', this.prev);
@@ -25443,7 +26576,7 @@ PassMessage = (function() {
       }
       msg = $.el('div', {
         className: 'box-outer top-box'
-      }, {innerHTML: "<div class=\"box-inner\"><div class=\"boxbar\"><h2>Trouble buying a 4chan Pass? (a message from 4chan-eX) <a href=\"javascript:;\" style=\"text-decoration: none; float: right; margin-right: 4px;\" title=\"Close\">×</a></h2></div><div class=\"boxcontent\">Check the 4chan-eX wiki for <a href=\"https://github.com/cercos/4chan-eX/wiki/Captcha-FAQ#alternatives\" target=\"_blank\" rel=\"noopener\">alternative solutions</a>.</div></div>"});
+      }, {innerHTML: "<div class=\"box-inner\"><div class=\"boxbar\"><h2>Trouble buying a 4chan Pass? (a message from 4chan-eX) <a href=\"javascript:;\" class=\"fa fa-times\" style=\"text-decoration: none; float: right; margin-right: 4px;\" title=\"Close\"></a></h2></div><div class=\"boxcontent\">Check the 4chan-eX wiki for <a href=\"https://github.com/cercos/4chan-eX/wiki/Captcha-FAQ#alternatives\" target=\"_blank\" rel=\"noopener\">alternative solutions</a>.</div></div>"});
       msg.style.cssText = 'padding-bottom: 0;';
       close = $('a', msg);
       $.on(close, 'click', function() {
@@ -25781,10 +26914,10 @@ Report = (function() {
       form = $('form');
       types = $.id('reportTypes');
       message = $('h3');
-      fieldset = $.el('fieldset', {
+      fieldset = $.el('div', {
         id: 'archive-report',
         hidden: true
-      }, {innerHTML: "<legend><label><input id=\"archive-report-enabled\" type=\"checkbox\">Report illegal content to archives</label></legend><label for=\"archive-report-reason\">Details</label><textarea id=\"archive-report-reason\" disabled>Illegal content</textarea><button id=\"archive-report-submit\" hidden>Submit</button>"});
+      }, {innerHTML: "<div class=\"archive-report-header\"><label><input id=\"archive-report-enabled\" type=\"checkbox\">Report illegal content to archives</label></div><label for=\"archive-report-reason\">Details</label><textarea id=\"archive-report-reason\" disabled>Illegal content</textarea><button id=\"archive-report-submit\" hidden>Submit</button>"});
       enabled = $('#archive-report-enabled', fieldset);
       reason = $('#archive-report-reason', fieldset);
       submit = $('#archive-report-submit', fieldset);
@@ -27169,7 +28302,7 @@ ThreadWatcher = (function() {
       });
       this.db = new DataBoard('watchedThreads', this.refresh, true);
       this.dbLM = new DataBoard('watcherLastModified', null, true);
-      this.dialog = UI.dialog('thread-watcher', {innerHTML: "<div class=\"move\">Thread Watcher <a class=\"refresh fa fa-refresh\" title=\"Check threads\" href=\"javascript:;\"></a><a class=\"mark-read fa fa-check\" title=\"Mark all watched threads as read\" href=\"javascript:;\"></a><span id=\"watcher-status\"></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><a class=\"close\" href=\"javascript:;\">×</a></div><div id=\"watched-threads\"></div><div id=\"watcher-footer\" class=\"watcher-footer\"></div>"});
+      this.dialog = UI.dialog('thread-watcher', {innerHTML: "<div class=\"move\">Thread Watcher <a class=\"refresh fa fa-refresh\" title=\"Check threads\" href=\"javascript:;\"></a><a class=\"mark-read fa fa-check\" title=\"Mark all watched threads as read\" href=\"javascript:;\"></a><span id=\"watcher-status\"></span><a class=\"menu-button\" href=\"javascript:;\"><i class=\"fa fa-angle-down\"></i></a><a class=\"close fa fa-times\" title=\"Close\" href=\"javascript:;\"></a></div><div id=\"watched-threads\"></div><div id=\"watcher-footer\" class=\"watcher-footer\"></div>"});
       this.status = $('#watcher-status', this.dialog);
       this.list = $('#watched-threads', this.dialog);
       this.footer = $('#watcher-footer', this.dialog);
@@ -28241,7 +29374,10 @@ ThreadWatcher = (function() {
       if (quotingYou) {
         $.addClass(div, 'replies-quoting-you');
       }
-      nodes = [x, $.tn(' '), link, $.tn(' '), markRead];
+      nodes = [x, $.tn(' '), link];
+      if (Conf['Show Mark Thread Read Icons']) {
+        nodes.push($.tn(' '), markRead);
+      }
       $.add(div, nodes);
       return div;
     },
@@ -28491,11 +29627,21 @@ ThreadWatcher = (function() {
       }
       return Math.max(16, Math.min(160, size));
     },
+    maxHeight: function() {
+      var height;
+      height = parseInt(Conf['Thread Watcher Max Height'], 10);
+      if (isNaN(height)) {
+        height = 420;
+      }
+      return Math.max(160, Math.min(2000, height));
+    },
     applyLayout: function() {
       if (!ThreadWatcher.dialog) {
         return;
       }
-      return ThreadWatcher.dialog.style.setProperty('--watcher-thumb-size', (ThreadWatcher.thumbnailSize()) + "px");
+      ThreadWatcher.dialog.style.setProperty('--watcher-thumb-size', (ThreadWatcher.thumbnailSize()) + "px");
+      ThreadWatcher.dialog.style.setProperty('--watcher-max-height', (ThreadWatcher.maxHeight()) + "px");
+      return ThreadWatcher.markReadButton.hidden = !Conf['Show Mark All Read Icon'];
     },
     update: function(siteID, boardID, threadID, newData) {
       var data, j, key, len1, line, n, newLine, ref, ref1, val;
@@ -28733,6 +29879,30 @@ ThreadWatcher = (function() {
           }
         });
         entries.push({
+          text: 'TW max height',
+          open: function() {
+            var input;
+            this.el.innerHTML = "TW max height <input type='number' value='" + (ThreadWatcher.maxHeight()) + "' min='160' max='2000' class='field' style='width:5em'>";
+            input = $('input', this.el);
+            $.on(input, 'click', function(e) {
+              return e.stopPropagation();
+            });
+            $.on(input, 'change', function() {
+              var height;
+              height = parseInt(this.value, 10);
+              if (isNaN(height)) {
+                height = 420;
+              }
+              height = Math.max(160, Math.min(2000, height));
+              this.value = height;
+              $.set('Thread Watcher Max Height', height);
+              Conf['Thread Watcher Max Height'] = height;
+              return ThreadWatcher.refresh();
+            });
+            return true;
+          }
+        });
+        entries.push({
           text: 'Open dead threads',
           cb: ThreadWatcher.cb.openDeads,
           open: function() {
@@ -28769,7 +29939,7 @@ ThreadWatcher = (function() {
           text: 'Thumbnail size',
           open: function() {
             var input;
-            this.el.innerHTML = "Thumbnail size: <input type='number' value='" + (ThreadWatcher.thumbnailSize()) + "' min='16' max='160' class='field'>px";
+            this.el.innerHTML = "Thumb size <input type='number' value='" + (ThreadWatcher.thumbnailSize()) + "' min='16' max='160' class='field' style='width:4.5em'>";
             input = $('input', this.el);
             $.on(input, 'click', function(e) {
               return e.stopPropagation();
@@ -28827,7 +29997,7 @@ ThreadWatcher = (function() {
         }
         $.on(input, 'change', $.cb.checked);
         $.on(input, 'change', function() {
-          if (name === 'Current Board' || name === 'Show Page' || name === 'Show Unread Count' || name === 'Show Site Prefix' || name === 'Show OP Thumbnails') {
+          if (name === 'Current Board' || name === 'Show Page' || name === 'Show Unread Count' || name === 'Show Mark All Read Icon' || name === 'Show Mark Thread Read Icons' || name === 'Show Site Prefix' || name === 'Show OP Thumbnails') {
             return ThreadWatcher.refresh();
           }
         });
@@ -30881,6 +32051,203 @@ QR = (function() {
     texPreviewHide: function() {
       return $.rmClass(QR.nodes.el, 'tex-preview');
     },
+    livePreviewEscape: function(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    },
+    livePreviewRenderInline: function(text) {
+      var i, j, len, out, part, parts;
+      parts = text.split(/(>>>\/[a-zA-Z\d]+\/\d+|>>\d+)/g);
+      out = '';
+      for (i = j = 0, len = parts.length; j < len; i = ++j) {
+        part = parts[i];
+        if (i % 2 === 1) {
+          out += "<a class=\"quotelink\" href=\"javascript:;\">" + (QR.livePreviewEscape(part)) + "</a>";
+        } else {
+          out += QR.livePreviewEscape(part);
+        }
+      }
+      return out;
+    },
+    livePreviewSupportedTags: function() {
+      var config, isQst, ref, ref1, tags;
+      config = ((ref = g.BOARD) != null ? ref.config : void 0) || {};
+      isQst = ((ref1 = g.BOARD) != null ? ref1.ID : void 0) === 'qst';
+      tags = $.dict();
+      if (config.spoilers) {
+        tags.spoiler = ['<s>', '</s>'];
+      }
+      if (config.code_tags) {
+        tags.code = ['<pre class="prettyprint">', '</pre>'];
+      }
+      if (config.math_tags) {
+        tags.math = ['<span class="math">[math]', '[/math]</span>'];
+      }
+      if (config.math_tags) {
+        tags.eqn = ['<span class="math">[eqn]', '[/eqn]</span>'];
+      }
+      if (config.sjis_tags) {
+        tags.sjis = ['<span class="sjis">', '</span>'];
+      }
+      if (isQst) {
+        tags.red = ['<span class="qst-color qst-red">', '</span>'];
+        tags.green = ['<span class="qst-color qst-green">', '</span>'];
+        tags.blue = ['<span class="qst-color qst-blue">', '</span>'];
+      }
+      return tags;
+    },
+    livePreviewRender: function() {
+      var closed, htmlParts, htmlTags, i, idx, inner, insideCode, isGreentext, isQuoteLink, j, k, last, len, len1, line, lines, m, ref, ref1, stack, tagNames, tagRE, text, tok, tokens, value;
+      if (!(QR.nodes && QR.nodes.livePreview)) {
+        return;
+      }
+      if (QR.nodes.livePreview.hidden) {
+        return;
+      }
+      text = QR.nodes.com.value || '';
+      htmlTags = QR.livePreviewSupportedTags();
+      tagNames = Object.keys(htmlTags);
+      tokens = [];
+      if (tagNames.length) {
+        tagRE = new RegExp("\\[(\\/?)(" + (tagNames.join('|')) + ")\\]", 'gi');
+        last = 0;
+        while (m = tagRE.exec(text)) {
+          if (m.index > last) {
+            tokens.push({
+              type: 'text',
+              value: text.slice(last, m.index)
+            });
+          }
+          tokens.push({
+            type: 'tag',
+            close: m[1] === '/',
+            name: m[2].toLowerCase(),
+            raw: m[0]
+          });
+          last = tagRE.lastIndex;
+        }
+        if (last < text.length) {
+          tokens.push({
+            type: 'text',
+            value: text.slice(last)
+          });
+        }
+      } else {
+        tokens.push({
+          type: 'text',
+          value: text
+        });
+      }
+      stack = [];
+      htmlParts = [];
+      insideCode = function() {
+        return indexOf.call(stack, 'code') >= 0;
+      };
+      for (j = 0, len = tokens.length; j < len; j++) {
+        tok = tokens[j];
+        if (tok.type === 'tag' && !(insideCode() && tok.name !== 'code')) {
+          if (tok.close) {
+            if ((idx = stack.lastIndexOf(tok.name)) >= 0) {
+              while (stack.length > idx) {
+                closed = stack.pop();
+                htmlParts.push(htmlTags[closed][1]);
+              }
+            } else {
+              htmlParts.push(QR.livePreviewEscape(tok.raw));
+            }
+          } else {
+            stack.push(tok.name);
+            htmlParts.push(htmlTags[tok.name][0]);
+          }
+        } else {
+          value = tok.type === 'tag' ? tok.raw : tok.value;
+          if (insideCode()) {
+            htmlParts.push(QR.livePreviewEscape(value));
+          } else {
+            lines = value.split('\n');
+            for (i = k = 0, len1 = lines.length; k < len1; i = ++k) {
+              line = lines[i];
+              isQuoteLink = /^>>(?:>\/[a-zA-Z\d]+\/)?\d/.test(line);
+              isGreentext = line[0] === '>' && !isQuoteLink && stack.length === 0;
+              inner = QR.livePreviewRenderInline(line);
+              if (isGreentext) {
+                htmlParts.push("<span class=\"quote\">" + inner + "</span>");
+              } else {
+                htmlParts.push(inner);
+              }
+              if (i < lines.length - 1) {
+                htmlParts.push('<br>');
+              }
+            }
+          }
+        }
+      }
+      while (stack.length) {
+        closed = stack.pop();
+        htmlParts.push(htmlTags[closed][1]);
+      }
+      QR.nodes.livePreview.innerHTML = htmlParts.join('');
+      if (((ref = g.BOARD) != null ? (ref1 = ref.config) != null ? ref1.math_tags : void 0 : void 0) && /\[(math|eqn)\]/i.test(text)) {
+        return $.event('mathjax', null, QR.nodes.livePreview);
+      }
+    },
+    livePreviewPositions: ['button', 'bottom', 'top', 'left', 'right'],
+    livePreviewApplyMode: function() {
+      var classList, enabled, isOn, j, len, p, pos, ref;
+      if (!QR.nodes) {
+        return;
+      }
+      enabled = !!Conf['Comment Preview'];
+      pos = Conf['Comment Preview Position'];
+      if (indexOf.call(QR.livePreviewPositions, pos) < 0) {
+        pos = 'button';
+      }
+      classList = QR.nodes.el.classList;
+      classList.toggle('has-live-preview', enabled);
+      ref = QR.livePreviewPositions;
+      for (j = 0, len = ref.length; j < len; j++) {
+        p = ref[j];
+        classList.toggle("qr-preview-pos-" + p, enabled && pos === p);
+      }
+      if (enabled && pos !== 'button') {
+        classList.remove('preview-on');
+        QR.nodes.livePreview.hidden = false;
+        return QR.livePreviewRender();
+      } else {
+        isOn = enabled && $.hasClass(QR.nodes.el, 'preview-on');
+        classList.toggle('preview-on', isOn);
+        QR.nodes.livePreview.hidden = !isOn;
+        if (isOn) {
+          return QR.livePreviewRender();
+        }
+      }
+    },
+    livePreviewToggleAvailable: function(enabled) {
+      Conf['Comment Preview'] = !!enabled;
+      return QR.livePreviewApplyMode();
+    },
+    livePreviewSetPosition: function(pos) {
+      if (indexOf.call(QR.livePreviewPositions, pos) < 0) {
+        pos = 'button';
+      }
+      Conf['Comment Preview Position'] = pos;
+      return QR.livePreviewApplyMode();
+    },
+    livePreviewClick: function() {
+      var isOn, pos;
+      if (!QR.nodes) {
+        return;
+      }
+      pos = Conf['Comment Preview Position'];
+      if (!((pos === 'button') || !(indexOf.call(QR.livePreviewPositions, pos) >= 0))) {
+        return;
+      }
+      QR.nodes.el.classList.toggle('preview-on');
+      isOn = $.hasClass(QR.nodes.el, 'preview-on');
+      QR.nodes.livePreview.hidden = !isOn;
+      if (isOn) {
+        return QR.livePreviewRender();
+      }
+    },
     addPost: function() {
       var wasOpen;
       wasOpen = QR.nodes && !QR.nodes.el.hidden;
@@ -31304,7 +32671,7 @@ QR = (function() {
     dialog: function() {
       var classList, config, dialog, event, i, items, name, node, nodes, save, setNode;
       QR.nodes = nodes = {
-        el: dialog = UI.dialog('qr', {innerHTML: "<div class=\"move\"><label><input type=\"checkbox\" id=\"autohide\" title=\"Auto-hide\">Quick Reply</label><a href=\"javascript:;\" class=\"close\" title=\"Close\">×</a><select data-name=\"thread\" title=\"Create a new thread / Reply\"><option value=\"new\">New thread</option></select></div><form autocomplete=\"off\"><div class=\"persona\"><button type=\"button\" id=\"sjis-toggle\" title=\"Toggle Mona font\">∀</button><button type=\"button\" id=\"tex-preview-button\" title=\"Preview TeX\">T<sub>E</sub>X</button><input name=\"fcx-name\" data-name=\"name\" list=\"list-name\" placeholder=\"Name\" class=\"field\" size=\"1\" autocomplete=\"off\" autocapitalize=\"off\" spellcheck=\"false\"><input name=\"fcx-email\" data-name=\"email\" list=\"list-email\" placeholder=\"Options\" class=\"field\" size=\"1\" autocomplete=\"off\" autocapitalize=\"off\" spellcheck=\"false\"><input name=\"fcx-sub\" data-name=\"sub\" list=\"list-sub\" placeholder=\"Subject\" class=\"field\" size=\"1\" autocomplete=\"off\"></div><div class=\"textarea\"><textarea data-name=\"com\" placeholder=\"Comment\" class=\"field\" autocomplete=\"off\"></textarea><span id=\"char-count\"></span><a id=\"split-post\" title=\"Split into multiple posts\" hidden><i class=\"fa fa-cut\"></i></a><div id=\"tex-preview\"></div></div><div id=\"dump-list-container\"><div id=\"dump-list\"></div><a id=\"add-post\" href=\"javascript:;\" title=\"Add a post\">+</a></div><div class=\"oekaki\" hidden><input type=\"button\" id=\"qr-draw-button\" value=\"Draw\"><label><span>Width:</span><input name=\"oekaki-width\" value=\"400\" type=\"number\" class=\"field\" size=\"1\"></label><label><span>Height:</span><input name=\"oekaki-height\" value=\"400\" type=\"number\" class=\"field\" size=\"1\"></label><span class=\"oekaki-bg\" title=\"Background Color\"><input name=\"oekaki-bg\" type=\"checkbox\" checked><input name=\"oekaki-bgcolor\" type=\"color\" value=\"#ffffff\"></span></div><div id=\"file-n-submit\"><input type=\"button\" id=\"qr-file-button\" value=\"Files\"><span id=\"qr-filename-container\" class=\"field\"><span id=\"qr-no-file\">No selected file</span><input id=\"qr-filename\" data-name=\"filename\" spellcheck=\"false\" autocomplete=\"off\"><label id=\"qr-spoiler-label\"><input type=\"checkbox\" id=\"qr-file-spoiler\" title=\"Spoiler image\"><a class=\"checkbox-letter\">S</a></label><a id=\"qr-oekaki-button\" title=\"Edit in Tegaki\"><i class=\"fa fa-edit\"></i></a><a href=\"javascript:;\" id=\"qr-filerm\" title=\"Remove file\"><i class=\"fa fa-times-circle\"></i></a><a id=\"url-button\" title=\"Post from URL\"><i class=\"fa fa-link\"></i></a><a hidden id=\"paste-area\" title=\"Select to paste images\" class=\"fa fa-clipboard\" tabindex=\"-1\" contentEditable=\"true\"></a><a id=\"custom-cooldown-button\" title=\"Toggle custom cooldown\" class=\"disabled\"><i class=\"fa fa-clock-o\"></i></a><a id=\"dump-button\" title=\"Dump list\"><i class=\"fa fa-plus-square\"></i></a></span><input type=\"submit\"></div><select data-default=\"4\" name=\"filetag\"><option value=\"0\">Hentai</option><option value=\"6\">Porn</option><option value=\"1\">Japanese</option><option value=\"2\">Anime</option><option value=\"3\">Game</option><option value=\"5\">Loop</option><option value=\"4\" selected>Other</option></select><input type=\"file\" multiple></form><datalist id=\"list-name\"></datalist><datalist id=\"list-email\"></datalist><datalist id=\"list-sub\"></datalist> "})
+        el: dialog = UI.dialog('qr', {innerHTML: "<div class=\"move\"><label><input type=\"checkbox\" id=\"autohide\" title=\"Auto-hide\">Quick Reply</label><a href=\"javascript:;\" class=\"close fa fa-times\" title=\"Close\"></a><select data-name=\"thread\" title=\"Create a new thread / Reply\"><option value=\"new\">New thread</option></select></div><form autocomplete=\"off\"><div class=\"persona\"><button type=\"button\" id=\"sjis-toggle\" title=\"Toggle Mona font\">∀</button><button type=\"button\" id=\"tex-preview-button\" title=\"Preview TeX\">T<sub>E</sub>X</button><button type=\"button\" id=\"live-preview-toggle\" title=\"Preview post\"><i class=\"fa fa-eye\"></i></button><input name=\"fcx-name\" data-name=\"name\" list=\"list-name\" placeholder=\"Name\" class=\"field\" size=\"1\" maxlength=\"75\" autocomplete=\"off\" autocapitalize=\"off\" spellcheck=\"false\"><input name=\"fcx-email\" data-name=\"email\" list=\"list-email\" placeholder=\"Options\" class=\"field\" size=\"1\" maxlength=\"75\" autocomplete=\"off\" autocapitalize=\"off\" spellcheck=\"false\"><input name=\"fcx-sub\" data-name=\"sub\" list=\"list-sub\" placeholder=\"Subject\" class=\"field\" size=\"1\" maxlength=\"100\" autocomplete=\"off\"></div><div class=\"textarea\"><textarea data-name=\"com\" placeholder=\"Comment\" class=\"field\" autocomplete=\"off\"></textarea><span id=\"char-count\"></span><a id=\"split-post\" title=\"Split into multiple posts\" hidden><i class=\"fa fa-cut\"></i></a><div id=\"tex-preview\"></div><blockquote id=\"qr-live-preview\" class=\"postMessage\" hidden></blockquote></div><div id=\"dump-list-container\"><div id=\"dump-list\"></div><a id=\"add-post\" href=\"javascript:;\" title=\"Add a post\">+</a></div><div class=\"oekaki\" hidden><input type=\"button\" id=\"qr-draw-button\" value=\"Draw\"><label><span>Width:</span><input name=\"oekaki-width\" value=\"400\" type=\"number\" class=\"field\" size=\"1\"></label><label><span>Height:</span><input name=\"oekaki-height\" value=\"400\" type=\"number\" class=\"field\" size=\"1\"></label><span class=\"oekaki-bg\" title=\"Background Color\"><input name=\"oekaki-bg\" type=\"checkbox\" checked><input name=\"oekaki-bgcolor\" type=\"color\" value=\"#ffffff\"></span></div><div id=\"file-n-submit\"><input type=\"button\" id=\"qr-file-button\" value=\"Files\"><span id=\"qr-filename-container\" class=\"field\"><span id=\"qr-no-file\">No selected file</span><input id=\"qr-filename\" data-name=\"filename\" maxlength=\"50\" spellcheck=\"false\" autocomplete=\"off\"><label id=\"qr-spoiler-label\"><input type=\"checkbox\" id=\"qr-file-spoiler\" title=\"Spoiler image\"><a class=\"checkbox-letter\">S</a></label><a id=\"qr-oekaki-button\" title=\"Edit in Tegaki\"><i class=\"fa fa-edit\"></i></a><a href=\"javascript:;\" id=\"qr-filerm\" title=\"Remove file\"><i class=\"fa fa-times-circle\"></i></a><a id=\"url-button\" title=\"Post from URL\"><i class=\"fa fa-link\"></i></a><a hidden id=\"paste-area\" title=\"Select to paste images\" class=\"fa fa-clipboard\" tabindex=\"-1\" contentEditable=\"true\"></a><a id=\"custom-cooldown-button\" title=\"Toggle custom cooldown\" class=\"disabled\"><i class=\"fa fa-clock-o\"></i></a><a id=\"dump-button\" title=\"Dump list\"><i class=\"fa fa-plus-square\"></i></a></span><input type=\"submit\"></div><select data-default=\"4\" name=\"filetag\"><option value=\"0\">Hentai</option><option value=\"6\">Porn</option><option value=\"1\">Japanese</option><option value=\"2\">Anime</option><option value=\"3\">Game</option><option value=\"5\">Loop</option><option value=\"4\" selected>Other</option></select><input type=\"file\" multiple></form><datalist id=\"list-name\"></datalist><datalist id=\"list-email\"></datalist><datalist id=\"list-sub\"></datalist> "})
       };
       setNode = function(name, query) {
         return nodes[name] = $(query, dialog);
@@ -31316,6 +32683,7 @@ QR = (function() {
       setNode('form', 'form');
       setNode('sjisToggle', '#sjis-toggle');
       setNode('texButton', '#tex-preview-button');
+      setNode('livePreviewBtn', '#live-preview-toggle');
       setNode('name', '[data-name=name]');
       setNode('email', '[data-name=email]');
       setNode('sub', '[data-name=sub]');
@@ -31323,6 +32691,7 @@ QR = (function() {
       setNode('charCount', '#char-count');
       setNode('splitPost', '#split-post');
       setNode('texPreview', '#tex-preview');
+      setNode('livePreview', '#qr-live-preview');
       setNode('dumpList', '#dump-list');
       setNode('addPost', '#add-post');
       setNode('oekaki', '.oekaki');
@@ -31342,6 +32711,7 @@ QR = (function() {
       setNode('flashTag', '[name=filetag]');
       setNode('fileInput', '[type=file]');
       config = g.BOARD.config;
+      QR.nodes.com.maxLength = QR.max_comment;
       classList = QR.nodes.el.classList;
       classList.toggle('forced-anon', QR.forcedAnon);
       classList.toggle('has-spoiler', QR.spoiler);
@@ -31349,6 +32719,8 @@ QR = (function() {
       classList.toggle('has-math', !!config.math_tags);
       classList.toggle('sjis-preview', !!config.sjis_tags && Conf['sjisPreview']);
       classList.toggle('show-new-thread-option', Conf['Show New Thread Option in Threads']);
+      QR.nodes.livePreview.hidden = true;
+      QR.livePreviewApplyMode();
       if (parseInt(Conf['customCooldown'], 10) > 0) {
         $.addClass(QR.nodes.fileSubmit, 'custom-cooldown');
         $.get('customCooldownEnabled', Conf['customCooldownEnabled'], function(arg) {
@@ -31394,6 +32766,10 @@ QR = (function() {
         return nodes.el.classList.toggle('dump');
       });
       $.on(nodes.fileInput, 'change', QR.handleFiles);
+      $.on(nodes.com, 'input', QR.livePreviewRender);
+      $.on(nodes.livePreviewBtn, 'click', QR.livePreviewClick);
+      $.sync('Comment Preview', QR.livePreviewToggleAvailable);
+      $.sync('Comment Preview Position', QR.livePreviewSetPosition);
       window.addEventListener('focus', QR.focus, true);
       window.addEventListener('blur', QR.focus, true);
       $.on(d, 'click', QR.focus);
@@ -34112,6 +35488,541 @@ QR = (function() {
 
 }).call(this);
 
+(function() {
+  var QRMetadataPatch;
+
+  QRMetadataPatch = {
+    updateNotice: function(post, message, type) {
+      var notice, ref;
+      notice = post._metadataNotice;
+      if (!notice) {
+        post._metadataNotice = notice = new Notice(type || 'info', message);
+        return notice;
+      }
+      if (type) {
+        notice.setType(type);
+      }
+      if ((ref = notice.el) != null ? ref.lastElementChild : void 0) {
+        notice.el.lastElementChild.textContent = '';
+        $.add(notice.el.lastElementChild, $.tn(message));
+      }
+      return notice;
+    },
+    closeNotice: function(post) {
+      if (post._metadataNotice) {
+        post._metadataNotice.close();
+        return delete post._metadataNotice;
+      }
+    },
+    replaceExtension: function(name, ext) {
+      var base;
+      base = (name || 'file').replace(/\.[^.\/\\]+$/, '');
+      return base + "." + ext;
+    },
+    fileGroup: function(file) {
+      var name, type;
+      type = ((file != null ? file.type : void 0) || '').toLowerCase();
+      name = ((file != null ? file.name : void 0) || '').toLowerCase();
+      if (/^image\//.test(type) || /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif)$/.test(name)) {
+        return 'image';
+      }
+      if (/^video\//.test(type) || /\.(webm|mp4|m4v|mov|3gp|3g2|mkv)$/.test(name)) {
+        return 'video';
+      }
+      if (/^audio\//.test(type) || /\.(mp3|m4a|aac|ogg|opus|wav|flac|weba)$/.test(name)) {
+        return 'audio';
+      }
+      return 'other';
+    },
+    settingEnabled: function(name, legacyName) {
+      var legacy, val;
+      val = Conf[name];
+      if (typeof val === 'boolean') {
+        return val;
+      }
+      if (legacyName != null) {
+        legacy = Conf[legacyName];
+        if (typeof legacy === 'boolean') {
+          return legacy;
+        }
+      }
+      return false;
+    },
+    shouldStrip: function(file) {
+      if (!file) {
+        return false;
+      }
+      if (Conf['Strip All Media Metadata']) {
+        return true;
+      }
+      switch (QRMetadataPatch.fileGroup(file)) {
+        case 'image':
+          return QRMetadataPatch.settingEnabled('Image Metadata', 'Strip Image Metadata');
+        case 'video':
+          return QRMetadataPatch.settingEnabled('Video Metadata', 'Strip Video Metadata');
+        case 'audio':
+          return QRMetadataPatch.settingEnabled('Audio Metadata', 'Strip Audio Metadata');
+        default:
+          return QRMetadataPatch.settingEnabled('Other Metadata', 'Strip Other Media Metadata');
+      }
+    },
+    setMp4BoxType: function(bytes, start, type) {
+      if (!(start + 8 <= bytes.length && (type != null ? type.length : void 0) === 4)) {
+        return;
+      }
+      bytes[start + 4] = type.charCodeAt(0);
+      bytes[start + 5] = type.charCodeAt(1);
+      bytes[start + 6] = type.charCodeAt(2);
+      return bytes[start + 7] = type.charCodeAt(3);
+    },
+    zeroBytes: function(bytes, start, finish) {
+      var i, j, ref, ref1, results;
+      if (!(start < finish)) {
+        return;
+      }
+      start = Math.max(0, start);
+      finish = Math.min(bytes.length, finish);
+      results = [];
+      for (i = j = ref = start, ref1 = finish; ref <= ref1 ? j < ref1 : j > ref1; i = ref <= ref1 ? ++j : --j) {
+        results.push(bytes[i] = 0);
+      }
+      return results;
+    },
+    zeroMp4Times: function(bytes, box) {
+      var start, version;
+      start = box.dataStart;
+      if (!(start + 12 <= box.end)) {
+        return false;
+      }
+      version = bytes[start];
+      if (version === 1) {
+        if (!(start + 20 <= box.end)) {
+          return false;
+        }
+        QRMetadataPatch.zeroBytes(bytes, start + 4, start + 20);
+      } else {
+        QRMetadataPatch.zeroBytes(bytes, start + 4, start + 12);
+      }
+      return true;
+    },
+    stripImage: function(file, done) {
+      var cleanup, img, type, url;
+      type = (file.type || '').toLowerCase();
+      if (type === 'image/gif') {
+        done(null, null, 'unsupported');
+        return;
+      }
+      url = URL.createObjectURL(file);
+      img = $.el('img');
+      cleanup = function() {
+        URL.revokeObjectURL(url);
+        img.onload = null;
+        return img.onerror = null;
+      };
+      img.onerror = function() {
+        cleanup();
+        return done(new Error('Could not read image for metadata stripping.'));
+      };
+      img.onload = function() {
+        var canvas, err, height, quality, targetType, width;
+        try {
+          width = img.naturalWidth || img.width;
+          height = img.naturalHeight || img.height;
+          if (!(width && height)) {
+            cleanup();
+            done(new Error('Image dimensions unavailable.'));
+            return;
+          }
+          canvas = $.el('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          targetType = (function() {
+            switch (false) {
+              case !/^image\/jpeg$/i.test(type):
+                return 'image/jpeg';
+              case !/^image\/png$/i.test(type):
+                return 'image/png';
+              case !/^image\/webp$/i.test(type):
+                return 'image/webp';
+              default:
+                return 'image/png';
+            }
+          })();
+          quality = targetType === 'image/jpeg' || targetType === 'image/webp' ? 0.92 : null;
+          return canvas.toBlob((function(blob) {
+            var ext, outFile;
+            cleanup();
+            if (!blob) {
+              done(new Error('Could not encode stripped image.'));
+              return;
+            }
+            ext = $.getOwn(QR.extensionFromType, targetType) || 'png';
+            outFile = new File([blob], QRMetadataPatch.replaceExtension(file.name, ext), {
+              type: targetType
+            });
+            return done(null, outFile, 'stripped');
+          }), targetType, quality);
+        } catch (error) {
+          err = error;
+          cleanup();
+          return done(err);
+        }
+      };
+      return img.src = url;
+    },
+    stripID3: function(file, done) {
+      var reader;
+      reader = new FileReader();
+      reader.onerror = function() {
+        return done(reader.error || new Error('Failed to read audio for metadata stripping.'));
+      };
+      reader.onload = function() {
+        var bytes, err, finish, flags, hasFooter, outBytes, outType, patched, start, tagSize;
+        try {
+          bytes = new Uint8Array(reader.result);
+          start = 0;
+          finish = bytes.length;
+          patched = false;
+          if (bytes.length >= 10 && bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+            tagSize = ((bytes[6] & 0x7F) << 21) | ((bytes[7] & 0x7F) << 14) | ((bytes[8] & 0x7F) << 7) | (bytes[9] & 0x7F);
+            flags = bytes[5] || 0;
+            hasFooter = !!(flags & 0x10);
+            start = 10 + tagSize + (hasFooter ? 10 : 0);
+            start = Math.min(start, finish);
+            if (start > 0) {
+              patched = true;
+            }
+          }
+          if (finish >= start + 128 && bytes[finish - 128] === 0x54 && bytes[finish - 127] === 0x41 && bytes[finish - 126] === 0x47) {
+            finish -= 128;
+            patched = true;
+          }
+          if (!patched) {
+            done(null, null, 'unsupported');
+            return;
+          }
+          outBytes = bytes.subarray(start, finish);
+          outType = file.type || 'audio/mpeg';
+          return done(null, new File([outBytes], file.name, {
+            type: outType
+          }), 'stripped');
+        } catch (error) {
+          err = error;
+          return done(err);
+        }
+      };
+      return reader.readAsArrayBuffer(file);
+    },
+    stripMp4Metadata: function(file, done) {
+      var reader, videoPatch;
+      videoPatch = window.QRVideoPatch;
+      if (!(videoPatch != null ? videoPatch.readMp4Box : void 0)) {
+        done(null, null, 'unsupported');
+        return;
+      }
+      reader = new FileReader();
+      reader.onerror = function() {
+        return done(reader.error || new Error('Failed to read MP4 for metadata stripping.'));
+      };
+      reader.onload = function() {
+        var buffer, bytes, containerBoxes, err, metadataBoxes, patched, scanBoxes, timeBoxes, view;
+        try {
+          buffer = reader.result;
+          bytes = new Uint8Array(buffer);
+          view = new DataView(buffer);
+          patched = false;
+          metadataBoxes = {
+            udta: true,
+            meta: true,
+            ilst: true,
+            keys: true,
+            cprt: true,
+            loci: true,
+            Xtra: true,
+            '----': true
+          };
+          containerBoxes = {
+            moov: true,
+            trak: true,
+            mdia: true,
+            minf: true,
+            stbl: true,
+            edts: true,
+            dinf: true,
+            udta: true,
+            meta: true,
+            ilst: true,
+            moof: true,
+            traf: true,
+            mfra: true,
+            mvex: true
+          };
+          timeBoxes = {
+            mvhd: true,
+            tkhd: true,
+            mdhd: true
+          };
+          scanBoxes = function(start, end) {
+            var box, childStart, localPatch, pos;
+            localPatch = false;
+            pos = start;
+            while (pos < end) {
+              box = videoPatch.readMp4Box(bytes, view, pos, end);
+              if (!(box && box.end > pos)) {
+                break;
+              }
+              if (box.type in metadataBoxes) {
+                QRMetadataPatch.setMp4BoxType(bytes, box.start, 'free');
+                localPatch = true;
+                pos = box.end;
+                continue;
+              }
+              if (box.type in timeBoxes) {
+                localPatch = QRMetadataPatch.zeroMp4Times(bytes, box) || localPatch;
+              }
+              if (box.type in containerBoxes) {
+                childStart = box.dataStart + (box.type === 'meta' ? 4 : 0);
+                if (childStart > box.end) {
+                  childStart = box.end;
+                }
+                localPatch = scanBoxes(childStart, box.end) || localPatch;
+              }
+              pos = box.end;
+            }
+            return localPatch;
+          };
+          patched = scanBoxes(0, bytes.length);
+          if (!patched) {
+            done(null, null, 'unsupported');
+            return;
+          }
+          return done(null, new File([bytes], file.name, {
+            type: file.type || 'video/mp4'
+          }), 'stripped');
+        } catch (error) {
+          err = error;
+          return done(err);
+        }
+      };
+      return reader.readAsArrayBuffer(file);
+    },
+    stripWebMMetadata: function(file, done) {
+      var reader, videoPatch;
+      videoPatch = window.QRVideoPatch;
+      if (!((videoPatch != null ? videoPatch.readElement : void 0) && (videoPatch != null ? videoPatch.voidElement : void 0))) {
+        done(null, null, 'unsupported');
+        return;
+      }
+      reader = new FileReader();
+      reader.onerror = function() {
+        return done(reader.error || new Error('Failed to read WebM for metadata stripping.'));
+      };
+      reader.onload = function() {
+        var bytes, child, err, info, infoPos, patched, pos, ref, segPos, segmentEnd, top;
+        try {
+          bytes = new Uint8Array(reader.result);
+          patched = false;
+          pos = 0;
+          while (pos < bytes.length) {
+            top = videoPatch.readElement(bytes, pos, bytes.length);
+            if (!(top && top.end > pos)) {
+              break;
+            }
+            if (top.id === 0x18538067) {
+              segmentEnd = top.sizeUnknown ? bytes.length : top.dataEnd;
+              segPos = top.dataStart;
+              while (segPos < segmentEnd) {
+                child = videoPatch.readElement(bytes, segPos, segmentEnd);
+                if (!(child && child.end > segPos)) {
+                  break;
+                }
+                if (child.id === 0x1254C367) {
+                  if (videoPatch.voidElement(bytes, child)) {
+                    patched = true;
+                  }
+                } else if (child.id === 0x1549A966) {
+                  infoPos = child.dataStart;
+                  while (infoPos < child.dataEnd) {
+                    info = videoPatch.readElement(bytes, infoPos, child.dataEnd);
+                    if (!(info && info.end > infoPos)) {
+                      break;
+                    }
+                    if ((ref = info.id) === 0x4461 || ref === 0x7BA9 || ref === 0x4D80 || ref === 0x5741 || ref === 0x73A4) {
+                      if (videoPatch.voidElement(bytes, info)) {
+                        patched = true;
+                      }
+                    }
+                    infoPos = info.end;
+                  }
+                }
+                segPos = child.end;
+              }
+              break;
+            }
+            pos = top.end;
+          }
+          if (!patched) {
+            done(null, null, 'unsupported');
+            return;
+          }
+          return done(null, new File([bytes], file.name, {
+            type: file.type || 'video/webm'
+          }), 'stripped');
+        } catch (error) {
+          err = error;
+          return done(err);
+        }
+      };
+      return reader.readAsArrayBuffer(file);
+    },
+    isLikelyMp4: function(file) {
+      var name, type;
+      type = ((file != null ? file.type : void 0) || '').toLowerCase();
+      name = ((file != null ? file.name : void 0) || '').toLowerCase();
+      return /^(video|audio)\/(mp4|quicktime|x-m4a)$/.test(type) || /\.(mp4|m4a|m4v|mov|3gp|3g2)$/.test(name);
+    },
+    isLikelyWebM: function(file) {
+      var name, type;
+      type = ((file != null ? file.type : void 0) || '').toLowerCase();
+      name = ((file != null ? file.name : void 0) || '').toLowerCase();
+      return /(video|audio)\/webm/.test(type) || /\.(webm|mkv)$/.test(name);
+    },
+    stripFile: function(file, done) {
+      var group;
+      if (!file) {
+        return done(null, null, 'unsupported');
+      }
+      group = QRMetadataPatch.fileGroup(file);
+      if (group === 'image') {
+        QRMetadataPatch.stripImage(file, done);
+        return;
+      }
+      if (QRMetadataPatch.isLikelyMp4(file)) {
+        QRMetadataPatch.stripMp4Metadata(file, done);
+        return;
+      }
+      if (QRMetadataPatch.isLikelyWebM(file)) {
+        QRMetadataPatch.stripWebMMetadata(file, done);
+        return;
+      }
+      if (group === 'audio') {
+        QRMetadataPatch.stripID3(file, done);
+        return;
+      }
+      return done(null, null, 'unsupported');
+    }
+  };
+
+  (function() {
+    var origDelete, origRm, origRmFile, origSetFile, origSubmit, proto;
+    proto = QR.post && QR.post.prototype;
+    if (!proto) {
+      return;
+    }
+    origSetFile = proto.setFile;
+    origRm = proto.rm;
+    origDelete = proto["delete"];
+    origRmFile = proto.rmFile;
+    origSubmit = QR.submit;
+    proto.cancelMetadataProcessing = function(message, silent) {
+      if (this._metadataProcessing && this._metadataProcessing.stop) {
+        this._metadataProcessing.cancelled = true;
+        this._metadataProcessing.stop();
+        delete this._metadataProcessing;
+      }
+      if (!this._imageProcessing && !this._videoProcessing) {
+        delete this._pendingFile;
+      }
+      if (!(this.file || this._imageProcessing || this._videoProcessing)) {
+        $.rmClass(this.nodes.el, 'has-file');
+        this.nodes.el.removeAttribute('title');
+        this.nodes.span.textContent = this.com || '';
+      }
+      QRMetadataPatch.closeNotice(this);
+      if (!silent && message) {
+        return QR.notifications.push(new Notice('info', message, 4));
+      }
+    };
+    proto.setFile = function(file) {
+      var post, taskID;
+      post = this;
+      post._metadataTaskID = (post._metadataTaskID || 0) + 1;
+      taskID = post._metadataTaskID;
+      post.cancelMetadataProcessing(null, true);
+      if (!QRMetadataPatch.shouldStrip(file)) {
+        return origSetFile.call(post, file);
+      }
+      post.filename = file.name;
+      post._pendingFile = true;
+      $.addClass(post.nodes.el, 'has-file');
+      post.nodes.el.title = file.name;
+      post.nodes.span.textContent = file.name;
+      if (typeof QR.updatePreviewStrip === "function") {
+        QR.updatePreviewStrip();
+      }
+      QRMetadataPatch.updateNotice(post, 'Stripping metadata...', 'info');
+      post._metadataProcessing = {
+        stop: function() {
+          return QRMetadataPatch.closeNotice(post);
+        },
+        cancelled: false
+      };
+      return QRMetadataPatch.stripFile(file, function(err, outFile) {
+        if (post._metadataTaskID !== taskID) {
+          return;
+        }
+        delete post._metadataProcessing;
+        if (!post._imageProcessing && !post._videoProcessing) {
+          delete post._pendingFile;
+        }
+        if (err) {
+          QRMetadataPatch.closeNotice(post);
+          if (!post.file) {
+            $.rmClass(post.nodes.el, 'has-file');
+          }
+          post.fileError(err.message || String(err));
+          return;
+        }
+        if (outFile) {
+          setTimeout((function() {
+            return QRMetadataPatch.closeNotice(post);
+          }), 1000);
+          return origSetFile.call(post, outFile);
+        } else {
+          QRMetadataPatch.closeNotice(post);
+          return origSetFile.call(post, file);
+        }
+      });
+    };
+    proto.rm = function() {
+      this.cancelMetadataProcessing(null, true);
+      return origRm.apply(this, arguments);
+    };
+    proto["delete"] = function() {
+      this.cancelMetadataProcessing(null, true);
+      return origDelete.apply(this, arguments);
+    };
+    proto.rmFile = function() {
+      this.cancelMetadataProcessing(null, true);
+      return origRmFile.apply(this, arguments);
+    };
+    return QR.submit = function(e) {
+      if (QR.selected && QR.selected._metadataProcessing) {
+        if (e != null) {
+          if (typeof e.preventDefault === "function") {
+            e.preventDefault();
+          }
+        }
+        QR.selected.cancelMetadataProcessing('Metadata processing canceled.');
+        return;
+      }
+      return origSubmit.apply(this, arguments);
+    };
+  })();
+
+}).call(this);
+
 QuoteBacklink = (function() {
   var QuoteBacklink;
 
@@ -35478,7 +37389,7 @@ Main = (function() {
       return $.ready(Main.initReady);
     },
     initStyle: function() {
-      var keyboard, ref;
+      var ref;
       if (!Main.isThisPageLegit()) {
         return;
       }
@@ -35511,18 +37422,6 @@ Main = (function() {
       Main.bgColorStyle = $.el('style', {
         id: 'fourchanx-bgcolor-css'
       });
-      keyboard = false;
-      $.on(d, 'mousedown', function() {
-        return keyboard = false;
-      });
-      $.on(d, 'keydown', function(e) {
-        if (e.keyCode === 9) {
-          return keyboard = true;
-        }
-      });
-      window.addEventListener('focus', (function() {
-        return doc.classList.toggle('keyboard-focus', keyboard);
-      }), true);
       return Main.setClass();
     },
     setClass: function() {
