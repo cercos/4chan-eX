@@ -101,9 +101,14 @@ Main =
       !$$('script:not([src])', d).filter((s) -> /this\[/.test(s.textContent)).length
     )
       ($.getSync or $.get) {'jsWhitelist': Conf['jsWhitelist']}, ({jsWhitelist}) ->
-        parsedList = jsWhitelist.replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim()
+        parsedList = (jsWhitelist or '').replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim()
         if /\S/.test(parsedList)
-          $.addCSP "script-src #{parsedList}"
+          tokens = parsedList.split(/\s+/)
+          hCaptchaOnly = tokens.every (token) -> token in ['https://hcaptcha.com', 'https://*.hcaptcha.com']
+          if hCaptchaOnly
+            $.set 'jsWhitelist', ''
+          else
+            $.addCSP "script-src #{parsedList}"
 
     # Get saved values as items
     items = $.dict()

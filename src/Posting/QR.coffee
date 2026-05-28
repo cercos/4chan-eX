@@ -25,6 +25,7 @@ QR =
 
   init: ->
     return unless Conf['Quick Reply']
+    return unless g.VIEW in ['index', 'thread']
 
     @posts = []
 

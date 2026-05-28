@@ -9,8 +9,10 @@ Report =
     $.addStyle CSS.report
 
     Report.archive() if Conf['Archive Report']
+    Report.restoreNativeCaptcha()
 
     new MutationObserver(->
+      Report.restoreNativeCaptcha()
       Report.fit 'iframe[src^="https://www.google.com/recaptcha/api2/frame"]'
       Report.fit 'body'
     ).observe d.body,
@@ -23,6 +25,17 @@ Report =
     return if not ((el = $ selector, doc) and getComputedStyle(el).visibility isnt 'hidden')
     dy = el.getBoundingClientRect().bottom - doc.clientHeight + 8
     window.resizeBy 0, dy if dy > 0
+
+  restoreNativeCaptcha: ->
+    $.global ->
+      window.TCaptcha4chanXPatch?(false)
+      for node in document.querySelectorAll '.fourchanx-stacked-captcha'
+        node.classList.remove 'fourchanx-stacked-captcha'
+      document.querySelector('#t-load')?.hidden = false
+      if (nextNode = document.querySelector '#t-next') and nextNode.dataset?.fourchanxStatusHidden is '1'
+        nextNode.style.visibility = ''
+        delete nextNode.dataset.fourchanxStatusHidden
+      return
 
   archive: ->
     return unless (urls = Redirect.report g.BOARD.ID).length

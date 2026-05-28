@@ -1929,7 +1929,7 @@ Settings =
     if compareString < '00001.00013.00008.00000'
       setD 'Download Link', true
     if compareString < '00001.00013.00009.00003'
-      if data['jsWhitelist']?
+      if data['jsWhitelist']?.trim()
         list = data['jsWhitelist'].split('\n')
         if 'https://cdnjs.cloudflare.com' not in list and 'https://cdn.mathjax.org' in list
           set 'jsWhitelist', data['jsWhitelist'] + '\n\nhttps://cdnjs.cloudflare.com'
@@ -2012,8 +2012,10 @@ Settings =
           '//imgops.com/start?url=%URL'
         )
     if compareString < '00001.00014.00017.00002'
-      if data['jsWhitelist']?
-        set 'jsWhitelist', data['jsWhitelist'] + '\n\nhttps://hcaptcha.com\nhttps://*.hcaptcha.com'
+      if data['jsWhitelist']?.trim()
+        list = data['jsWhitelist'].split('\n')
+        if 'https://hcaptcha.com' not in list and 'https://*.hcaptcha.com' not in list
+          set 'jsWhitelist', data['jsWhitelist'] + '\n\nhttps://hcaptcha.com\nhttps://*.hcaptcha.com'
     if compareString < '00001.00014.00020.00004'
       if data['archiveLists']?
         set 'archiveLists', data['archiveLists'].replace('https://nstepien.github.io/archives.json/archives.json', 'https://4chenz.github.io/archives.json/archives.json')
