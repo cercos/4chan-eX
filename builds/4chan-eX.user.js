@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX
-// @version      1.1.4
+// @version      1.1.5
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -234,7 +234,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1.1.4',
+  VERSION:   '1.1.5',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)
@@ -15260,7 +15260,7 @@ Settings = (function() {
       $.event('CloseMenu');
       Settings.dialog = dialog = $.el('div', {
         id: 'overlay'
-      }, {innerHTML: "<div id=\"fourchanx-settings\" class=\"dialog\"><a href=\"javascript:;\" class=\"close fa fa-times\" title=\"Close\"></a><div class=\"settings-titlebar\"><span class=\"settings-title\">4chan-eX Settings</span></div><div class=\"settings-body\"><nav><div class=\"settings-search\"><input type=\"search\" placeholder=\"Search settings\" autocomplete=\"off\"></div><div class=\"sections-list\"></div></nav><div class=\"section-container\"></div></div><div class=\"settings-footer\"><div class=\"settings-actions\"><a class=\"export\">Export</a>&nbsp|&nbsp<a class=\"import\">Import</a>&nbsp|&nbsp<a class=\"reset\">Reset Settings</a><input type=\"file\" hidden></div><p class=\"imp-exp-result warning\"></p><div class=\"credits\"><a href=\"https://www.4chan-eX.net/\" target=\"_blank\">4chan-eX</a>&nbsp|&nbsp<a href=\"https://github.com/cercos/4chan-eX/blob/master/CHANGELOG.md\" target=\"_blank\">" + E(g.VERSION) + "</a>&nbsp|&nbsp<a href=\"https://github.com/cercos/4chan-eX/issues\" target=\"_blank\">Issues</a></div></div></div>"});
+      }, {innerHTML: "<div id=\"fourchanx-settings\" class=\"dialog\"><a href=\"javascript:;\" class=\"close fa fa-times\" title=\"Close\"></a><div class=\"settings-titlebar\"><span class=\"settings-title\">4chan-eX Settings</span></div><div class=\"settings-body\"><nav><div class=\"settings-search\"><input type=\"search\" placeholder=\"Search settings\" autocomplete=\"off\"></div><div class=\"sections-list\"></div></nav><div class=\"section-container\"></div></div><div class=\"settings-footer\"><div class=\"settings-actions\"><a class=\"export\">Export</a>&nbsp|&nbsp<a class=\"import\">Import</a>&nbsp|&nbsp<a class=\"reset\">Reset Settings</a><input type=\"file\" hidden></div><p class=\"imp-exp-result warning\"></p><div class=\"credits\"><a href=\"https://www.4chan-eX.com/\" target=\"_blank\">4chan-eX</a>&nbsp|&nbsp<a href=\"https://github.com/cercos/4chan-eX/releases/tag/v" + E(g.VERSION) + "\" target=\"_blank\">" + E(g.VERSION) + "</a>&nbsp|&nbsp<a href=\"https://github.com/cercos/4chan-eX/issues\" target=\"_blank\">Issues</a></div></div></div>"});
       $.on($('.export', dialog), 'click', Settings["export"]);
       $.on($('.import', dialog), 'click', Settings["import"]);
       $.on($('.reset', dialog), 'click', Settings.reset);
