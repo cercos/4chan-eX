@@ -209,6 +209,11 @@ ThreadHiding =
     threadRoot = thread.nodes.root
     threadRoot.hidden = thread.isHidden = false
     Index.updateHideLabel()
-    if thread.catalogView and Index.showHiddenThreads
-      $.rm thread.catalogView.nodes.root
-      $.event 'PostsRemoved', null, Index.root
+    if thread.catalogView
+      if Index.showHiddenThreads
+        $.rm thread.catalogView.nodes.root
+        $.event 'PostsRemoved', null, Index.root
+      else if g.VIEW is 'index' and Conf['Index Mode'] is 'catalog'
+        # In catalog-index mode, hidden threads are removed from the DOM.
+        # Rebuild so an unhidden thread is reinserted immediately.
+        Index.buildIndex()

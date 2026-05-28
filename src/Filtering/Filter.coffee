@@ -472,8 +472,27 @@ Filter =
   quickFilterMD5Apply: (filters, posts=[], post=null) ->
     return unless filters?.length
     Filter.addFilter 'MD5', filters.join('\n')
-    Filter.markMD5Filtered p for p in posts
-    Filter.quickFilterMD5Notify filters, posts, post
+    {hiddenPosts} = Filter.applyLive()
+    changedPosts = if hiddenPosts.length then hiddenPosts else posts
+    Filter.markMD5Filtered p for p in changedPosts
+    Filter.quickFilterMD5Notify filters, changedPosts, post
+
+  applyLive: ->
+    hiddenPosts = []
+    shownPosts = []
+    g.posts.forEach (post) ->
+      return unless post?.isReply and !post.isClone and !post.isFetchedQuote
+      delete post.filterResults
+      {hide, stub} = Filter.test post, true
+      if hide
+        unless post.isHidden
+          PostHiding.hide post, stub
+          hiddenPosts.push post
+      else if post.isHidden and !PostHiding.db?.get({boardID: post.board.ID, threadID: post.thread.ID, postID: post.ID})
+        PostHiding.show post
+        shownPosts.push post
+      Filter.markMD5Filtered post
+    {hiddenPosts, shownPosts}
 
   quickFilterMD5Notify: (filters, posts=[], post=null) ->
     return unless filters?.length
@@ -511,13 +530,15 @@ Filter =
     origin = post?.origin or post
     Filter.toggleMD5Filter md5, (
       ->
+        {hiddenPosts} = Filter.applyLive()
         if origin
           Filter.markMD5Filtered origin
-          Filter.quickFilterMD5Notify ["/#{md5}/"], [origin], post
+          Filter.quickFilterMD5Notify ["/#{md5}/"], (if hiddenPosts.length then hiddenPosts else [origin]), post
         else
-          Filter.quickFilterMD5Notify ["/#{md5}/"]
+          Filter.quickFilterMD5Notify ["/#{md5}/"], hiddenPosts
     ), (
       ->
+        Filter.applyLive()
         Filter.markMD5Filtered origin if origin
         new Notice 'info', 'MD5 unfiltered.', 2
     )
@@ -530,7 +551,8 @@ Filter =
       @close()
     undo: ->
       Filter.removeFilters 'MD5', @filters
-      for post in @posts
+      {shownPosts} = Filter.applyLive()
+      for post in @posts.concat(shownPosts)
         if post.isReply
           PostHiding.show post
         else if post.thread and g.VIEW in ['index', 'catalog']

@@ -1057,7 +1057,11 @@ QR =
       err or= 'Original comment required.'
 
     if !err and QR.captcha is Captcha.t and QR.nodes.el.dataset.fourchanxCaptchaPending is '1'
-      err = 'Finish captcha before submitting.'
+      # Re-evaluate current TCaptcha status first so stale pending flags
+      # (e.g. when verification becomes not required) can clear themselves.
+      QR.captcha.getOne()
+      if QR.nodes.el.dataset.fourchanxCaptchaPending is '1'
+        err = 'Finish captcha before submitting.'
 
     hasReplyCaptchaCookie = QR.captcha is Captcha.v2 and /\b_ct=/.test(d.cookie) and threadID
     captchaBusy = QR.nodes.el.dataset.fourchanxCaptchaPending is '1' or QR.captcha.occupied?()
