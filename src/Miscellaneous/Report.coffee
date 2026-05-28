@@ -31,7 +31,7 @@ Report =
     types   = $.id 'reportTypes'
     message = $ 'h3'
 
-    fieldset = $.el 'fieldset',
+    fieldset = $.el 'div',
       id: 'archive-report'
       hidden: true
     ,

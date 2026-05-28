@@ -273,6 +273,7 @@ Settings =
       @open @el, g
       @rendered = true
       Settings.restoreSectionHeader @
+      Settings.setupCollapsibleFieldsets @el
     @el.scrollTop = 0
     Settings.applySearch()
     $.event 'OpenSettings', null, @el
@@ -302,11 +303,13 @@ Settings =
     for sectionObj in Settings.sections
       section = sectionObj.el
       continue unless section
+      Settings.updateFieldsetCollapseForSearch section, !!query
 
       if query and not sectionObj.rendered
         sectionObj.open section, g
         sectionObj.rendered = true
         Settings.restoreSectionHeader sectionObj
+        Settings.setupCollapsibleFieldsets section
 
       for el in $$ '.settings-search-hidden', section
         $.rmClass el, 'settings-search-hidden'
@@ -316,7 +319,7 @@ Settings =
 
       if query
         # Hide all elements initially
-        for el in $$ 'div[data-name], tr[data-name], .generated-highlight-group, .generated-highlight-auto-group, .generated-highlight-auto-row, fieldset, .settings-group-heading, table, thead, tbody, legend, h4', section
+        for el in $$ 'div[data-name], tr[data-name], .generated-highlight-group, .generated-highlight-auto-group, .generated-highlight-auto-row, details.settings-fieldset, .settings-group-heading, table, thead, tbody, summary.settings-legend, h4', section
           $.addClass el, 'settings-search-hidden'
 
         hasMatch = false
@@ -333,7 +336,7 @@ Settings =
             child.classList.remove 'settings-search-hidden' for child in $$ '.settings-search-hidden', row
 
         # 2. Search Styling Groups and headings (except previews)
-        for el in $$ '.generated-highlight-group, .generated-highlight-auto-group, legend, th, h4, .generated-highlight-help', section
+        for el in $$ '.generated-highlight-group, .generated-highlight-auto-group, summary.settings-legend, th, h4, .generated-highlight-help', section
           continue if el.closest('.generated-highlight-preview') or el.closest('.custom-css-editor')
           if el.textContent.toLowerCase().indexOf(query) >= 0
             hasMatch = true
@@ -357,10 +360,10 @@ Settings =
               node = node.nextElementSibling
 
         # 4. Search Fieldsets (except previews)
-        for fs in $$ 'fieldset', section
+        for fs in $$ 'details.settings-fieldset', section
           isPreview = fs.classList.contains('generated-highlight-preview') or fs.classList.contains('custom-css-editor')
           if not isPreview
-            matchTarget = $('legend', fs)?.textContent or fs.textContent
+            matchTarget = $('summary.settings-legend', fs)?.textContent or fs.textContent
             hit = matchTarget.toLowerCase().indexOf(query) >= 0
             if hit
               hasMatch = true
@@ -371,9 +374,140 @@ Settings =
       else
         section.hidden = sectionObj isnt activeSection
 
+  setupCollapsibleFieldsets: (section) ->
+    collapseCount = 0
+    for fs in $$ 'details.settings-fieldset', section
+      Settings.setupCollapsibleFieldset fs
+      collapseCount++ unless fs.classList.contains 'settings-no-collapse'
+    Settings.ensureSectionCollapseControls section, collapseCount > 0
+
+  ensureSectionCollapseControls: (section, hasCollapsible) ->
+    controls = $('.settings-collapse-controls', section)
+    unless controls
+      controls = $.el 'div',
+        className: 'settings-collapse-controls'
+      collapseAll = $.el 'a',
+        className: 'settings-collapse-all'
+        href: 'javascript:;'
+        textContent: 'Collapse all'
+      expandAll = $.el 'a',
+        className: 'settings-expand-all'
+        href: 'javascript:;'
+        textContent: 'Expand all'
+      $.on collapseAll, 'click', Settings.collapseAllFieldsets
+      $.on expandAll, 'click', Settings.expandAllFieldsets
+      $.add controls, [
+        collapseAll
+        $.tn ' | '
+        expandAll
+      ]
+      section.insertBefore controls, section.firstChild
+    controls.hidden = !hasCollapsible
+    Settings.refreshCollapseControlsState section if hasCollapsible
+
+  setupCollapsibleFieldset: (fs) ->
+    return if fs.classList.contains 'settings-collapsible-ready'
+    summary = $('summary.settings-legend', fs)
+    return unless summary
+    fs.classList.add 'settings-collapsible-ready'
+
+    if fs.closest('.generated-highlight-preview') or fs.classList.contains('custom-css-editor')
+      fs.classList.add 'settings-no-collapse'
+    else if Settings.countCollapsibleRows(fs) <= 2
+      fs.classList.add 'settings-no-collapse'
+
+    if fs.classList.contains 'settings-no-collapse'
+      $.on summary, 'click', Settings.preventDetailsToggle
+      return
+
+    fs.open = true unless fs.hasAttribute 'open'
+    summary.title = 'Collapse section'
+    $.on fs, 'toggle', Settings.onFieldsetToggle
+    $.on summary, 'click', Settings.suppressToggleOnInteractive
+
+  preventDetailsToggle: (e) ->
+    e.preventDefault()
+
+  suppressToggleOnInteractive: (e) ->
+    e.preventDefault() if e.target.closest 'a, input, button, textarea, select, code'
+
+  onFieldsetToggle: ->
+    summary = $('summary.settings-legend', @)
+    summary.title = if @open then 'Collapse section' else 'Expand section' if summary
+    Settings.refreshCollapseControlsState $.x 'ancestor::section[1]', @
+
+  countCollapsibleRows: (fs) ->
+    rows = $$ 'div[data-name], tr[data-name], p, li, .settings-group-heading, .generated-highlight-group, .generated-highlight-auto-group', fs
+    count = 0
+    for row in rows
+      continue if row.hidden
+      continue if row.closest('summary')
+      count++
+
+    if count is 0
+      for el in fs.children
+        continue if el.nodeName is 'SUMMARY'
+        continue if el.hidden
+        count++
+    count
+
+  updateFieldsetCollapseForSearch: (section, searching) ->
+    changed = false
+    for fs in $$ 'details.settings-fieldset.settings-collapsible-ready', section
+      continue if fs.classList.contains 'settings-no-collapse'
+      if searching
+        fs.classList.add 'settings-search-expand'
+        unless fs.open
+          changed = true
+          fs.open = true
+      else
+        fs.classList.remove 'settings-search-expand'
+    Settings.refreshCollapseControlsState section if changed or !searching
+
+  collapseAllFieldsets: (e) ->
+    e.preventDefault()
+    section = $.x 'ancestor::section[1]', @
+    return unless section
+    Settings.setAllFieldsetsCollapsed section, true
+
+  expandAllFieldsets: (e) ->
+    e.preventDefault()
+    section = $.x 'ancestor::section[1]', @
+    return unless section
+    Settings.setAllFieldsetsCollapsed section, false
+
+  setAllFieldsetsCollapsed: (section, collapsed) ->
+    for fs in $$ 'details.settings-fieldset.settings-collapsible-ready', section
+      continue if fs.classList.contains 'settings-no-collapse'
+      continue if fs.classList.contains 'settings-search-expand'
+      fs.open = !collapsed
+    Settings.refreshCollapseControlsState section
+
+  refreshCollapseControlsState: (section) ->
+    return unless section
+    collapseLink = $('.settings-collapse-all', section)
+    expandLink = $('.settings-expand-all', section)
+    return unless collapseLink and expandLink
+
+    total = 0
+    collapsedCount = 0
+    for fs in $$ 'details.settings-fieldset.settings-collapsible-ready', section
+      continue if fs.classList.contains 'settings-no-collapse'
+      continue if fs.classList.contains 'settings-search-expand'
+      total++
+      collapsedCount++ unless fs.open
+
+    if total is 0
+      collapseLink.classList.add 'disabled'
+      expandLink.classList.add 'disabled'
+      return
+
+    collapseLink.classList.toggle 'disabled', collapsedCount is total
+    expandLink.classList.toggle 'disabled', collapsedCount is 0
+
   highlightSettingRow: (row, query) ->
     # Highlight matching text in labels, legends, descriptions, and table headers
-    for el in $$ '.setting-title, .setting-description, legend, th, h4, .generated-highlight-help', row
+    for el in $$ '.setting-title, .setting-description, summary.settings-legend, th, h4, .generated-highlight-help', row
       # Skip highlighting inside previews
       continue if el.closest('.generated-highlight-preview') or el.closest('.custom-css-editor')
       
@@ -419,8 +553,10 @@ Settings =
     'Count Posts by ID'
     'Remove Spoilers'
     'Reveal Spoilers'
+    'Quote Backlinks'
     'Highlight Posts Quoting You'
     'Highlight Own Posts'
+    'Highlight Ghost Posts'
   ]
 
   searchKeywords:
@@ -517,10 +653,12 @@ Settings =
     hideLegendFor ?= []
 
     if includeWarnings
-      warnings = $.el 'fieldset',
+      warnings = $.el 'details',
+        className: 'settings-fieldset'
         hidden: true
+        open: true
       ,
-        `<%= html('<legend>Warnings</legend><ul></ul>') %>`
+        `<%= html('<summary class="settings-legend">Warnings</summary><ul></ul>') %>`
       addWarning = (item) ->
         $.add $('ul', warnings), item
         warnings.hidden = false
@@ -553,8 +691,11 @@ Settings =
           ['Compatibility', ['Disable Native Extension']]
         ]
         for [legendTitle, keys] in subgroups
-          fs = $.el 'fieldset',
-            `<%= html('<legend>${legendTitle}</legend>') %>`
+          fs = $.el 'details',
+            className: 'settings-fieldset'
+            open: true
+          ,
+            `<%= html('<summary class="settings-legend">${legendTitle}</summary>') %>`
           group = $.dict()
           for key in keys when lookup[key]
             group[key] = lookup[key]
@@ -568,8 +709,11 @@ Settings =
           ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio', 'Strip All Media Metadata', 'Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'], 1]
           ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]
         ]
-          fs = $.el 'fieldset',
-            `<%= html('<legend>${legendTitle}</legend>') %>`
+          fs = $.el 'details',
+            className: 'settings-fieldset'
+            open: true
+          ,
+            `<%= html('<summary class="settings-legend">${legendTitle}</summary>') %>`
           group = Settings.selectGroup obj, keys, baseLevel
           continue unless Settings.addCheckboxes(fs, group, items, inputs, (key) -> key not in styleNames)
           if legendTitle is 'Captcha'
@@ -588,9 +732,14 @@ Settings =
         continue
 
       legendTitle = if keyFS is 'Filtering' then 'Content Controls' else keyFS
-      fs = $.el 'fieldset'
-      unless keyFS in hideLegendFor
-        $.extend fs, `<%= html('<legend>${legendTitle}</legend>') %>`
+      if keyFS in hideLegendFor
+        fs = $.el 'div',
+          className: 'settings-fieldset settings-no-collapse'
+      else
+        fs = $.el 'details',
+          className: 'settings-fieldset'
+          open: true
+        $.extend fs, `<%= html('<summary class="settings-legend">${legendTitle}</summary>') %>`
       continue unless Settings.addCheckboxes(fs, obj, items, inputs, (key) -> key not in styleNames)
       $.add section, fs
 
@@ -644,8 +793,11 @@ Settings =
       $.add section, div
 
   addSelectFieldset: (section, title, rows) ->
-    fs = $.el 'fieldset',
-      `<%= html('<legend>${title}</legend>') %>`
+    fs = $.el 'details',
+      className: 'settings-fieldset'
+      open: true
+    ,
+      `<%= html('<summary class="settings-legend">${title}</summary>') %>`
     items = $.dict()
     inputs = $.dict()
     for row in rows
@@ -683,8 +835,11 @@ Settings =
       return
 
   addThreadWatcherFieldset: (section) ->
-    fs = $.el 'fieldset',
-      `<%= html('<legend>Thread Watcher</legend>') %>`
+    fs = $.el 'details',
+      className: 'settings-fieldset'
+      open: true
+    ,
+      `<%= html('<summary class="settings-legend">Thread Watcher</summary>') %>`
 
     items = $.dict()
     inputs = $.dict()
@@ -765,8 +920,11 @@ Settings =
     inputs = $.dict()
 
     # Custom Board Navigation (moved from Advanced) - shown at top of Interface
-    fsNav = $.el 'fieldset',
-      `<%= html('<legend>Board Navigation</legend>') %>`
+    fsNav = $.el 'details',
+      className: 'settings-fieldset'
+      open: true
+    ,
+      `<%= html('<summary class="settings-legend">Board Navigation</summary>') %>`
     textarea = $.el 'textarea',
       name: 'boardnav'
       className: 'field boardnav-field'
@@ -842,11 +1000,13 @@ Settings =
     # Formatting options moved from Styling
     items  = $.dict()
     inputs = $.dict()
-    fs = $.el 'fieldset',
-      `<%= html('<legend>Formatting</legend>') %>`
+    fs = $.el 'details',
+      className: 'settings-fieldset settings-formatting-fieldset'
+      open: true
+    ,
+      `<%= html('<summary class="settings-legend">Formatting</summary>') %>`
     lookup = Settings.getMainSettingLookup()
     for [title, keys] in [
-      ['Time and Formatting', ['Time Formatting', 'Relative Post Dates', 'Relative Date Title', 'File Info Formatting']]
       ['Board and ID Display', ['Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID']]
       ['Spoiler Display', ['Remove Spoilers', 'Reveal Spoilers']]
     ]
@@ -859,6 +1019,49 @@ Settings =
         textContent: title
       Settings.addCheckboxes fs, group, items, inputs
     $.add section, fs
+
+    # Formatting templates moved from Styling.
+    formattingDetails = $.el 'div',
+      className: 'settings-formatting-details'
+    $.extend formattingDetails, `<%= readHTML('ThreadPostFormatting.html') %>`
+    warning.hidden = Conf[warning.dataset.feature] for warning in $$ '.warning', formattingDetails
+
+    addFormattingToggles = (selector, keys) ->
+      root = $(selector, formattingDetails)
+      return unless root
+      group = $.dict()
+      for key in keys when lookup[key]
+        group[key] = lookup[key]
+      Settings.addCheckboxes root, group, items, inputs
+
+    addFormattingToggles '.time-formatting-toggles', ['Time Formatting', 'Relative Post Dates', 'Relative Date Title']
+    addFormattingToggles '.quote-backlinks-toggles', ['Quote Backlinks']
+    addFormattingToggles '.file-info-formatting-toggles', ['File Info Formatting']
+
+    for input in $$ '[name]', formattingDetails when not (input.name of inputs)
+      inputs[input.name] = input
+      items[input.name] = Conf[input.name]
+      event = if (
+        input.nodeName is 'SELECT' or
+        input.type in ['checkbox', 'radio'] or
+        (input.nodeName is 'TEXTAREA' and input.name not of Settings)
+      ) then 'change' else 'input'
+      $.on input, event, $.cb[if input.type is 'checkbox' then 'checked' else 'value']
+      $.on input, event, Settings[input.name] if input.name of Settings
+
+    refreshFormattingDetailsState = ->
+      for fs in $$ '.formatting-detail-fieldset', formattingDetails
+        toggleName = fs.dataset.mainToggle
+        enabled = !!inputs[toggleName]?.checked
+        fs.classList.toggle 'formatting-detail-disabled', !enabled
+
+    for toggleName in ['Time Formatting', 'Quote Backlinks', 'File Info Formatting']
+      do (toggleName) ->
+        input = inputs[toggleName]
+        return unless input
+        $.on input, 'change', refreshFormattingDetailsState
+
+    $.add section, formattingDetails
 
     # Main groups for Content Controls (filtering/hiding), Monitoring and Quotes
     Settings.renderMainGroups section,
@@ -893,8 +1096,11 @@ Settings =
       ]
 
     # Interval and Cooldown (moved from Advanced)
-    fs = $.el 'fieldset',
-      `<%= html('<legend>Updater & Cooldown</legend>') %>`
+    fs = $.el 'details',
+      className: 'settings-fieldset'
+      open: true
+    ,
+      `<%= html('<summary class="settings-legend">Updater & Cooldown</summary>') %>`
     
     divInterval = $.el 'div',
       `<%= html('<label><span class="setting-title">Update Interval: </span><input type="number" name="Interval" class="field" min="1"></label><span class="description">: Seconds between updates.</span>') %>`
@@ -927,6 +1133,7 @@ Settings =
           input.parentNode.parentNode.dataset.checked = val
         else
           input.value = val
+      refreshFormattingDetailsState()
       return
 
   media: (section) ->
@@ -939,8 +1146,11 @@ Settings =
       ['Images', ['Gallery', 'Fullscreen Gallery', 'PDF in Gallery', 'Sauce', 'Reveal Spoiler Thumbnails', 'Image Prefetching', 'Fappe Tyme', 'Werk Tyme']]
       ['Videos', ['WEBM Metadata', 'Autoplay', 'Show Controls', 'Click Passthrough', 'Allow Sound', 'Mouse Wheel Volume', 'Loop in New Tab', 'Volume in New Tab']]
     ]
-      fs = $.el 'fieldset',
-        `<%= html('<legend>${legendTitle}</legend>') %>`
+      fs = $.el 'details',
+        className: 'settings-fieldset'
+        open: true
+      ,
+        `<%= html('<summary class="settings-legend">${legendTitle}</summary>') %>`
       group = $.dict()
       for key in keys when lookup[key]
         group[key] = lookup[key]
@@ -971,8 +1181,11 @@ Settings =
       includeHiddenCount: false
     
     # Quick Reply Personas (moved from Advanced)
-    fs = $.el 'fieldset',
-      `<%= html('<legend>Quick Reply Personas</legend>') %>`
+    fs = $.el 'details',
+      className: 'settings-fieldset'
+      open: true
+    ,
+      `<%= html('<summary class="settings-legend">Quick Reply Personas</summary>') %>`
     div = $.el 'div',
       `<%= html(
         '<textarea name="QR.personas" class="personafield field" spellcheck="false"></textarea>' +

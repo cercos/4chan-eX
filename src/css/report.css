@@ -9,12 +9,17 @@
 /* Archive reports */
 #archive-report {
   padding: 3px;
+  border: 1px solid #888;
+  border-radius: 3px;
+  margin: 4px 0;
 }
 #archive-report-enabled {
   vertical-align: middle;
 }
-#archive-report > label {
+#archive-report > label,
+#archive-report > .archive-report-header {
   display: block;
+  font-weight: 700;
 }
 #archive-report-reason {
   display: block;

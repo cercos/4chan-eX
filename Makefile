@@ -250,9 +250,11 @@ distready : dist $(wildcard dist/* dist/*/*)
 
 .SECONDARY :
 
-.PHONY: default all distready script crx release jshint install minify push $(npgoals)
+.PHONY: default all distready script test crx release jshint install minify push $(npgoals)
 
 script : $(script)
+
+test : testbuilds/$(name).user.js
 
 crx : $(crx)
 
