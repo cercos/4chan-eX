@@ -503,6 +503,31 @@ Config =
         'Remove audio from MP4 and WebM uploads in Quick Reply on boards that do not allow audio.'
         1
       ]
+      'Strip All Media Metadata': [
+        false
+        'Strip metadata from all uploaded media in Quick Reply, regardless of type.'
+        1
+      ]
+      'Image Metadata': [
+        true
+        'Strip metadata from image uploads in Quick Reply when "Strip All Media Metadata" is disabled.'
+        2
+      ]
+      'Video Metadata': [
+        true
+        'Strip metadata from video uploads in Quick Reply when "Strip All Media Metadata" is disabled.'
+        2
+      ]
+      'Audio Metadata': [
+        false
+        'Strip metadata from audio uploads in Quick Reply when "Strip All Media Metadata" is disabled.'
+        2
+      ]
+      'Other Metadata': [
+        false
+        'Strip metadata from non-image/video/audio uploads in Quick Reply when "Strip All Media Metadata" is disabled and supported in-browser.'
+        2
+      ]
       'Open Post in New Tab': [
         true
         'Open new threads in a new tab, and open replies in a new tab if you\'re not already in the thread.'

@@ -463,6 +463,41 @@ Settings =
       count++
     count
 
+  linkMediaMetadataToggles: (inputs) ->
+    parent = inputs['Strip All Media Metadata']
+    return unless parent
+    parent.parentNode.parentNode.classList.add 'no-suboption-collapse'
+    children = (inputs[key] for key in ['Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'] when inputs[key])
+    return unless children.length
+
+    syncing = false
+    setChecked = (input, checked) ->
+      input.checked = checked
+      input.parentNode.parentNode.dataset.checked = checked
+      $.cb.checked.call input
+
+    syncChildrenFromParent = ->
+      return if syncing
+      syncing = true
+      for child in children
+        setChecked child, parent.checked
+      syncing = false
+
+    syncParentFromChildren = ->
+      return if syncing
+      syncing = true
+      setChecked parent, children.every((child) -> child.checked)
+      syncing = false
+
+    $.on parent, 'change', syncChildrenFromParent
+    for child in children
+      $.on child, 'change', syncParentFromChildren
+
+    if parent.checked
+      syncChildrenFromParent()
+    else
+      syncParentFromChildren()
+
   selectGroup: (obj, keys, baseLevel = 0) ->
     group = $.dict()
     for key in keys when (arr = obj[key])
@@ -530,7 +565,7 @@ Settings =
       if keyFS is 'Posting and Captchas'
         for [legendTitle, keys, baseLevel] in [
           ['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Comment Preview', 'Pass Link'], 0]
-          ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio'], 1]
+          ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio', 'Strip All Media Metadata', 'Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'], 1]
           ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]
         ]
           fs = $.el 'fieldset',
@@ -572,6 +607,7 @@ Settings =
       for key, val of items
         inputs[key].checked = val
         inputs[key].parentNode.parentNode.dataset.checked = val
+      Settings.linkMediaMetadataToggles inputs
       return
 
     return unless includeHiddenCount
@@ -894,11 +930,37 @@ Settings =
       return
 
   media: (section) ->
+    items  = $.dict()
+    inputs = $.dict()
+    lookup = Settings.getMainSettingLookup()
+
+    for [legendTitle, keys] in [
+      ['General', ['Image Expansion', 'Image Hover', 'Image Hover in Catalog', 'Replace Thumbnails', 'Restart when Opened']]
+      ['Images', ['Gallery', 'Fullscreen Gallery', 'PDF in Gallery', 'Sauce', 'Reveal Spoiler Thumbnails', 'Image Prefetching', 'Fappe Tyme', 'Werk Tyme']]
+      ['Videos', ['WEBM Metadata', 'Autoplay', 'Show Controls', 'Click Passthrough', 'Allow Sound', 'Mouse Wheel Volume', 'Loop in New Tab', 'Volume in New Tab']]
+    ]
+      fs = $.el 'fieldset',
+        `<%= html('<legend>${legendTitle}</legend>') %>`
+      group = $.dict()
+      for key in keys when lookup[key]
+        group[key] = lookup[key]
+      continue unless Settings.addCheckboxes(fs, group, items, inputs)
+      $.add section, fs
+
     Settings.renderMainGroups section,
-      categories: ['Images and Videos', 'Linkification']
+      categories: ['Linkification']
       includeWarnings: false
       includeJSONIndex: false
       includeHiddenCount: false
+
+    $.get items, (items) ->
+      for key, val of items
+        input = inputs[key]
+        continue unless input
+        input.checked = val
+        input.parentNode.parentNode.dataset.checked = val
+      return
+
     Settings.sauce section
 
   posting: (section) ->

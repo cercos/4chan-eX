@@ -882,6 +882,9 @@ audio.controls-added {
 div[data-checked="false"] > .suboption-list {
   display: none;
 }
+div.no-suboption-collapse[data-checked="false"] > .suboption-list {
+  display: block;
+}
 .suboption-list {
   position: relative;
 }

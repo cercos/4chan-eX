@@ -360,6 +360,12 @@ CustomCSS =
       .section-styling .ghs-thread-preview.highlight-you .opContainer.quotesYou > .op .deadlink {
         color: #{styles.quotesYouLinkColor} !important;
       }
+
+      .section-styling .ghs-thread-preview.highlight-ghost .ghost-post > .post,
+      .section-styling .ghs-thread-preview.highlight-ghost .ghost-post.opContainer > .post.op {
+        background: #{styles.ghostPostRGBA} !important;
+        border-left: 3px dotted #{styles.ghostPostBorderRGBA} !important;
+      }
     """
 
   normalizeHexColor: (color, fallback) ->
