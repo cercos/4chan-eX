@@ -459,6 +459,7 @@ Captcha.t =
       restoreRegular = ->
         root = document.querySelector '#qr'
         root?.classList.remove 'fourchanx-stacked-captcha'
+        delete root.dataset.fourchanxCaptchaPending if root?.dataset?.fourchanxCaptchaPending?
         window.TCaptcha.__fourchanXStackedEnabled = false
         cachedButtons = []
         currentHighlightIndex = -1

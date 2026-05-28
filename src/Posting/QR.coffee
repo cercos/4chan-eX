@@ -1056,7 +1056,7 @@ QR =
     if g.BOARD.ID is 'r9k' and !post.com?.match(/[a-z-]/i)
       err or= 'Original comment required.'
 
-    if !err and QR.captcha is Captcha.t and QR.nodes.el.dataset.fourchanxCaptchaPending is '1'
+    if !err and QR.captcha is Captcha.t and $.hasClass(QR.nodes.el, 'fourchanx-stacked-captcha') and QR.nodes.el.dataset.fourchanxCaptchaPending is '1'
       # Re-evaluate current TCaptcha status first so stale pending flags
       # (e.g. when verification becomes not required) can clear themselves.
       QR.captcha.getOne()
