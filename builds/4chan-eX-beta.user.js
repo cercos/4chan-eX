@@ -384,6 +384,7 @@ Config = (function() {
         'Scrollbar Mark Own Posts': [true, 'Mark your own posts in the scrollbar.', 1],
         'Scrollbar Mark Quotes You': [true, 'Mark posts that quote you in the scrollbar.', 1],
         'Scrollbar Mark Ghost Posts': [true, 'Mark deleted (ghost) posts in the scrollbar.', 1],
+        'Scrollbar Mark Unread Line': [true, 'Mark the unread line position in the scrollbar.', 1],
         'Fetch Ghost Posts': [false, 'When opening a thread, fetch deleted posts from the configured archive and insert them inline as ghost posts. Requires Resurrect Quotes and a Foolfuuka archive for the board.'],
         'Ghost Post Backlinks': [false, 'Like Fetch Ghost Posts, but without inserting deleted posts inline: only add their backlinks under the live posts they quoted. Hover the backlinks to preview the ghost post. Ignored if Fetch Ghost Posts is on. Requires Resurrect Quotes and a Foolfuuka archive for the board.'],
         'Reply Pruning': [true, 'Add option in header menu to hide old replies in long threads. Activated by default in stickies.'],
@@ -467,6 +468,12 @@ Config = (function() {
       'Show Mark Thread Read Icons': [true, 'Show per-thread Mark as read icons in the thread watcher list.'],
       'Show Site Prefix': [true, 'When multiple sites are shown in the thread watcher, add a prefix to board names to distinguish them.'],
       'Show OP Thumbnails': [false, 'Show OP thumbnails in watched thread entries.'],
+      'Show Footer Stats': [true, 'Show summary stats at the bottom of the thread watcher.'],
+      'Footer Stats Thread Count': [true, 'Show watched thread counts in the thread watcher footer.'],
+      'Footer Stats Unread Count': [true, 'Show total unread watched posts in the thread watcher footer.'],
+      'Footer Stats Quoting You': [true, 'Show number of watched threads currently quoting you in the thread watcher footer.'],
+      'Footer Stats Dead Count': [false, 'Show number of dead watched threads in the thread watcher footer.'],
+      'Footer Stats Storage Size': [true, 'Show estimated thread watcher storage usage in the thread watcher footer.'],
       'Require OP Quote Link': [false, 'For purposes of thread watcher highlighting, only consider posts with a quote link to the OP as replies to the OP.']
     },
     'Thread Watcher Thumbnail Size': 40,
@@ -3075,6 +3082,9 @@ div.no-suboption-collapse[data-checked=\"false\"] > .suboption-list {\n\
   color: var(--settings-input-fg, inherit);\n\
   border-color: var(--settings-input-border, color-mix(in srgb, currentColor 28%, transparent));\n\
 }\n\
+#fourchanx-settings .thread-watcher-subsetting {\n\
+  margin-left: 18px;\n\
+}\n\
 /* CSS Highlight Editor — pre background matches textarea */\n\
 #fourchanx-settings .css-hl-pre {\n\
   background: #212121;\n\
@@ -4249,6 +4259,16 @@ input[name=\"Default Volume\"] {\n\
 .scroll-marker-ghost {\n\
   right: 18px;\n\
   background: var(--eX-ghost-post-color, #888888);\n\
+}\n\
+.scroll-marker-unread {\n\
+  left: 0;\n\
+  right: 0;\n\
+  width: auto;\n\
+  min-height: 2px;\n\
+  border-radius: 0;\n\
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .45);\n\
+  background: #ffd400;\n\
+  pointer-events: none;\n\
 }\n\
 /* Spoiler text */\n\
 :root.reveal-spoilers $site$spoiler,\n\
@@ -11859,7 +11879,7 @@ Filter = (function() {
       return results;
     },
     quickFilterMD5Apply: function(filters, posts, post) {
-      var i, len, p;
+      var changedPosts, hiddenPosts, i, len, p;
       if (posts == null) {
         posts = [];
       }
@@ -11870,11 +11890,44 @@ Filter = (function() {
         return;
       }
       Filter.addFilter('MD5', filters.join('\n'));
-      for (i = 0, len = posts.length; i < len; i++) {
-        p = posts[i];
+      hiddenPosts = Filter.applyLive().hiddenPosts;
+      changedPosts = hiddenPosts.length ? hiddenPosts : posts;
+      for (i = 0, len = changedPosts.length; i < len; i++) {
+        p = changedPosts[i];
         Filter.markMD5Filtered(p);
       }
-      return Filter.quickFilterMD5Notify(filters, posts, post);
+      return Filter.quickFilterMD5Notify(filters, changedPosts, post);
+    },
+    applyLive: function() {
+      var hiddenPosts, shownPosts;
+      hiddenPosts = [];
+      shownPosts = [];
+      g.posts.forEach(function(post) {
+        var hide, ref, ref1, stub;
+        if (!((post != null ? post.isReply : void 0) && !post.isClone && !post.isFetchedQuote)) {
+          return;
+        }
+        delete post.filterResults;
+        ref = Filter.test(post, true), hide = ref.hide, stub = ref.stub;
+        if (hide) {
+          if (!post.isHidden) {
+            PostHiding.hide(post, stub);
+            hiddenPosts.push(post);
+          }
+        } else if (post.isHidden && !((ref1 = PostHiding.db) != null ? ref1.get({
+          boardID: post.board.ID,
+          threadID: post.thread.ID,
+          postID: post.ID
+        }) : void 0)) {
+          PostHiding.show(post);
+          shownPosts.push(post);
+        }
+        return Filter.markMD5Filtered(post);
+      });
+      return {
+        hiddenPosts: hiddenPosts,
+        shownPosts: shownPosts
+      };
     },
     quickFilterMD5Notify: function(filters, posts, post) {
       var links, msg, notice, ref, ref1;
@@ -11926,13 +11979,16 @@ Filter = (function() {
       post = Get.postFromNode(e.target);
       origin = (post != null ? post.origin : void 0) || post;
       Filter.toggleMD5Filter(md5, (function() {
+        var hiddenPosts;
+        hiddenPosts = Filter.applyLive().hiddenPosts;
         if (origin) {
           Filter.markMD5Filtered(origin);
-          return Filter.quickFilterMD5Notify(["/" + md5 + "/"], [origin], post);
+          return Filter.quickFilterMD5Notify(["/" + md5 + "/"], (hiddenPosts.length ? hiddenPosts : [origin]), post);
         } else {
-          return Filter.quickFilterMD5Notify(["/" + md5 + "/"]);
+          return Filter.quickFilterMD5Notify(["/" + md5 + "/"], hiddenPosts);
         }
       }), (function() {
+        Filter.applyLive();
         if (origin) {
           Filter.markMD5Filtered(origin);
         }
@@ -11947,9 +12003,10 @@ Filter = (function() {
         return this.close();
       },
       undo: function() {
-        var i, len, post, ref, ref1;
+        var i, len, post, ref, ref1, shownPosts;
         Filter.removeFilters('MD5', this.filters);
-        ref = this.posts;
+        shownPosts = Filter.applyLive().shownPosts;
+        ref = this.posts.concat(shownPosts);
         for (i = 0, len = ref.length; i < len; i++) {
           post = ref[i];
           if (post.isReply) {
@@ -12734,9 +12791,13 @@ ThreadHiding = (function() {
       threadRoot = thread.nodes.root;
       threadRoot.hidden = thread.isHidden = false;
       Index.updateHideLabel();
-      if (thread.catalogView && Index.showHiddenThreads) {
-        $.rm(thread.catalogView.nodes.root);
-        return $.event('PostsRemoved', null, Index.root);
+      if (thread.catalogView) {
+        if (Index.showHiddenThreads) {
+          $.rm(thread.catalogView.nodes.root);
+          return $.event('PostsRemoved', null, Index.root);
+        } else if (g.VIEW === 'index' && Conf['Index Mode'] === 'catalog') {
+          return Index.buildIndex();
+        }
       }
     }
   };
@@ -16526,20 +16587,32 @@ Settings = (function() {
       });
     },
     addThreadWatcherFieldset: function(section) {
-      var conf, description, div, fs, input, inputs, items, name, ref, sizeDiv, sizeInput;
+      var className, conf, description, div, footerStatsChildren, fs, input, inputs, items, labelOverrides, name, parent, ref, sizeDiv, sizeInput, title, updateFooterChildren;
       fs = $.el('details', {
         className: 'settings-fieldset',
         open: true
       }, {innerHTML: "<summary class=\"settings-legend\">Thread Watcher</summary>"});
       items = $.dict();
       inputs = $.dict();
+      footerStatsChildren = ['Footer Stats Thread Count', 'Footer Stats Unread Count', 'Footer Stats Quoting You', 'Footer Stats Dead Count', 'Footer Stats Storage Size'];
+      labelOverrides = {
+        'Footer Stats Thread Count': 'Thread Count',
+        'Footer Stats Unread Count': 'Unread Count',
+        'Footer Stats Quoting You': 'Quoting You Count',
+        'Footer Stats Dead Count': 'Dead Thread Count',
+        'Footer Stats Storage Size': 'Storage Size'
+      };
       ref = Config.threadWatcher;
       for (name in ref) {
         conf = ref[name];
         description = conf[1] || '';
-        div = $.el('div', {innerHTML: "<label><input type=\"checkbox\" name=\"" + E(name) + "\"><span class=\"setting-title\">" + E(name) + "</span></label><span class=\"description\">: <span class=\"setting-description\">" + E(description) + "</span></span>"});
+        title = labelOverrides[name] || name;
+        className = indexOf.call(footerStatsChildren, name) >= 0 ? 'thread-watcher-subsetting' : '';
+        div = $.el('div', {
+          className: className
+        }, {innerHTML: "<label><input type=\"checkbox\" name=\"" + E(name) + "\"><span class=\"setting-title\">" + E(title) + "</span></label><span class=\"description\">: <span class=\"setting-description\">" + E(description) + "</span></span>"});
         div.dataset.name = name;
-        div.dataset.settingTitle = name;
+        div.dataset.settingTitle = title;
         div.dataset.settingDescription = description;
         input = $('input', div);
         $.on(input, 'change', $.cb.checked);
@@ -16551,7 +16624,7 @@ Settings = (function() {
           if (!ThreadWatcher.enabled) {
             return;
           }
-          if ((ref1 = this.name) === 'Current Board' || ref1 === 'Show Page' || ref1 === 'Show Unread Count' || ref1 === 'Show Site Prefix' || ref1 === 'Show OP Thumbnails') {
+          if ((ref1 = this.name) === 'Current Board' || ref1 === 'Show Page' || ref1 === 'Show Unread Count' || ref1 === 'Show Site Prefix' || ref1 === 'Show OP Thumbnails' || ref1 === 'Show Footer Stats' || ref1 === 'Footer Stats Thread Count' || ref1 === 'Footer Stats Unread Count' || ref1 === 'Footer Stats Quoting You' || ref1 === 'Footer Stats Dead Count' || ref1 === 'Footer Stats Storage Size') {
             ThreadWatcher.refresh();
           }
           if ((ref2 = this.name) === 'Show Page' || ref2 === 'Show Unread Count' || ref2 === 'Auto Update Thread Watcher') {
@@ -16590,7 +16663,7 @@ Settings = (function() {
       $.add(fs, sizeDiv);
       $.add(section, fs);
       $.get(items, function(items) {
-        var key, val;
+        var j, key, len, parent, val;
         for (key in items) {
           val = items[key];
           input = inputs[key];
@@ -16603,7 +16676,33 @@ Settings = (function() {
               input.value = val;
           }
         }
+        if ((parent = inputs['Show Footer Stats'])) {
+          for (j = 0, len = footerStatsChildren.length; j < len; j++) {
+            key = footerStatsChildren[j];
+            if (!(input = inputs[key])) {
+              continue;
+            }
+            input.disabled = !parent.checked;
+            $.toggleClass(input.parentNode.parentNode, 'disabled', !parent.checked);
+          }
+        }
       });
+      if ((parent = inputs['Show Footer Stats'])) {
+        updateFooterChildren = function() {
+          var j, key, len, results;
+          results = [];
+          for (j = 0, len = footerStatsChildren.length; j < len; j++) {
+            key = footerStatsChildren[j];
+            if (!(input = inputs[key])) {
+              continue;
+            }
+            input.disabled = !parent.checked;
+            results.push($.toggleClass(input.parentNode.parentNode, 'disabled', !parent.checked));
+          }
+          return results;
+        };
+        $.on(parent, 'change', updateFooterChildren);
+      }
     },
     general: function(section) {
       return Settings.renderMainGroups(section, {
@@ -16673,52 +16772,42 @@ Settings = (function() {
       });
     },
     threadsAndPosts: function(section) {
-      var addFormattingToggles, cooldownInput, divCooldown, divInterval, event, fn, formattingDetails, fs, group, input, inputs, intervalInput, items, j, key, keys, l, len, len1, len2, len3, len4, lookup, n, q, ref, ref1, ref2, ref3, ref4, ref5, refreshFormattingDetailsState, t, title, toggleName, warning;
+      var addFormattingToggles, cooldownInput, divCooldown, divInterval, event, fn, formattingDetails, fs, group, input, inputs, intervalInput, items, j, key, l, len, len1, len2, len3, lookup, n, q, ref, ref1, ref2, ref3, ref4, refreshFormattingDetailsState, toggleName, warning;
       items = $.dict();
       inputs = $.dict();
       fs = $.el('details', {
-        className: 'settings-fieldset settings-formatting-fieldset',
+        className: 'settings-fieldset',
         open: true
       }, {innerHTML: "<summary class=\"settings-legend\">Formatting</summary>"});
       lookup = Settings.getMainSettingLookup();
-      ref = [['Board and ID Display', ['Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID']], ['Spoiler Display', ['Remove Spoilers', 'Reveal Spoilers']]];
+      group = $.dict();
+      ref = ['Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID', 'Remove Spoilers', 'Reveal Spoilers'];
       for (j = 0, len = ref.length; j < len; j++) {
-        ref1 = ref[j], title = ref1[0], keys = ref1[1];
-        group = $.dict();
-        for (l = 0, len1 = keys.length; l < len1; l++) {
-          key = keys[l];
-          if (lookup[key]) {
-            group[key] = lookup[key];
-          }
+        key = ref[j];
+        if (lookup[key]) {
+          group[key] = lookup[key];
         }
-        if (!Object.keys(group).length) {
-          continue;
-        }
-        $.add(fs, $.el('h3', {
-          className: 'settings-group-heading',
-          textContent: title
-        }));
-        Settings.addCheckboxes(fs, group, items, inputs);
       }
+      Settings.addCheckboxes(fs, group, items, inputs);
       $.add(section, fs);
       formattingDetails = $.el('div', {
         className: 'settings-formatting-details'
       });
       $.extend(formattingDetails, {innerHTML: "<details class=\"settings-fieldset formatting-detail-fieldset\" data-main-toggle=\"Time Formatting\" open><summary class=\"settings-legend\">Time Formatting</summary><div class=\"formatting-toggle-group time-formatting-toggles\"></div><div><input name=\"time\" class=\"field\" spellcheck=\"false\">: <span class=\"time-preview\"></span></div><div>Supported <a href=\"http://man7.org/linux/man-pages/man1/date.1.html\" target=\"_blank\">format specifiers</a>:</div><div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div><div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div><div>Year: <code>%y</code>, <code>%Y</code></div><div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div><div>Minute: <code>%M</code></div><div>Second: <code>%S</code></div><div>Literal <code>%</code>: <code>%%</code></div><div><a href=\"https://www.w3.org/International/articles/language-tags/\" target=\"_blank\">Language tag</a>: <input name=\"timeLocale\" class=\"field\" spellcheck=\"false\"></div></details><details class=\"settings-fieldset formatting-detail-fieldset\" data-main-toggle=\"Quote Backlinks\" open><summary class=\"settings-legend\">Quote Backlinks formatting</summary><div class=\"formatting-toggle-group quote-backlinks-toggles\"></div><div><input name=\"backlink\" class=\"field\" spellcheck=\"false\">: <span class=\"backlink-preview\"></span></div></details><details class=\"settings-fieldset formatting-detail-fieldset\" data-main-toggle=\"File Info Formatting\" open><summary class=\"settings-legend\">File Info Formatting</summary><div class=\"formatting-toggle-group file-info-formatting-toggles\"></div><div><input name=\"fileInfo\" class=\"field\" spellcheck=\"false\">: <span class=\"file-info file-info-preview\"></span></div><div>Link: <code>%l</code> (truncated), <code>%L</code> (untruncated), <code>%T</code> (4chan filename)</div><div>Filename: <code>%n</code> (truncated), <code>%N</code> (untruncated), <code>%t</code> (4chan filename)</div><div>Download button: <code>%d</code></div><div>Quick filter MD5: <code>%f</code></div><div>Spoiler indicator: <code>%p</code></div><div>Size: <code>%B</code> (Bytes), <code>%K</code> (KB), <code>%M</code> (MB), <code>%s</code> (4chan default)</div><div>Resolution: <code>%r</code> (Displays &#039;PDF&#039; for PDF files)</div><div>Tag: <code>%g</code><div>Literal <code>%</code>: <code>%%</code></div></details>"});
-      ref2 = $$('.warning', formattingDetails);
-      for (n = 0, len2 = ref2.length; n < len2; n++) {
-        warning = ref2[n];
+      ref1 = $$('.warning', formattingDetails);
+      for (l = 0, len1 = ref1.length; l < len1; l++) {
+        warning = ref1[l];
         warning.hidden = Conf[warning.dataset.feature];
       }
       addFormattingToggles = function(selector, keys) {
-        var len3, q, root;
+        var len2, n, root;
         root = $(selector, formattingDetails);
         if (!root) {
           return;
         }
         group = $.dict();
-        for (q = 0, len3 = keys.length; q < len3; q++) {
-          key = keys[q];
+        for (n = 0, len2 = keys.length; n < len2; n++) {
+          key = keys[n];
           if (lookup[key]) {
             group[key] = lookup[key];
           }
@@ -16728,33 +16817,33 @@ Settings = (function() {
       addFormattingToggles('.time-formatting-toggles', ['Time Formatting', 'Relative Post Dates', 'Relative Date Title']);
       addFormattingToggles('.quote-backlinks-toggles', ['Quote Backlinks']);
       addFormattingToggles('.file-info-formatting-toggles', ['File Info Formatting']);
-      ref3 = $$('[name]', formattingDetails);
-      for (q = 0, len3 = ref3.length; q < len3; q++) {
-        input = ref3[q];
+      ref2 = $$('[name]', formattingDetails);
+      for (n = 0, len2 = ref2.length; n < len2; n++) {
+        input = ref2[n];
         if (!(!(input.name in inputs))) {
           continue;
         }
         inputs[input.name] = input;
         items[input.name] = Conf[input.name];
-        event = (input.nodeName === 'SELECT' || ((ref4 = input.type) === 'checkbox' || ref4 === 'radio') || (input.nodeName === 'TEXTAREA' && !(input.name in Settings))) ? 'change' : 'input';
+        event = (input.nodeName === 'SELECT' || ((ref3 = input.type) === 'checkbox' || ref3 === 'radio') || (input.nodeName === 'TEXTAREA' && !(input.name in Settings))) ? 'change' : 'input';
         $.on(input, event, $.cb[input.type === 'checkbox' ? 'checked' : 'value']);
         if (input.name in Settings) {
           $.on(input, event, Settings[input.name]);
         }
       }
       refreshFormattingDetailsState = function() {
-        var enabled, len4, ref5, ref6, results, t, toggleName;
-        ref5 = $$('.formatting-detail-fieldset', formattingDetails);
+        var enabled, len3, q, ref4, ref5, results, toggleName;
+        ref4 = $$('.formatting-detail-fieldset', formattingDetails);
         results = [];
-        for (t = 0, len4 = ref5.length; t < len4; t++) {
-          fs = ref5[t];
+        for (q = 0, len3 = ref4.length; q < len3; q++) {
+          fs = ref4[q];
           toggleName = fs.dataset.mainToggle;
-          enabled = !!((ref6 = inputs[toggleName]) != null ? ref6.checked : void 0);
+          enabled = !!((ref5 = inputs[toggleName]) != null ? ref5.checked : void 0);
           results.push(fs.classList.toggle('formatting-detail-disabled', !enabled));
         }
         return results;
       };
-      ref5 = ['Time Formatting', 'Quote Backlinks', 'File Info Formatting'];
+      ref4 = ['Time Formatting', 'Quote Backlinks', 'File Info Formatting'];
       fn = function(toggleName) {
         input = inputs[toggleName];
         if (!input) {
@@ -16762,8 +16851,8 @@ Settings = (function() {
         }
         return $.on(input, 'change', refreshFormattingDetailsState);
       };
-      for (t = 0, len4 = ref5.length; t < len4; t++) {
-        toggleName = ref5[t];
+      for (q = 0, len3 = ref4.length; q < len3; q++) {
+        toggleName = ref4[q];
         fn(toggleName);
       }
       $.add(section, formattingDetails);
@@ -27561,7 +27650,7 @@ ScrollMarkers = (function() {
         id: 'scroll-markers'
       });
       this.container.hidden = true;
-      ref = ['Scrollbar Mark Own Posts', 'Scrollbar Mark Quotes You', 'Scrollbar Mark Ghost Posts'];
+      ref = ['Scrollbar Mark Own Posts', 'Scrollbar Mark Quotes You', 'Scrollbar Mark Ghost Posts', 'Scrollbar Mark Unread Line'];
       for (i = 0, len = ref.length; i < len; i++) {
         key = ref[i];
         $.sync(key, function(val, k) {
@@ -27582,6 +27671,7 @@ ScrollMarkers = (function() {
       $.on(d, 'PostsInserted', ScrollMarkers.refreshDeferred);
       $.on(d, 'ThreadUpdate', ScrollMarkers.refreshDeferred);
       $.on(d, 'YouMarkChanged', ScrollMarkers.refreshDeferred);
+      $.on(d, 'UnreadLineUpdated', ScrollMarkers.refreshDeferred);
       $.on(window, 'resize', ScrollMarkers.refreshDeferred);
       $.on(window, 'load', ScrollMarkers.refreshDeferred);
       return ScrollMarkers.refreshDeferred();
@@ -27590,7 +27680,7 @@ ScrollMarkers = (function() {
       return ScrollMarkers.refresh();
     }),
     refresh: function() {
-      var container, docHeight, frag, showGhost, showOwn, showYou;
+      var container, docHeight, frag, rect, showGhost, showOwn, showUnread, showYou, topInDoc, topPct, unreadMarker;
       if (!(ScrollMarkers.thread && ScrollMarkers.container.parentNode)) {
         return;
       }
@@ -27603,6 +27693,7 @@ ScrollMarkers = (function() {
       showOwn = Conf['Highlight Own Posts'] && Conf['Scrollbar Mark Own Posts'];
       showYou = Conf['Highlight Posts Quoting You'] && Conf['Scrollbar Mark Quotes You'];
       showGhost = Conf['Highlight Ghost Posts'] && Conf['Scrollbar Mark Ghost Posts'];
+      showUnread = Conf['Unread Line'] && Conf['Scrollbar Mark Unread Line'];
       ScrollMarkers.thread.posts.forEach(function(post) {
         var heightPct, isGhost, isOwn, isYou, marker, rect, root, showThisGhost, topInDoc, topPct;
         if (post.isHidden || post.isClone || post.isFetchedQuote) {
@@ -27648,6 +27739,17 @@ ScrollMarkers = (function() {
           $.add(frag, marker);
         }
       });
+      if (showUnread && (typeof Unread !== "undefined" && Unread !== null ? Unread.hr : void 0) && Unread.hr.isConnected && !Unread.hr.hidden) {
+        rect = Unread.hr.getBoundingClientRect();
+        topInDoc = rect.top + window.scrollY;
+        topPct = (topInDoc / docHeight) * 100;
+        unreadMarker = $.el('div', {
+          className: 'scroll-marker scroll-marker-unread',
+          style: "top:" + topPct + "%;height:2px"
+        });
+        unreadMarker.title = 'Unread line';
+        $.add(frag, unreadMarker);
+      }
       container.textContent = '';
       $.add(container, frag);
     },
@@ -29473,11 +29575,18 @@ ThreadWatcher = (function() {
       return ThreadWatcher.refreshIcon();
     },
     refreshFooter: function(visibleCount) {
-      var boardID, boards, bytes, data, parts, ref, ref1, siteID, threadID, threads, total;
+      var boardID, boards, data, dead, parts, quotingYou, ref, ref1, siteID, threadID, threads, total, unread;
       if (!ThreadWatcher.footer) {
         return;
       }
+      ThreadWatcher.footer.hidden = !Conf['Show Footer Stats'];
+      if (ThreadWatcher.footer.hidden) {
+        return;
+      }
       total = 0;
+      unread = 0;
+      quotingYou = 0;
+      dead = 0;
       ref = ThreadWatcher.db.data;
       for (siteID in ref) {
         boards = ref[siteID];
@@ -29487,17 +29596,40 @@ ThreadWatcher = (function() {
             threads = ref1[boardID];
             for (threadID in threads) {
               data = threads[threadID];
-              if (data && typeof data === 'object') {
-                total++;
+              if (!(data && typeof data === 'object')) {
+                continue;
+              }
+              total++;
+              unread += data.unread || 0;
+              if (data.isDead) {
+                dead++;
+              }
+              if ((data.quotingYou || 0) > (data.dismiss || 0)) {
+                quotingYou++;
               }
             }
           }
         }
       }
-      bytes = ThreadWatcher.estimateStorage();
       parts = [];
-      parts.push((visibleCount != null) && visibleCount !== total ? visibleCount + " shown · " + total + " watched" : total + " watched");
-      parts.push(ThreadWatcher.formatBytes(bytes));
+      if (Conf['Footer Stats Thread Count']) {
+        parts.push((visibleCount != null) && visibleCount !== total ? visibleCount + " shown · " + total + " watched" : total + " watched");
+      }
+      if (Conf['Footer Stats Unread Count']) {
+        parts.push(unread + " unread");
+      }
+      if (Conf['Footer Stats Quoting You']) {
+        parts.push(quotingYou + " quoting you");
+      }
+      if (Conf['Footer Stats Dead Count']) {
+        parts.push(dead + " dead");
+      }
+      if (Conf['Footer Stats Storage Size']) {
+        parts.push(ThreadWatcher.formatBytes(ThreadWatcher.estimateStorage()));
+      }
+      if (parts.length === 0) {
+        parts.push((visibleCount != null) && visibleCount !== total ? visibleCount + " shown · " + total + " watched" : total + " watched");
+      }
       return ThreadWatcher.footer.textContent = parts.join(' · ');
     },
     estimateStorage: function() {
@@ -29666,7 +29798,8 @@ ThreadWatcher = (function() {
       }
       ThreadWatcher.dialog.style.setProperty('--watcher-thumb-size', (ThreadWatcher.thumbnailSize()) + "px");
       ThreadWatcher.dialog.style.setProperty('--watcher-max-height', (ThreadWatcher.maxHeight()) + "px");
-      return ThreadWatcher.markReadButton.hidden = !Conf['Show Mark All Read Icon'];
+      ThreadWatcher.markReadButton.hidden = !Conf['Show Mark All Read Icon'];
+      return ThreadWatcher.footer.hidden = !Conf['Show Footer Stats'];
     },
     update: function(siteID, boardID, threadID, newData) {
       var data, j, key, len1, line, n, newLine, ref, ref1, val;
@@ -29875,7 +30008,7 @@ ThreadWatcher = (function() {
         });
       },
       addMenuEntries: function() {
-        var cb, conf, entries, entry, j, len1, name, open, ref, ref1, text, title;
+        var cb, conf, entries, entry, footerDetailToggles, j, len1, name, open, ref, ref1, text, title;
         entries = [];
         entries.push({
           text: 'Open all threads',
@@ -30001,9 +30134,13 @@ ThreadWatcher = (function() {
           entry.open = open.bind(entry);
           this.menu.addEntry(entry);
         }
+        footerDetailToggles = ['Footer Stats Thread Count', 'Footer Stats Unread Count', 'Footer Stats Quoting You', 'Footer Stats Dead Count', 'Footer Stats Storage Size'];
         ref1 = Config.threadWatcher;
         for (name in ref1) {
           conf = ref1[name];
+          if (indexOf.call(footerDetailToggles, name) >= 0) {
+            continue;
+          }
           this.addCheckbox(name, conf[1]);
         }
       },
@@ -30022,7 +30159,7 @@ ThreadWatcher = (function() {
         }
         $.on(input, 'change', $.cb.checked);
         $.on(input, 'change', function() {
-          if (name === 'Current Board' || name === 'Show Page' || name === 'Show Unread Count' || name === 'Show Mark All Read Icon' || name === 'Show Mark Thread Read Icons' || name === 'Show Site Prefix' || name === 'Show OP Thumbnails') {
+          if (name === 'Current Board' || name === 'Show Page' || name === 'Show Unread Count' || name === 'Show Mark All Read Icon' || name === 'Show Mark Thread Read Icons' || name === 'Show Site Prefix' || name === 'Show OP Thumbnails' || name === 'Show Footer Stats' || name === 'Footer Stats Thread Count' || name === 'Footer Stats Unread Count' || name === 'Footer Stats Quoting You' || name === 'Footer Stats Dead Count' || name === 'Footer Stats Storage Size') {
             return ThreadWatcher.refresh();
           }
         });
@@ -30347,7 +30484,8 @@ Unread = (function() {
           $.rm(Unread.hr);
         }
       }
-      return Unread.hr.hidden = Unread.linePosition === Unread.order.last;
+      Unread.hr.hidden = Unread.linePosition === Unread.order.last;
+      return $.event('UnreadLineUpdated');
     },
     update: function() {
       var count, countQuotingYou, countStyle, isDead, titleCount, titleDead, titleQuotingYou;
@@ -33125,7 +33263,10 @@ QR = (function() {
         err || (err = 'Original comment required.');
       }
       if (!err && QR.captcha === Captcha.t && QR.nodes.el.dataset.fourchanxCaptchaPending === '1') {
-        err = 'Finish captcha before submitting.';
+        QR.captcha.getOne();
+        if (QR.nodes.el.dataset.fourchanxCaptchaPending === '1') {
+          err = 'Finish captcha before submitting.';
+        }
       }
       hasReplyCaptchaCookie = QR.captcha === Captcha.v2 && /\b_ct=/.test(d.cookie) && threadID;
       captchaBusy = QR.nodes.el.dataset.fourchanxCaptchaPending === '1' || (typeof (base = QR.captcha).occupied === "function" ? base.occupied() : void 0);
