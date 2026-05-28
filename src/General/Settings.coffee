@@ -1,5 +1,9 @@
 Settings =
   init: ->
+    Settings.collapsedFieldsets = {}
+    $.get 'settings.collapsedFieldsets', {}, (states) ->
+      Settings.collapsedFieldsets = states or {}
+
     # 4chan-eX settings link
     link = $.el 'a',
       className:   'settings-link fa fa-wrench'
@@ -55,6 +59,7 @@ Settings =
     $.on $('.reset',  dialog), 'click',  Settings.reset
     $.on $('input[type=file]', dialog), 'change', Settings.onImport
     $.on $('.settings-search input', dialog), 'input', Settings.onSearchInput
+    Settings.ensureGlobalCollapseControls dialog
 
     links = []
     container = $('.section-container', dialog)
@@ -153,6 +158,53 @@ Settings =
         Settings.applyWindowState win, state
     Settings.watchSize win
     Settings.setDragHandle win
+    Settings.refreshInputContrast()
+
+  refreshInputContrast: ->
+    return unless Settings.dialog
+    win = Settings.dialog.firstElementChild
+    return unless win
+    bg = Settings.detectBackgroundColor($('.section-container', win) or win)
+    return unless bg
+    luminance = Settings.relativeLuminance(bg.r, bg.g, bg.b)
+    isLight = luminance >= 0.55
+    if isLight
+      win.style.setProperty '--settings-input-bg', 'rgba(255, 255, 255, 0.94)'
+      win.style.setProperty '--settings-input-fg', '#111'
+      win.style.setProperty '--settings-input-border', 'rgba(0, 0, 0, 0.28)'
+    else
+      win.style.setProperty '--settings-input-bg', 'rgba(20, 20, 20, 0.92)'
+      win.style.setProperty '--settings-input-fg', '#e9e9e9'
+      win.style.setProperty '--settings-input-border', 'rgba(255, 255, 255, 0.28)'
+
+  detectBackgroundColor: (el) ->
+    node = el
+    while node and node.nodeType is 1
+      color = getComputedStyle(node).backgroundColor
+      parsed = Settings.parseRGBA(color)
+      if parsed and parsed.a > 0
+        return parsed
+      node = node.parentElement
+    {r: 34, g: 34, b: 34, a: 1}
+
+  parseRGBA: (value) ->
+    return null unless value
+    m = value.match /^rgba?\(([^)]+)\)$/
+    return null unless m
+    parts = m[1].split(',').map (x) -> x.trim()
+    return null unless parts.length in [3, 4]
+    r = parseFloat(parts[0])
+    g = parseFloat(parts[1])
+    b = parseFloat(parts[2])
+    a = if parts[3]? then parseFloat(parts[3]) else 1
+    return null if [r, g, b, a].some (x) -> isNaN(x)
+    {r, g, b, a}
+
+  relativeLuminance: (r, g, b) ->
+    toLinear = (c) ->
+      c /= 255
+      if c <= 0.03928 then c / 12.92 else Math.pow((c + 0.055) / 1.055, 2.4)
+    0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
 
   applyLayoutMode: (win) ->
     win.classList.remove 'settings-layout-classic'
@@ -276,7 +328,51 @@ Settings =
       Settings.setupCollapsibleFieldsets @el
     @el.scrollTop = 0
     Settings.applySearch()
+    Settings.refreshInputContrast()
+    Settings.refreshGlobalCollapseControlsState()
     $.event 'OpenSettings', null, @el
+
+  ensureGlobalCollapseControls: (dialog) ->
+    titlebar = $('.settings-titlebar', dialog)
+    return unless titlebar
+    return if $('.settings-global-collapse-controls', titlebar)
+
+    controls = $.el 'span',
+      className: 'settings-global-collapse-controls'
+    collapseAll = $.el 'a',
+      className: 'settings-global-collapse-all'
+      href: 'javascript:;'
+      textContent: 'Collapse all'
+    expandAll = $.el 'a',
+      className: 'settings-global-expand-all'
+      href: 'javascript:;'
+      textContent: 'Expand all'
+    $.on collapseAll, 'click', Settings.collapseAllInActiveSection
+    $.on expandAll, 'click', Settings.expandAllInActiveSection
+    $.add controls, [
+      collapseAll
+      $.tn ' | '
+      expandAll
+    ]
+    $.add titlebar, controls
+    Settings.refreshGlobalCollapseControlsState()
+
+  getActiveSectionEl: ->
+    for section in Settings.sections when section.el and !section.el.hidden
+      return section.el
+    null
+
+  collapseAllInActiveSection: (e) ->
+    e.preventDefault()
+    section = Settings.getActiveSectionEl()
+    return unless section
+    Settings.setAllFieldsetsCollapsed section, true
+
+  expandAllInActiveSection: (e) ->
+    e.preventDefault()
+    section = Settings.getActiveSectionEl()
+    return unless section
+    Settings.setAllFieldsetsCollapsed section, false
 
   restoreSectionHeader: (sectionObj) ->
     el = sectionObj.el
@@ -378,7 +474,7 @@ Settings =
     collapseCount = 0
     for fs in $$ 'details.settings-fieldset', section
       Settings.setupCollapsibleFieldset fs
-      collapseCount++ unless fs.classList.contains 'settings-no-collapse'
+      collapseCount++
     Settings.ensureSectionCollapseControls section, collapseCount > 0
 
   ensureSectionCollapseControls: (section, hasCollapsible) ->
@@ -402,7 +498,7 @@ Settings =
         expandAll
       ]
       section.insertBefore controls, section.firstChild
-    controls.hidden = !hasCollapsible
+    controls.hidden = true
     Settings.refreshCollapseControlsState section if hasCollapsible
 
   setupCollapsibleFieldset: (fs) ->
@@ -410,31 +506,30 @@ Settings =
     summary = $('summary.settings-legend', fs)
     return unless summary
     fs.classList.add 'settings-collapsible-ready'
-
-    if fs.closest('.generated-highlight-preview') or fs.classList.contains('custom-css-editor')
-      fs.classList.add 'settings-no-collapse'
-    else if Settings.countCollapsibleRows(fs) <= 2
-      fs.classList.add 'settings-no-collapse'
-
-    if fs.classList.contains 'settings-no-collapse'
-      $.on summary, 'click', Settings.preventDetailsToggle
-      return
-
-    fs.open = true unless fs.hasAttribute 'open'
-    summary.title = 'Collapse section'
-    $.on fs, 'toggle', Settings.onFieldsetToggle
+    fs.open = true
+    Settings.updateFieldsetLegendHeight fs
+    isCollapsed = Settings.isFieldsetStoredCollapsed fs
+    fs.classList.toggle 'settings-collapsed', isCollapsed
+    summary.title = if isCollapsed then 'Expand section' else 'Collapse section'
+    $.on summary, 'click', Settings.toggleFieldsetCollapsed
+    $.on summary, 'keydown', Settings.toggleFieldsetCollapsedOnKey
     $.on summary, 'click', Settings.suppressToggleOnInteractive
-
-  preventDetailsToggle: (e) ->
-    e.preventDefault()
 
   suppressToggleOnInteractive: (e) ->
     e.preventDefault() if e.target.closest 'a, input, button, textarea, select, code'
 
-  onFieldsetToggle: ->
-    summary = $('summary.settings-legend', @)
-    summary.title = if @open then 'Collapse section' else 'Expand section' if summary
-    Settings.refreshCollapseControlsState $.x 'ancestor::section[1]', @
+  toggleFieldsetCollapsed: (e) ->
+    e.preventDefault()
+    fs = $.x 'ancestor::details[1]', @
+    return unless fs?.classList.contains 'settings-collapsible-ready'
+    fs.classList.toggle 'settings-collapsed'
+    @title = if fs.classList.contains('settings-collapsed') then 'Expand section' else 'Collapse section'
+    Settings.saveCollapsedFieldsetState fs
+    Settings.refreshCollapseControlsState $.x 'ancestor::section[1]', fs
+
+  toggleFieldsetCollapsedOnKey: (e) ->
+    return unless e.key is 'Enter' or e.key is ' '
+    Settings.toggleFieldsetCollapsed.call @, e
 
   countCollapsibleRows: (fs) ->
     rows = $$ 'div[data-name], tr[data-name], p, li, .settings-group-heading, .generated-highlight-group, .generated-highlight-auto-group', fs
@@ -454,12 +549,13 @@ Settings =
   updateFieldsetCollapseForSearch: (section, searching) ->
     changed = false
     for fs in $$ 'details.settings-fieldset.settings-collapsible-ready', section
-      continue if fs.classList.contains 'settings-no-collapse'
       if searching
         fs.classList.add 'settings-search-expand'
-        unless fs.open
+        if fs.classList.contains 'settings-collapsed'
           changed = true
-          fs.open = true
+          fs.classList.remove 'settings-collapsed'
+          summary = $('summary.settings-legend', fs)
+          summary.title = 'Collapse section' if summary
       else
         fs.classList.remove 'settings-search-expand'
     Settings.refreshCollapseControlsState section if changed or !searching
@@ -478,12 +574,16 @@ Settings =
 
   setAllFieldsetsCollapsed: (section, collapsed) ->
     for fs in $$ 'details.settings-fieldset.settings-collapsible-ready', section
-      continue if fs.classList.contains 'settings-no-collapse'
       continue if fs.classList.contains 'settings-search-expand'
-      fs.open = !collapsed
+      fs.classList.toggle 'settings-collapsed', collapsed
+      summary = $('summary.settings-legend', fs)
+      summary.title = if collapsed then 'Expand section' else 'Collapse section' if summary
+      Settings.saveCollapsedFieldsetState fs, true
+    Settings.persistCollapsedFieldsetStates()
     Settings.refreshCollapseControlsState section
 
   refreshCollapseControlsState: (section) ->
+    Settings.refreshGlobalCollapseControlsState()
     return unless section
     collapseLink = $('.settings-collapse-all', section)
     expandLink = $('.settings-expand-all', section)
@@ -492,10 +592,9 @@ Settings =
     total = 0
     collapsedCount = 0
     for fs in $$ 'details.settings-fieldset.settings-collapsible-ready', section
-      continue if fs.classList.contains 'settings-no-collapse'
       continue if fs.classList.contains 'settings-search-expand'
       total++
-      collapsedCount++ unless fs.open
+      collapsedCount++ if fs.classList.contains 'settings-collapsed'
 
     if total is 0
       collapseLink.classList.add 'disabled'
@@ -504,6 +603,60 @@ Settings =
 
     collapseLink.classList.toggle 'disabled', collapsedCount is total
     expandLink.classList.toggle 'disabled', collapsedCount is 0
+
+  refreshGlobalCollapseControlsState: ->
+    dialog = Settings.dialog
+    return unless dialog
+    collapseLink = $('.settings-global-collapse-all', dialog)
+    expandLink = $('.settings-global-expand-all', dialog)
+    return unless collapseLink and expandLink
+
+    section = Settings.getActiveSectionEl()
+    total = 0
+    collapsedCount = 0
+    if section
+      for fs in $$ 'details.settings-fieldset.settings-collapsible-ready', section
+        continue if fs.classList.contains 'settings-search-expand'
+        total++
+        collapsedCount++ if fs.classList.contains 'settings-collapsed'
+
+    if total is 0
+      collapseLink.classList.add 'disabled'
+      expandLink.classList.add 'disabled'
+      return
+
+    collapseLink.classList.toggle 'disabled', collapsedCount is total
+    expandLink.classList.toggle 'disabled', collapsedCount is 0
+
+  updateFieldsetLegendHeight: (fs) ->
+    summary = $('summary.settings-legend', fs)
+    return unless summary
+    fs.style.setProperty '--settings-legend-height', "#{Math.ceil(summary.offsetHeight)}px"
+
+  fieldsetStateKey: (fs) ->
+    section = $.x 'ancestor::section[1]', fs
+    sectionName = (section?.className.match(/\bsection-[^\s]+\b/) or ['section-unknown'])[0]
+    legend = $('summary.settings-legend', fs)?.textContent?.trim() or 'untitled'
+    index = 0
+    if section
+      i = 0
+      for other in $$ 'details.settings-fieldset', section
+        if other is fs
+          index = i
+          break
+        i++
+    "#{sectionName}::#{index}::#{legend}"
+
+  isFieldsetStoredCollapsed: (fs) ->
+    Settings.collapsedFieldsets[Settings.fieldsetStateKey(fs)] is true
+
+  saveCollapsedFieldsetState: (fs, deferPersist = false) ->
+    key = Settings.fieldsetStateKey fs
+    Settings.collapsedFieldsets[key] = fs.classList.contains 'settings-collapsed'
+    Settings.persistCollapsedFieldsetStates() unless deferPersist
+
+  persistCollapsedFieldsetStates: ->
+    $.set 'settings.collapsedFieldsets', Settings.collapsedFieldsets
 
   highlightSettingRow: (row, query) ->
     # Highlight matching text in labels, legends, descriptions, and table headers
@@ -2446,6 +2599,19 @@ Settings =
       return
 
     lines = textarea.value.split '\n'
+    # Large MD5 lists can freeze the settings pane due to full per-line/per-thread preview.
+    # Keep preview responsive by skipping expensive stats past a practical threshold.
+    if type is 'MD5'
+      activeLines = 0
+      for line in lines
+        trimmed = line.trim()
+        activeLines++ if trimmed and trimmed[0] isnt '#'
+      if activeLines > 250
+        $.add panel, $.el 'div',
+          className: 'filter-stats-empty'
+          textContent: "Preview disabled for MD5 while #{activeLines} lines are loaded."
+        return
+
     stats = []
     totalMatches = 0
     totalHidden = 0

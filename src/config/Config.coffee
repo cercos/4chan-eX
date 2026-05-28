@@ -198,6 +198,16 @@ Config =
         'Show notification when quick filtering MD5s using the button or keybind.'
         1
       ]
+      'Catalog Shift-Click Image MD5': [
+        true
+        'In catalog view, shift-clicking an image toggles filtering by its MD5. When disabled, normal catalog shift-click thread actions apply everywhere on the tile.'
+        1
+      ]
+      'Thread Shift-Click Image MD5': [
+        true
+        'In thread/index view, shift-clicking an image toggles filtering by its MD5 and marks matching posts/images.'
+        1
+      ]
       'Recursive Hiding': [
         true
         'Hide replies of hidden posts, recursively.'
@@ -743,6 +753,14 @@ Config =
       true
       'Show number of unread posts in watched threads.'
     ]
+    'Show Mark All Read Icon': [
+      true
+      'Show the Mark all read icon in the thread watcher header.'
+    ]
+    'Show Mark Thread Read Icons': [
+      true
+      'Show per-thread Mark as read icons in the thread watcher list.'
+    ]
     'Show Site Prefix': [
       true
       'When multiple sites are shown in the thread watcher, add a prefix to board names to distinguish them.'
@@ -757,6 +775,7 @@ Config =
     ]
 
   'Thread Watcher Thumbnail Size': 40
+  'Thread Watcher Max Height': 420
 
   filter:
     general: ''

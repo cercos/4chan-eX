@@ -602,6 +602,17 @@ audio.controls-added {
 .settings-title {
   font-weight: 700;
 }
+.settings-global-collapse-controls {
+  font-size: 11px;
+  margin-left: auto;
+}
+.settings-global-collapse-controls > a {
+  text-decoration: none;
+}
+.settings-global-collapse-controls > a.disabled {
+  opacity: .45;
+  pointer-events: none;
+}
 .settings-body {
   -webkit-flex: 1;
   flex: 1;
@@ -619,8 +630,11 @@ audio.controls-added {
   display: flex;
   -webkit-flex-direction: column;
   flex-direction: column;
-  -webkit-flex: 0 0 180px;
-  flex: 0 0 180px;
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 148px;
+  max-width: min(26vw, 230px);
 }
 #fourchanx-settings > .settings-body > nav a {
   text-decoration: none;
@@ -632,6 +646,8 @@ audio.controls-added {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   width: 100%;
+  padding: 2px 4px;
+  font-size: 12px;
 }
 .section-container {
   -webkit-flex: 1;
@@ -684,8 +700,9 @@ audio.controls-added {
   overflow: auto;
 }
 .sections-list > a {
+  white-space: nowrap;
   border-radius: 3px;
-  padding: 4px 6px;
+  padding: 3px 5px;
 }
 .sections-list > a:hover,
 .sections-list > a:focus {
@@ -752,18 +769,6 @@ audio.controls-added {
   margin: 0 0 0 10px;
   white-space: nowrap;
 }
-#fourchanx-settings.settings-layout-classic .credits {
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  bottom: 6px;
-  border-top: 1px solid;
-  margin-left: 0;
-  margin-top: 0;
-  padding-top: 6px;
-  white-space: nowrap;
-  overflow: auto hidden;
-}
 .export, .import, .reset {
   cursor: pointer;
   text-decoration: none !important;
@@ -772,16 +777,42 @@ audio.controls-added {
   background: rgba(128, 128, 128, .18);
   font-weight: 700;
 }
-.credits {
-  border-top: 1px solid;
+.settings-footer {
+  border-top: 1px solid rgba(128, 128, 128, .25);
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   font-size: 11px;
-  line-height: 1.7;
-  margin-top: auto;
-  padding-top: 7px;
+  line-height: 1.6;
+  padding: 6px 8px;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 4px 12px;
+}
+.settings-actions {
+  white-space: nowrap;
+}
+.credits {
+  white-space: nowrap;
+  margin-left: auto;
 }
 .imp-exp-result {
   font-size: 11px;
-  margin: 6px 0;
+  margin: 0;
+}
+#fourchanx-settings.settings-layout-classic .settings-footer {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  padding: 6px 0 0;
+  border-top: 1px solid;
+}
+#fourchanx-settings.settings-layout-classic .settings-actions,
+#fourchanx-settings.settings-layout-classic .credits {
+  overflow: auto hidden;
 }
 
 .settings-section-header {
@@ -1641,9 +1672,9 @@ div.no-suboption-collapse[data-checked="false"] > .suboption-list {
 }
 #fourchanx-settings textarea,
 #fourchanx-settings .field {
-  background-color: color-mix(in srgb, currentColor 8%, transparent);
-  color: inherit;
-  border-color: color-mix(in srgb, currentColor 28%, transparent);
+  background-color: var(--settings-input-bg, color-mix(in srgb, currentColor 8%, transparent));
+  color: var(--settings-input-fg, inherit);
+  border-color: var(--settings-input-border, color-mix(in srgb, currentColor 28%, transparent));
 }
 /* CSS Highlight Editor — pre background matches textarea */
 #fourchanx-settings .css-hl-pre {
@@ -1764,12 +1795,19 @@ div.no-suboption-collapse[data-checked="false"] > .suboption-list {
   font-family: monospace;
 }
 #fourchanx-settings .settings-fieldset {
+  --settings-collapsed-preview-height: 42px;
+  --settings-legend-height: 34px;
+  --settings-expanded-max-height: 2400px;
   border: 1px solid rgba(128, 128, 128, .3);
   border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
   border-radius: 4px;
   padding: 0 0.75em 0.85em;
   margin: 0 0 8px;
   position: relative;
+  max-height: var(--settings-expanded-max-height);
+  overflow: hidden;
+  -webkit-transition: max-height 180ms ease;
+  transition: max-height 180ms ease;
 }
 #fourchanx-settings .settings-legend {
   list-style: none;
@@ -1807,13 +1845,29 @@ div.no-suboption-collapse[data-checked="false"] > .suboption-list {
 #fourchanx-settings .settings-legend:hover::after {
   opacity: 1;
 }
-#fourchanx-settings .settings-fieldset:not([open]) > .settings-legend {
+#fourchanx-settings .settings-fieldset.settings-collapsed > .settings-legend {
   margin-bottom: 0;
-  border-bottom: 0;
 }
-#fourchanx-settings .settings-fieldset:not([open]) > .settings-legend::after {
+#fourchanx-settings .settings-fieldset.settings-collapsed > .settings-legend::after {
   -webkit-transform: rotate(-90deg);
           transform: rotate(-90deg);
+}
+#fourchanx-settings .settings-fieldset.settings-collapsed {
+  max-height: calc(var(--settings-legend-height) + var(--settings-collapsed-preview-height));
+}
+#fourchanx-settings .settings-fieldset.settings-collapsed::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--settings-legend-height);
+  bottom: 0;
+  pointer-events: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, currentColor 12%, transparent),
+    inset 0 0 14px color-mix(in srgb, currentColor 14%, transparent),
+    inset 0 -12px 14px color-mix(in srgb, currentColor 18%, transparent);
 }
 #fourchanx-settings .settings-no-collapse > .settings-legend {
   cursor: default;
@@ -1822,9 +1876,7 @@ div.no-suboption-collapse[data-checked="false"] > .suboption-list {
   content: none;
 }
 #fourchanx-settings .settings-collapse-controls {
-  text-align: right;
-  font-size: 11px;
-  margin: 0 0 6px;
+  display: none;
 }
 #fourchanx-settings .settings-collapse-controls > a {
   text-decoration: none;
@@ -2337,10 +2389,12 @@ textarea.copy-text-element {
   white-space: nowrap;
   min-width: 146px;
   --watcher-thumb-size: 40px;
+  --watcher-max-height: 420px;
 }
 #watched-threads {
   overflow-x: hidden;
   overflow-y: auto;
+  max-height: var(--watcher-max-height);
 }
 #thread-watcher .refresh {
   padding: 0px 4px;
@@ -2358,11 +2412,10 @@ textarea.copy-text-element {
 }
 :root.fixed-watcher #watched-threads {
   /* XXX https://code.google.com/p/chromium/issues/detail?id=168840, https://bugs.webkit.org/show_bug.cgi?id=94158 */
-  max-height: 85vh;
-  max-height: calc(100vh - 75px);
+  max-height: min(var(--watcher-max-height), calc(100vh - 75px));
 }
 :root:not(.fixed-watcher) #watched-threads:not(:hover) {
-  max-height: 210px;
+  max-height: min(210px, var(--watcher-max-height));
   overflow-y: hidden;
 }
 #thread-watcher > .move {
@@ -2742,6 +2795,21 @@ input[name="Default Volume"] {
 :root:root.werkTyme:not(.catalog-hover-expand) .catalog-thread.watched,
 :root.werkTyme.catalog-hover-expand .catalog-thread.watched > .catalog-container:hover > .catalog-post {
   border: 2px solid rgba(255, 0, 0, .75);
+}
+.md5-filtered-post$site$highlightable$op,
+.md5-filtered-post$site$highlightable$reply {
+  box-shadow: inset 5px 0 rgba(72, 153, 216, .7);
+}
+:root:not(.werkTyme) .catalog-thread.md5-filtered-post .catalog-thumb,
+:root.werkTyme .catalog-thread.md5-filtered-post:not(:hover),
+:root.werkTyme:not(.catalog-hover-expand) .catalog-thread.md5-filtered-post,
+:root.werkTyme.catalog-hover-expand .catalog-thread.md5-filtered-post > .catalog-container:hover > .catalog-post,
+:root.catalog $site$catalog$thread.md5-filtered-post$site$highlightable$catalog {
+  box-shadow: 0 0 3px 3px rgba(72, 153, 216, .6);
+}
+.md5-filtered-image {
+  outline: 2px solid rgba(72, 153, 216, .7);
+  outline-offset: -2px;
 }
 
 /* Ghost posts (fetched from archive) */

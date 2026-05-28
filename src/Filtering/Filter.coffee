@@ -14,6 +14,10 @@ Filter =
     for line in @easyFilterLines()
       @parseFilterLine 'general', line
 
+    Callbacks.Post.push
+      name: 'Quick Filter MD5 Click'
+      cb:   @bindQuickFilterMD5Click
+
     return unless Object.keys(@filters).length
     if g.VIEW is 'catalog'
       Filter.catalog()
@@ -303,6 +307,10 @@ Filter =
     if noti and Unread.posts and (@ID > Unread.lastReadPost) and not QuoteYou.isYou(@) and not @isGhostPost
       Unread.openNotification @, ' triggered a notification filter'
 
+  bindQuickFilterMD5Click: ->
+    return if @isClone
+    $.on @nodes.root, 'click', Filter.quickFilterMD5Click
+
   catalog: ->
     return unless (url = g.SITE.urls.catalogJSON?(g.BOARD))
     Filter.catalogData = $.dict()
@@ -412,35 +420,109 @@ Filter =
     post = Get.postFromNode @
     files = post.files.filter((f) -> f.MD5)
     return unless files.length
-    filter = files.map((f) -> "/#{f.MD5}/").join('\n')
-    Filter.addFilter 'MD5', filter
+    filters = files.map((f) -> "/#{f.MD5}/")
     origin = post.origin or post
     if origin.isReply
       PostHiding.hide origin
     else if g.VIEW is 'index'
       ThreadHiding.hide origin.thread
+    Filter.quickFilterMD5Apply filters, [origin], post
+
+  quickFilterMD5Value: (md5) ->
+    return unless md5
+    Filter.quickFilterMD5Apply ["/#{md5}/"]
+
+  hasMD5Filter: (md5) ->
+    return false unless md5
+    line = "/#{md5}/"
+    Conf['MD5'].split('\n').some (x) -> x.trim() is line
+
+  toggleMD5Filter: (md5, cbAdded, cbRemoved) ->
+    return unless md5
+    line = "/#{md5}/"
+    $.get 'MD5', Conf['MD5'], (item) ->
+      lines = item['MD5'].split '\n'
+      hadLine = false
+      next = []
+      for l in lines
+        if l.trim() is line
+          hadLine = true
+        else
+          next.push l
+      save = if hadLine
+        next.join('\n')
+      else if item['MD5']
+        "#{item['MD5']}\n#{line}"
+      else
+        line
+      $.set 'MD5', save, ->
+        if hadLine
+          cbRemoved?()
+        else
+          cbAdded?()
+
+  markMD5Filtered: (post) ->
+    return unless post?.nodes?.root
+    match = post.files?.some((f) -> f.MD5 and Filter.hasMD5Filter(f.MD5))
+    post.nodes.root.classList.toggle 'md5-filtered-post', !!match
+    post.thread?.catalogView?.nodes?.root?.classList.toggle 'md5-filtered-post', !!match
+    for node in $$ '[data-md5]', post.nodes.root
+      node.classList.toggle 'md5-filtered-image', !!(match and Filter.hasMD5Filter(node.dataset.md5))
+
+  quickFilterMD5Apply: (filters, posts=[], post=null) ->
+    return unless filters?.length
+    Filter.addFilter 'MD5', filters.join('\n')
+    Filter.markMD5Filtered p for p in posts
+    Filter.quickFilterMD5Notify filters, posts, post
+
+  quickFilterMD5Notify: (filters, posts=[], post=null) ->
+    return unless filters?.length
 
     unless Conf['MD5 Quick Filter Notifications']
       # feedback for when nothing gets hidden
-      if post.nodes.post.getBoundingClientRect().height
+      if !post or post.nodes.post.getBoundingClientRect().height
         new Notice 'info', 'MD5 filtered.', 2
       return
 
     {notice} = Filter.quickFilterMD5
     if notice
-      notice.filters.push filter
-      notice.posts.push origin
+      notice.filters.push filters...
+      notice.posts.push posts...
       $('span', notice.el).textContent = "#{notice.filters.length} MD5s filtered."
     else
       msg = $.el 'div',
         `<%= html('<span>MD5 filtered.</span> [<a href="javascript:;">show</a>] [<a href="javascript:;">undo</a>]') %>`
       notice = Filter.quickFilterMD5.notice = new Notice 'info', msg, undefined, ->
         delete Filter.quickFilterMD5.notice
-      notice.filters = [filter]
-      notice.posts = [origin]
+      notice.filters = [filters...]
+      notice.posts = [posts...]
       links = $$ 'a', msg
       $.on links[0], 'click', Filter.quickFilterCB.show.bind(notice)
       $.on links[1], 'click', Filter.quickFilterCB.undo.bind(notice)
+
+  quickFilterMD5Click: (e) ->
+    return unless Conf['Thread Shift-Click Image MD5']
+    return unless e.button is 0 and e.shiftKey
+    # Keep behavior literal: shift+clicking an image (thumb/full) filters its MD5.
+    target = $.x('ancestor-or-self::*[@data-md5]', e.target)
+    return unless target?.dataset?.md5
+    md5 = target.dataset.md5
+    post = Get.postFromNode e.target
+    origin = post?.origin or post
+    Filter.toggleMD5Filter md5, (
+      ->
+        if origin
+          Filter.markMD5Filtered origin
+          Filter.quickFilterMD5Notify ["/#{md5}/"], [origin], post
+        else
+          Filter.quickFilterMD5Notify ["/#{md5}/"]
+    ), (
+      ->
+        Filter.markMD5Filtered origin if origin
+        new Notice 'info', 'MD5 unfiltered.', 2
+    )
+    e.preventDefault()
+    e.stopPropagation()
 
   quickFilterCB:
     show: ->
@@ -451,8 +533,9 @@ Filter =
       for post in @posts
         if post.isReply
           PostHiding.show post
-        else if g.VIEW is 'index'
+        else if post.thread and g.VIEW in ['index', 'catalog']
           ThreadHiding.show post.thread
+        Filter.markMD5Filtered post
       @close()
 
   escape: (value) ->

@@ -229,6 +229,26 @@ Index =
   catalogNode: ->
     $.on @nodes.root, 'mousedown click', (e) =>
       return unless e.button is 0
+      if Conf['Catalog Shift-Click Image MD5'] and e.shiftKey and $.x('ancestor-or-self::img[contains(concat(" ", @class, " "), " catalog-thumb ")]', e.target)
+        md5 = $.x('ancestor-or-self::*[@data-md5]', e.target)?.dataset?.md5 or @thread.OP.file?.MD5
+        return unless md5
+        if e.type is 'click'
+          thread = @thread
+          op = @thread?.OP
+          return unless op and thread
+          Filter.toggleMD5Filter md5, (
+            ->
+              ThreadHiding.hide thread
+              Filter.markMD5Filtered op
+              Filter.quickFilterMD5Notify ["/#{md5}/"], [op], op
+          ), (
+            ->
+              ThreadHiding.show thread
+              Filter.markMD5Filtered op
+              new Notice 'info', 'MD5 unfiltered.', 2
+          )
+        e.preventDefault()
+        return
       # Parse on every event so changing the binding in settings takes effect
       # without reloading. Empty/None disables the action.
       hideBind  = Index.parseClickBinding Conf['Catalog Hide Click']

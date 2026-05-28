@@ -634,7 +634,9 @@ ThreadWatcher =
       $.addClass div, 'replies-read'        if data.unread is 0
       $.addClass div, 'replies-unread'      if data.unread
     $.addClass div, 'replies-quoting-you' if quotingYou
-    nodes = [x, $.tn(' '), link, $.tn(' '), markRead]
+    nodes = [x, $.tn(' '), link]
+    if Conf['Show Mark Thread Read Icons']
+      nodes.push $.tn(' '), markRead
     $.add div, nodes
     div
 
@@ -793,9 +795,17 @@ ThreadWatcher =
       size = 40
     Math.max(16, Math.min(160, size))
 
+  maxHeight: ->
+    height = parseInt(Conf['Thread Watcher Max Height'], 10)
+    if isNaN(height)
+      height = 420
+    Math.max(160, Math.min(2000, height))
+
   applyLayout: ->
     return unless ThreadWatcher.dialog
     ThreadWatcher.dialog.style.setProperty '--watcher-thumb-size', "#{ThreadWatcher.thumbnailSize()}px"
+    ThreadWatcher.dialog.style.setProperty '--watcher-max-height', "#{ThreadWatcher.maxHeight()}px"
+    ThreadWatcher.markReadButton.hidden = !Conf['Show Mark All Read Icon']
 
   update: (siteID, boardID, threadID, newData) ->
     return if not (data = ThreadWatcher.db?.get {siteID, boardID, threadID})
@@ -927,6 +937,22 @@ ThreadWatcher =
           @el.classList.toggle 'disabled', disabled
           true
 
+      entries.push
+        text: 'TW max height'
+        open: ->
+          @el.innerHTML = "TW max height <input type='number' value='#{ThreadWatcher.maxHeight()}' min='160' max='2000' class='field' style='width:5em'>"
+          input = $ 'input', @el
+          $.on input, 'click', (e) -> e.stopPropagation()
+          $.on input, 'change', ->
+            height = parseInt(@value, 10)
+            height = 420 if isNaN(height)
+            height = Math.max(160, Math.min(2000, height))
+            @value = height
+            $.set 'Thread Watcher Max Height', height
+            Conf['Thread Watcher Max Height'] = height
+            ThreadWatcher.refresh()
+          true
+
       # `Open dead threads` entry
       entries.push
         text: 'Open dead threads'
@@ -962,7 +988,7 @@ ThreadWatcher =
       entries.push
         text: 'Thumbnail size'
         open: ->
-          @el.innerHTML = "Thumbnail size: <input type='number' value='#{ThreadWatcher.thumbnailSize()}' min='16' max='160' class='field'>px"
+          @el.innerHTML = "Thumb size <input type='number' value='#{ThreadWatcher.thumbnailSize()}' min='16' max='160' class='field' style='width:4.5em'>"
           input = $ 'input', @el
           $.on input, 'click', (e) -> e.stopPropagation()
           $.on input, 'change', ->
@@ -1002,7 +1028,7 @@ ThreadWatcher =
         $.addClass entry.el, 'disabled'
         entry.el.title += '\n[Remember Last Read Post is disabled.]'
       $.on input, 'change', $.cb.checked
-      $.on input, 'change', -> ThreadWatcher.refresh() if name in ['Current Board', 'Show Page', 'Show Unread Count', 'Show Site Prefix', 'Show OP Thumbnails']
+      $.on input, 'change', -> ThreadWatcher.refresh() if name in ['Current Board', 'Show Page', 'Show Unread Count', 'Show Mark All Read Icon', 'Show Mark Thread Read Icons', 'Show Site Prefix', 'Show OP Thumbnails']
       $.on input, 'change', ThreadWatcher.fetchAuto    if name in ['Show Page', 'Show Unread Count', 'Auto Update Thread Watcher']
       if name is 'Show OP Thumbnails'
         $.on input, 'change', -> ThreadWatcher.fetchAllStatus() if @checked
