@@ -17512,7 +17512,7 @@ Settings = (function() {
       }
     },
     upgrade: function(data, version) {
-      var addCSS, addSauces, boardID, boards, changes, compareString, corrupted, db, hideZero, hostname, j, key, l, lastChecked, len, len1, len2, len3, line, list, n, name, q, quoted, record, ref, ref1, ref10, ref11, ref12, ref13, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, rice, set, setD, siteProperties, software, type, uids, val, val2, value;
+      var addCSS, addSauces, boardID, boards, changes, compareString, corrupted, db, hideZero, hostname, j, key, l, lastChecked, len, len1, len2, len3, line, list, n, name, q, quoted, record, ref, ref1, ref10, ref11, ref12, ref13, ref14, ref15, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, rice, set, setD, siteProperties, software, type, uids, val, val2, value;
       changes = $.dict();
       set = function(key, value) {
         return data[key] = changes[key] = value;
@@ -17741,7 +17741,7 @@ Settings = (function() {
         setD('Download Link', true);
       }
       if (compareString < '00001.00013.00009.00003') {
-        if (data['jsWhitelist'] != null) {
+        if ((ref7 = data['jsWhitelist']) != null ? ref7.trim() : void 0) {
           list = data['jsWhitelist'].split('\n');
           if (indexOf.call(list, 'https://cdnjs.cloudflare.com') < 0 && indexOf.call(list, 'https://cdn.mathjax.org') >= 0) {
             set('jsWhitelist', data['jsWhitelist'] + '\n\nhttps://cdnjs.cloudflare.com');
@@ -17764,11 +17764,11 @@ Settings = (function() {
         }
       }
       if (compareString < '00001.00014.00005.00000') {
-        ref7 = DataBoard.keys;
-        for (n = 0, len2 = ref7.length; n < len2; n++) {
-          db = ref7[n];
-          if ((ref8 = data[db]) != null ? ref8.boards : void 0) {
-            ref9 = data[db], boards = ref9.boards, lastChecked = ref9.lastChecked;
+        ref8 = DataBoard.keys;
+        for (n = 0, len2 = ref8.length; n < len2; n++) {
+          db = ref8[n];
+          if ((ref9 = data[db]) != null ? ref9.boards : void 0) {
+            ref10 = data[db], boards = ref10.boards, lastChecked = ref10.lastChecked;
             data[db]['4chan.org'] = {
               boards: boards,
               lastChecked: lastChecked
@@ -17780,10 +17780,10 @@ Settings = (function() {
         }
         if ((data['siteSoftware'] != null) && (data['siteProperties'] == null)) {
           siteProperties = $.dict();
-          ref10 = data['siteSoftware'].split('\n');
-          for (q = 0, len3 = ref10.length; q < len3; q++) {
-            line = ref10[q];
-            ref11 = line.split(' '), hostname = ref11[0], software = ref11[1];
+          ref11 = data['siteSoftware'].split('\n');
+          for (q = 0, len3 = ref11.length; q < len3; q++) {
+            line = ref11[q];
+            ref12 = line.split(' '), hostname = ref12[0], software = ref12[1];
             siteProperties[hostname] = {
               software: software
             };
@@ -17833,8 +17833,11 @@ Settings = (function() {
         }
       }
       if (compareString < '00001.00014.00017.00002') {
-        if (data['jsWhitelist'] != null) {
-          set('jsWhitelist', data['jsWhitelist'] + '\n\nhttps://hcaptcha.com\nhttps://*.hcaptcha.com');
+        if ((ref13 = data['jsWhitelist']) != null ? ref13.trim() : void 0) {
+          list = data['jsWhitelist'].split('\n');
+          if (indexOf.call(list, 'https://hcaptcha.com') < 0 && indexOf.call(list, 'https://*.hcaptcha.com') < 0) {
+            set('jsWhitelist', data['jsWhitelist'] + '\n\nhttps://hcaptcha.com\nhttps://*.hcaptcha.com');
+          }
         }
       }
       if (compareString < '00001.00014.00020.00004') {
@@ -17855,7 +17858,7 @@ Settings = (function() {
         set('Replace Thumbnails', !!(data['Replace GIF'] || data['Replace JPG'] || data['Replace PNG'] || data['Replace WEBM']));
       }
       if (data['Detailed Thread Stats'] == null) {
-        set('Detailed Thread Stats', !!((ref12 = data['IP Count in Stats']) != null ? ref12 : true) || !!((ref13 = data['Page Count in Stats']) != null ? ref13 : true));
+        set('Detailed Thread Stats', !!((ref14 = data['IP Count in Stats']) != null ? ref14 : true) || !!((ref15 = data['Page Count in Stats']) != null ? ref15 : true));
       }
       if (data['Thread Title'] == null) {
         set('Thread Title', data['Remove Thread Excerpt'] ? 'board' : 'excerpt');
@@ -26886,7 +26889,9 @@ Report = (function() {
       if (Conf['Archive Report']) {
         Report.archive();
       }
+      Report.restoreNativeCaptcha();
       new MutationObserver(function() {
+        Report.restoreNativeCaptcha();
         Report.fit('iframe[src^="https://www.google.com/recaptcha/api2/frame"]');
         return Report.fit('body');
       }).observe(d.body, {
@@ -26905,6 +26910,26 @@ Report = (function() {
       if (dy > 0) {
         return window.resizeBy(0, dy);
       }
+    },
+    restoreNativeCaptcha: function() {
+      return $.global(function() {
+        var i, len, nextNode, node, ref, ref1, ref2;
+        if (typeof window.TCaptcha4chanXPatch === "function") {
+          window.TCaptcha4chanXPatch(false);
+        }
+        ref = document.querySelectorAll('.fourchanx-stacked-captcha');
+        for (i = 0, len = ref.length; i < len; i++) {
+          node = ref[i];
+          node.classList.remove('fourchanx-stacked-captcha');
+        }
+        if ((ref1 = document.querySelector('#t-load')) != null) {
+          ref1.hidden = false;
+        }
+        if ((nextNode = document.querySelector('#t-next')) && ((ref2 = nextNode.dataset) != null ? ref2.fourchanxStatusHidden : void 0) === '1') {
+          nextNode.style.visibility = '';
+          delete nextNode.dataset.fourchanxStatusHidden;
+        }
+      });
     },
     archive: function() {
       var enabled, fieldset, form, match, message, reason, submit, types, urls;
@@ -31750,8 +31775,11 @@ QR = (function() {
       'video/mp4': 'mp4'
     },
     init: function() {
-      var sc;
+      var ref, sc;
       if (!Conf['Quick Reply']) {
+        return;
+      }
+      if ((ref = g.VIEW) !== 'index' && ref !== 'thread') {
         return;
       }
       this.posts = [];
@@ -37210,11 +37238,19 @@ Main = (function() {
         ($.getSync || $.get)({
           'jsWhitelist': Conf['jsWhitelist']
         }, function(arg) {
-          var jsWhitelist, parsedList;
+          var hCaptchaOnly, jsWhitelist, parsedList, tokens;
           jsWhitelist = arg.jsWhitelist;
-          parsedList = jsWhitelist.replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim();
+          parsedList = (jsWhitelist || '').replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim();
           if (/\S/.test(parsedList)) {
-            return $.addCSP("script-src " + parsedList);
+            tokens = parsedList.split(/\s+/);
+            hCaptchaOnly = tokens.every(function(token) {
+              return token === 'https://hcaptcha.com' || token === 'https://*.hcaptcha.com';
+            });
+            if (hCaptchaOnly) {
+              return $.set('jsWhitelist', '');
+            } else {
+              return $.addCSP("script-src " + parsedList);
+            }
           }
         });
       }
