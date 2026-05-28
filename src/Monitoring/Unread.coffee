@@ -220,6 +220,7 @@ Unread =
       else
         $.rm Unread.hr
     Unread.hr.hidden = Unread.linePosition is Unread.order.last
+    $.event 'UnreadLineUpdated'
 
   update: ->
     count = Unread.posts.size

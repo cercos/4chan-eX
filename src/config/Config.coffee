@@ -445,6 +445,11 @@ Config =
         'Mark deleted (ghost) posts in the scrollbar.'
         1
       ]
+      'Scrollbar Mark Unread Line': [
+        true
+        'Mark the unread line position in the scrollbar.'
+        1
+      ]
       'Fetch Ghost Posts': [
         false
         'When opening a thread, fetch deleted posts from the configured archive and insert them inline as ghost posts. Requires Resurrect Quotes and a Foolfuuka archive for the board.'

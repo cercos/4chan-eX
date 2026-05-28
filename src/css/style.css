@@ -2872,6 +2872,16 @@ input[name="Default Volume"] {
   right: 18px;
   background: var(--eX-ghost-post-color, #888888);
 }
+.scroll-marker-unread {
+  left: 0;
+  right: 0;
+  width: auto;
+  min-height: 2px;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .45);
+  background: #ffd400;
+  pointer-events: none;
+}
 
 /* Spoiler text */
 :root.reveal-spoilers $site$spoiler,

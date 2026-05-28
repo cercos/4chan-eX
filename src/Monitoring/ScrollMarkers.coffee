@@ -5,7 +5,7 @@ ScrollMarkers =
     @container = $.el 'div', id: 'scroll-markers'
     @container.hidden = true
 
-    for key in ['Scrollbar Mark Own Posts', 'Scrollbar Mark Quotes You', 'Scrollbar Mark Ghost Posts']
+    for key in ['Scrollbar Mark Own Posts', 'Scrollbar Mark Quotes You', 'Scrollbar Mark Ghost Posts', 'Scrollbar Mark Unread Line']
       $.sync key, (val, k) ->
         Conf[k] = val
         ScrollMarkers.refreshDeferred()
@@ -23,6 +23,7 @@ ScrollMarkers =
     $.on d, 'PostsInserted',                ScrollMarkers.refreshDeferred
     $.on d, 'ThreadUpdate',                 ScrollMarkers.refreshDeferred
     $.on d, 'YouMarkChanged',               ScrollMarkers.refreshDeferred
+    $.on d, 'UnreadLineUpdated',            ScrollMarkers.refreshDeferred
     $.on window, 'resize',                  ScrollMarkers.refreshDeferred
     $.on window, 'load',                    ScrollMarkers.refreshDeferred
 
@@ -42,6 +43,7 @@ ScrollMarkers =
     showOwn   = Conf['Highlight Own Posts']         and Conf['Scrollbar Mark Own Posts']
     showYou   = Conf['Highlight Posts Quoting You'] and Conf['Scrollbar Mark Quotes You']
     showGhost = Conf['Highlight Ghost Posts']       and Conf['Scrollbar Mark Ghost Posts']
+    showUnread = Conf['Unread Line'] and Conf['Scrollbar Mark Unread Line']
 
     ScrollMarkers.thread.posts.forEach (post) ->
       return if post.isHidden or post.isClone or post.isFetchedQuote
@@ -78,6 +80,16 @@ ScrollMarkers =
         ScrollMarkers.bind marker, post
         $.add frag, marker
       return
+
+    if showUnread and Unread?.hr and Unread.hr.isConnected and !Unread.hr.hidden
+      rect = Unread.hr.getBoundingClientRect()
+      topInDoc = rect.top + window.scrollY
+      topPct = (topInDoc / docHeight) * 100
+      unreadMarker = $.el 'div',
+        className: 'scroll-marker scroll-marker-unread'
+        style: "top:#{topPct}%;height:2px"
+      unreadMarker.title = 'Unread line'
+      $.add frag, unreadMarker
 
     container.textContent = ''
     $.add container, frag
