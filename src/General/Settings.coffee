@@ -996,20 +996,37 @@ Settings =
 
     items = $.dict()
     inputs = $.dict()
+    footerStatsChildren = [
+      'Footer Stats Thread Count'
+      'Footer Stats Unread Count'
+      'Footer Stats Quoting You'
+      'Footer Stats Dead Count'
+      'Footer Stats Storage Size'
+    ]
+    labelOverrides =
+      'Footer Stats Thread Count': 'Thread Count'
+      'Footer Stats Unread Count': 'Unread Count'
+      'Footer Stats Quoting You': 'Quoting You Count'
+      'Footer Stats Dead Count': 'Dead Thread Count'
+      'Footer Stats Storage Size': 'Storage Size'
 
     for name, conf of Config.threadWatcher
       description = conf[1] or ''
+      title = labelOverrides[name] or name
+      className = if name in footerStatsChildren then 'thread-watcher-subsetting' else ''
       div = $.el 'div',
-        `<%= html('<label><input type="checkbox" name="${name}"><span class="setting-title">${name}</span></label><span class="description">: <span class="setting-description">${description}</span></span>') %>`
+        className: className
+      ,
+        `<%= html('<label><input type="checkbox" name="${name}"><span class="setting-title">${title}</span></label><span class="description">: <span class="setting-description">${description}</span></span>') %>`
       div.dataset.name = name
-      div.dataset.settingTitle = name
+      div.dataset.settingTitle = title
       div.dataset.settingDescription = description
       input = $ 'input', div
       $.on input, 'change', $.cb.checked
       $.on input, 'change', -> @parentNode.parentNode.dataset.checked = @checked
       $.on input, 'change', ->
         return unless ThreadWatcher.enabled
-        if @name in ['Current Board', 'Show Page', 'Show Unread Count', 'Show Site Prefix', 'Show OP Thumbnails']
+        if @name in ['Current Board', 'Show Page', 'Show Unread Count', 'Show Site Prefix', 'Show OP Thumbnails', 'Show Footer Stats', 'Footer Stats Thread Count', 'Footer Stats Unread Count', 'Footer Stats Quoting You', 'Footer Stats Dead Count', 'Footer Stats Storage Size']
           ThreadWatcher.refresh()
         if @name in ['Show Page', 'Show Unread Count', 'Auto Update Thread Watcher']
           ThreadWatcher.fetchAuto()
@@ -1049,7 +1066,18 @@ Settings =
             input.parentNode.parentNode.dataset.checked = val
           else
             input.value = val
+      if (parent = inputs['Show Footer Stats'])
+        for key in footerStatsChildren when input = inputs[key]
+          input.disabled = !parent.checked
+          $.toggleClass input.parentNode.parentNode, 'disabled', !parent.checked
       return
+
+    if (parent = inputs['Show Footer Stats'])
+      updateFooterChildren = ->
+        for key in footerStatsChildren when input = inputs[key]
+          input.disabled = !parent.checked
+          $.toggleClass input.parentNode.parentNode, 'disabled', !parent.checked
+      $.on parent, 'change', updateFooterChildren
     return
 
   general: (section) ->
@@ -1154,23 +1182,22 @@ Settings =
     items  = $.dict()
     inputs = $.dict()
     fs = $.el 'details',
-      className: 'settings-fieldset settings-formatting-fieldset'
+      className: 'settings-fieldset'
       open: true
     ,
       `<%= html('<summary class="settings-legend">Formatting</summary>') %>`
     lookup = Settings.getMainSettingLookup()
-    for [title, keys] in [
-      ['Board and ID Display', ['Custom Board Titles', 'Persistent Custom Board Titles', 'Color User IDs', 'Count Posts by ID']]
-      ['Spoiler Display', ['Remove Spoilers', 'Reveal Spoilers']]
-    ]
-      group = $.dict()
-      for key in keys when lookup[key]
-        group[key] = lookup[key]
-      continue unless Object.keys(group).length
-      $.add fs, $.el 'h3',
-        className: 'settings-group-heading'
-        textContent: title
-      Settings.addCheckboxes fs, group, items, inputs
+    group = $.dict()
+    for key in [
+      'Custom Board Titles'
+      'Persistent Custom Board Titles'
+      'Color User IDs'
+      'Count Posts by ID'
+      'Remove Spoilers'
+      'Reveal Spoilers'
+    ] when lookup[key]
+      group[key] = lookup[key]
+    Settings.addCheckboxes fs, group, items, inputs
     $.add section, fs
 
     # Formatting templates moved from Styling.

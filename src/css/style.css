@@ -1676,6 +1676,9 @@ div.no-suboption-collapse[data-checked="false"] > .suboption-list {
   color: var(--settings-input-fg, inherit);
   border-color: var(--settings-input-border, color-mix(in srgb, currentColor 28%, transparent));
 }
+#fourchanx-settings .thread-watcher-subsetting {
+  margin-left: 18px;
+}
 /* CSS Highlight Editor — pre background matches textarea */
 #fourchanx-settings .css-hl-pre {
   background: #212121;

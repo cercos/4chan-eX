@@ -685,18 +685,40 @@ ThreadWatcher =
 
   refreshFooter: (visibleCount) ->
     return unless ThreadWatcher.footer
+    ThreadWatcher.footer.hidden = !Conf['Show Footer Stats']
+    return if ThreadWatcher.footer.hidden
+
     total = 0
+    unread = 0
+    quotingYou = 0
+    dead = 0
     for siteID, boards of ThreadWatcher.db.data when typeof boards is 'object' and boards?.boards
       for boardID, threads of boards.boards
         for threadID, data of threads when data and typeof data is 'object'
           total++
-    bytes = ThreadWatcher.estimateStorage()
+          unread += data.unread or 0
+          dead++ if data.isDead
+          quotingYou++ if (data.quotingYou or 0) > (data.dismiss or 0)
+
     parts = []
-    parts.push if visibleCount? and visibleCount isnt total
-      "#{visibleCount} shown · #{total} watched"
-    else
-      "#{total} watched"
-    parts.push ThreadWatcher.formatBytes bytes
+
+    if Conf['Footer Stats Thread Count']
+      parts.push if visibleCount? and visibleCount isnt total
+        "#{visibleCount} shown · #{total} watched"
+      else
+        "#{total} watched"
+
+    parts.push "#{unread} unread" if Conf['Footer Stats Unread Count']
+    parts.push "#{quotingYou} quoting you" if Conf['Footer Stats Quoting You']
+    parts.push "#{dead} dead" if Conf['Footer Stats Dead Count']
+    parts.push ThreadWatcher.formatBytes(ThreadWatcher.estimateStorage()) if Conf['Footer Stats Storage Size']
+
+    if parts.length is 0
+      parts.push if visibleCount? and visibleCount isnt total
+        "#{visibleCount} shown · #{total} watched"
+      else
+        "#{total} watched"
+
     ThreadWatcher.footer.textContent = parts.join(' · ')
 
   estimateStorage: ->
@@ -806,6 +828,7 @@ ThreadWatcher =
     ThreadWatcher.dialog.style.setProperty '--watcher-thumb-size', "#{ThreadWatcher.thumbnailSize()}px"
     ThreadWatcher.dialog.style.setProperty '--watcher-max-height', "#{ThreadWatcher.maxHeight()}px"
     ThreadWatcher.markReadButton.hidden = !Conf['Show Mark All Read Icon']
+    ThreadWatcher.footer.hidden = !Conf['Show Footer Stats']
 
   update: (siteID, boardID, threadID, newData) ->
     return if not (data = ThreadWatcher.db?.get {siteID, boardID, threadID})
@@ -1012,7 +1035,15 @@ ThreadWatcher =
         @menu.addEntry entry
 
       # Settings checkbox entries:
+      footerDetailToggles = [
+        'Footer Stats Thread Count'
+        'Footer Stats Unread Count'
+        'Footer Stats Quoting You'
+        'Footer Stats Dead Count'
+        'Footer Stats Storage Size'
+      ]
       for name, conf of Config.threadWatcher
+        continue if name in footerDetailToggles
         @addCheckbox name, conf[1]
 
       return
@@ -1028,7 +1059,7 @@ ThreadWatcher =
         $.addClass entry.el, 'disabled'
         entry.el.title += '\n[Remember Last Read Post is disabled.]'
       $.on input, 'change', $.cb.checked
-      $.on input, 'change', -> ThreadWatcher.refresh() if name in ['Current Board', 'Show Page', 'Show Unread Count', 'Show Mark All Read Icon', 'Show Mark Thread Read Icons', 'Show Site Prefix', 'Show OP Thumbnails']
+      $.on input, 'change', -> ThreadWatcher.refresh() if name in ['Current Board', 'Show Page', 'Show Unread Count', 'Show Mark All Read Icon', 'Show Mark Thread Read Icons', 'Show Site Prefix', 'Show OP Thumbnails', 'Show Footer Stats', 'Footer Stats Thread Count', 'Footer Stats Unread Count', 'Footer Stats Quoting You', 'Footer Stats Dead Count', 'Footer Stats Storage Size']
       $.on input, 'change', ThreadWatcher.fetchAuto    if name in ['Show Page', 'Show Unread Count', 'Auto Update Thread Watcher']
       if name is 'Show OP Thumbnails'
         $.on input, 'change', -> ThreadWatcher.fetchAllStatus() if @checked

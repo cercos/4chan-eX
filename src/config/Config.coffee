@@ -774,6 +774,30 @@ Config =
       false
       'Show OP thumbnails in watched thread entries.'
     ]
+    'Show Footer Stats': [
+      true
+      'Show summary stats at the bottom of the thread watcher.'
+    ]
+    'Footer Stats Thread Count': [
+      true
+      'Show watched thread counts in the thread watcher footer.'
+    ]
+    'Footer Stats Unread Count': [
+      true
+      'Show total unread watched posts in the thread watcher footer.'
+    ]
+    'Footer Stats Quoting You': [
+      true
+      'Show number of watched threads currently quoting you in the thread watcher footer.'
+    ]
+    'Footer Stats Dead Count': [
+      false
+      'Show number of dead watched threads in the thread watcher footer.'
+    ]
+    'Footer Stats Storage Size': [
+      true
+      'Show estimated thread watcher storage usage in the thread watcher footer.'
+    ]
     'Require OP Quote Link': [
       false
       'For purposes of thread watcher highlighting, only consider posts with a quote link to the OP as replies to the OP.'
