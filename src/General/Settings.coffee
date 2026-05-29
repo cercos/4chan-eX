@@ -1003,7 +1003,11 @@ Settings =
       'Footer Stats Dead Count'
       'Footer Stats Storage Size'
     ]
+    markAllReadChildren = [
+      'Show Mark Thread Read Icons'
+    ]
     labelOverrides =
+      'Show Mark Thread Read Icons': 'Mark Threads with icon'
       'Footer Stats Thread Count': 'Thread Count'
       'Footer Stats Unread Count': 'Unread Count'
       'Footer Stats Quoting You': 'Quoting You Count'
@@ -1011,9 +1015,10 @@ Settings =
       'Footer Stats Storage Size': 'Storage Size'
 
     for name, conf of Config.threadWatcher
+      continue if name is 'Show OP Thumbnails'
       description = conf[1] or ''
       title = labelOverrides[name] or name
-      className = if name in footerStatsChildren then 'thread-watcher-subsetting' else ''
+      className = if name in footerStatsChildren or name in markAllReadChildren then 'thread-watcher-subsetting' else ''
       div = $.el 'div',
         className: className
       ,
@@ -1037,11 +1042,18 @@ Settings =
       $.add fs, div
 
     sizeDiv = $.el 'div',
-      `<%= html('<label><span class="setting-title">Thumbnail Size: </span><input type="number" name="Thread Watcher Thumbnail Size" min="16" max="160" step="1"></label><span class="description">: Set OP thumbnail size (16-160px).</span>') %>`
+      `<%= html('<label><input type="checkbox" name="Show OP Thumbnails"><span class="setting-title">Thumbnails</span><input type="number" name="Thread Watcher Thumbnail Size" min="16" max="160" step="1"></label><span class="description">: Set OP thumbnail size (16-160px).</span>') %>`
     sizeDiv.dataset.name = 'Thread Watcher Thumbnail Size'
     sizeDiv.dataset.settingTitle = 'Thread Watcher Thumbnail Size'
     sizeDiv.dataset.settingDescription = 'Set OP thumbnail size (16-160px).'
-    sizeInput = $ 'input', sizeDiv
+    thumbnailToggle = $('input[name="Show OP Thumbnails"]', sizeDiv)
+    $.on thumbnailToggle, 'change', $.cb.checked
+    $.on thumbnailToggle, 'change', -> @parentNode.parentNode.dataset.checked = @checked
+    $.on thumbnailToggle, 'change', ->
+      return unless ThreadWatcher.enabled
+      ThreadWatcher.refresh()
+      ThreadWatcher.fetchAllStatus() if @checked
+    sizeInput = $('input[name="Thread Watcher Thumbnail Size"]', sizeDiv)
     $.on sizeInput, 'change', ->
       size = parseInt(@value, 10)
       if isNaN(size)
@@ -1052,6 +1064,8 @@ Settings =
       Conf[@name] = size
       return unless ThreadWatcher.enabled
       ThreadWatcher.refresh()
+    items['Show OP Thumbnails'] = Conf['Show OP Thumbnails']
+    inputs['Show OP Thumbnails'] = thumbnailToggle
     items['Thread Watcher Thumbnail Size'] = Conf['Thread Watcher Thumbnail Size']
     inputs['Thread Watcher Thumbnail Size'] = sizeInput
     $.add fs, sizeDiv
@@ -1070,6 +1084,10 @@ Settings =
         for key in footerStatsChildren when input = inputs[key]
           input.disabled = !parent.checked
           $.toggleClass input.parentNode.parentNode, 'disabled', !parent.checked
+      if (parent = inputs['Show Mark All Read Icon'])
+        for key in markAllReadChildren when input = inputs[key]
+          input.disabled = !parent.checked
+          $.toggleClass input.parentNode.parentNode, 'disabled', !parent.checked
       return
 
     if (parent = inputs['Show Footer Stats'])
@@ -1078,6 +1096,12 @@ Settings =
           input.disabled = !parent.checked
           $.toggleClass input.parentNode.parentNode, 'disabled', !parent.checked
       $.on parent, 'change', updateFooterChildren
+    if (parent = inputs['Show Mark All Read Icon'])
+      updateMarkAllChildren = ->
+        for key in markAllReadChildren when input = inputs[key]
+          input.disabled = !parent.checked
+          $.toggleClass input.parentNode.parentNode, 'disabled', !parent.checked
+      $.on parent, 'change', updateMarkAllChildren
     return
 
   general: (section) ->

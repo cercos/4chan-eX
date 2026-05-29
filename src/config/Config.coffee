@@ -508,6 +508,11 @@ Config =
         'Automatically convert unsupported image formats and resize oversized image uploads in Quick Reply.'
         1
       ]
+      'Canvas Process Uploads': [
+        true
+        'Allow canvas-based processing of image uploads in Quick Reply (used by Auto-process Images). Disable if your browser blocks canvas and causes image corruption.'
+        2
+      ]
       'Quick Reply File Thumbnails': [
         true
         'Show file thumbnails in Quick Reply attachments. Disable to avoid thumbnail rendering (including canvas-based previews).'

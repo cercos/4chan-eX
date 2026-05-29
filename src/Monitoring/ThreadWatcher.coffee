@@ -1011,8 +1011,16 @@ ThreadWatcher =
       entries.push
         text: 'Thumbnail size'
         open: ->
-          @el.innerHTML = "Thumb size <input type='number' value='#{ThreadWatcher.thumbnailSize()}' min='16' max='160' class='field' style='width:4.5em'>"
-          input = $ 'input', @el
+          checkedAttr = if Conf['Show OP Thumbnails'] then ' checked' else ''
+          @el.innerHTML = "<input type='checkbox'#{checkedAttr}>Thumbnails <input type='number' value='#{ThreadWatcher.thumbnailSize()}' min='16' max='160' class='field' style='width:4.5em'>"
+          checkbox = $ "input[type='checkbox']", @el
+          input = $ "input[type='number']", @el
+          $.on checkbox, 'click', (e) -> e.stopPropagation()
+          $.on checkbox, 'change', ->
+            $.set 'Show OP Thumbnails', @checked
+            Conf['Show OP Thumbnails'] = @checked
+            ThreadWatcher.refresh()
+            ThreadWatcher.fetchAllStatus() if @checked
           $.on input, 'click', (e) -> e.stopPropagation()
           $.on input, 'change', ->
             size = parseInt(@value, 10)
@@ -1043,15 +1051,16 @@ ThreadWatcher =
         'Footer Stats Storage Size'
       ]
       for name, conf of Config.threadWatcher
-        continue if name in footerDetailToggles
+        continue if name in footerDetailToggles or name is 'Show OP Thumbnails'
         @addCheckbox name, conf[1]
 
       return
 
     addCheckbox: (name, desc) ->
+      label = if name is 'Show Mark Thread Read Icons' then 'Show Thread Read Icon' else name.replace(' Thread Watcher', '')
       entry =
         type: 'thread watcher'
-        el: UI.checkbox name, name.replace(' Thread Watcher', '')
+        el: UI.checkbox name, label
       entry.el.title = desc
       input = entry.el.firstElementChild
       if name is 'Show Unread Count' and not ThreadWatcher.unreadEnabled
@@ -1061,6 +1070,4 @@ ThreadWatcher =
       $.on input, 'change', $.cb.checked
       $.on input, 'change', -> ThreadWatcher.refresh() if name in ['Current Board', 'Show Page', 'Show Unread Count', 'Show Mark All Read Icon', 'Show Mark Thread Read Icons', 'Show Site Prefix', 'Show OP Thumbnails', 'Show Footer Stats', 'Footer Stats Thread Count', 'Footer Stats Unread Count', 'Footer Stats Quoting You', 'Footer Stats Dead Count', 'Footer Stats Storage Size']
       $.on input, 'change', ThreadWatcher.fetchAuto    if name in ['Show Page', 'Show Unread Count', 'Auto Update Thread Watcher']
-      if name is 'Show OP Thumbnails'
-        $.on input, 'change', -> ThreadWatcher.fetchAllStatus() if @checked
       @menu.addEntry entry

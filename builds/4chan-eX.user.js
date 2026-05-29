@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX
-// @version      1.1.6
+// @version      1.1.7
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -234,7 +234,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1.1.6',
+  VERSION:   '1.1.7',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)
@@ -399,6 +399,7 @@ Config = (function() {
         'Show New Thread Option in Threads': [true, 'Show the option to post a new / different thread from inside a thread.', 1],
         'Randomize Filename': [false, 'Set the filename to a random timestamp within the past year. Disabled on /f/.', 1],
         'Auto-process Images': [true, 'Automatically convert unsupported image formats and resize oversized image uploads in Quick Reply.', 1],
+        'Canvas Process Uploads': [true, 'Allow canvas-based processing of image uploads in Quick Reply (used by Auto-process Images). Disable if your browser blocks canvas and causes image corruption.', 2],
         'Quick Reply File Thumbnails': [true, 'Show file thumbnails in Quick Reply attachments. Disable to avoid thumbnail rendering (including canvas-based previews).', 1],
         'Show Upload Progress': [true, 'Track progress of file uploads as percentage in submit button.', 1],
         'Strip Video Audio': [true, 'Remove audio from MP4 and WebM uploads in Quick Reply on boards that do not allow audio.', 1],
@@ -16629,7 +16630,7 @@ Settings = (function() {
       });
     },
     addThreadWatcherFieldset: function(section) {
-      var className, conf, description, div, footerStatsChildren, fs, input, inputs, items, labelOverrides, name, parent, ref, sizeDiv, sizeInput, title, updateFooterChildren;
+      var className, conf, description, div, footerStatsChildren, fs, input, inputs, items, labelOverrides, markAllReadChildren, name, parent, ref, sizeDiv, sizeInput, thumbnailToggle, title, updateFooterChildren, updateMarkAllChildren;
       fs = $.el('details', {
         className: 'settings-fieldset',
         open: true
@@ -16637,7 +16638,9 @@ Settings = (function() {
       items = $.dict();
       inputs = $.dict();
       footerStatsChildren = ['Footer Stats Thread Count', 'Footer Stats Unread Count', 'Footer Stats Quoting You', 'Footer Stats Dead Count', 'Footer Stats Storage Size'];
+      markAllReadChildren = ['Show Mark Thread Read Icons'];
       labelOverrides = {
+        'Show Mark Thread Read Icons': 'Mark Threads with icon',
         'Footer Stats Thread Count': 'Thread Count',
         'Footer Stats Unread Count': 'Unread Count',
         'Footer Stats Quoting You': 'Quoting You Count',
@@ -16647,9 +16650,12 @@ Settings = (function() {
       ref = Config.threadWatcher;
       for (name in ref) {
         conf = ref[name];
+        if (name === 'Show OP Thumbnails') {
+          continue;
+        }
         description = conf[1] || '';
         title = labelOverrides[name] || name;
-        className = indexOf.call(footerStatsChildren, name) >= 0 ? 'thread-watcher-subsetting' : '';
+        className = indexOf.call(footerStatsChildren, name) >= 0 || indexOf.call(markAllReadChildren, name) >= 0 ? 'thread-watcher-subsetting' : '';
         div = $.el('div', {
           className: className
         }, {innerHTML: "<label><input type=\"checkbox\" name=\"" + E(name) + "\"><span class=\"setting-title\">" + E(title) + "</span></label><span class=\"description\">: <span class=\"setting-description\">" + E(description) + "</span></span>"});
@@ -16680,11 +16686,25 @@ Settings = (function() {
         inputs[name] = input;
         $.add(fs, div);
       }
-      sizeDiv = $.el('div', {innerHTML: "<label><span class=\"setting-title\">Thumbnail Size: </span><input type=\"number\" name=\"Thread Watcher Thumbnail Size\" min=\"16\" max=\"160\" step=\"1\"></label><span class=\"description\">: Set OP thumbnail size (16-160px).</span>"});
+      sizeDiv = $.el('div', {innerHTML: "<label><input type=\"checkbox\" name=\"Show OP Thumbnails\"><span class=\"setting-title\">Thumbnails</span><input type=\"number\" name=\"Thread Watcher Thumbnail Size\" min=\"16\" max=\"160\" step=\"1\"></label><span class=\"description\">: Set OP thumbnail size (16-160px).</span>"});
       sizeDiv.dataset.name = 'Thread Watcher Thumbnail Size';
       sizeDiv.dataset.settingTitle = 'Thread Watcher Thumbnail Size';
       sizeDiv.dataset.settingDescription = 'Set OP thumbnail size (16-160px).';
-      sizeInput = $('input', sizeDiv);
+      thumbnailToggle = $('input[name="Show OP Thumbnails"]', sizeDiv);
+      $.on(thumbnailToggle, 'change', $.cb.checked);
+      $.on(thumbnailToggle, 'change', function() {
+        return this.parentNode.parentNode.dataset.checked = this.checked;
+      });
+      $.on(thumbnailToggle, 'change', function() {
+        if (!ThreadWatcher.enabled) {
+          return;
+        }
+        ThreadWatcher.refresh();
+        if (this.checked) {
+          return ThreadWatcher.fetchAllStatus();
+        }
+      });
+      sizeInput = $('input[name="Thread Watcher Thumbnail Size"]', sizeDiv);
       $.on(sizeInput, 'change', function() {
         var size;
         size = parseInt(this.value, 10);
@@ -16700,12 +16720,14 @@ Settings = (function() {
         }
         return ThreadWatcher.refresh();
       });
+      items['Show OP Thumbnails'] = Conf['Show OP Thumbnails'];
+      inputs['Show OP Thumbnails'] = thumbnailToggle;
       items['Thread Watcher Thumbnail Size'] = Conf['Thread Watcher Thumbnail Size'];
       inputs['Thread Watcher Thumbnail Size'] = sizeInput;
       $.add(fs, sizeDiv);
       $.add(section, fs);
       $.get(items, function(items) {
-        var j, key, len, parent, val;
+        var j, key, l, len, len1, parent, val;
         for (key in items) {
           val = items[key];
           input = inputs[key];
@@ -16721,6 +16743,16 @@ Settings = (function() {
         if ((parent = inputs['Show Footer Stats'])) {
           for (j = 0, len = footerStatsChildren.length; j < len; j++) {
             key = footerStatsChildren[j];
+            if (!(input = inputs[key])) {
+              continue;
+            }
+            input.disabled = !parent.checked;
+            $.toggleClass(input.parentNode.parentNode, 'disabled', !parent.checked);
+          }
+        }
+        if ((parent = inputs['Show Mark All Read Icon'])) {
+          for (l = 0, len1 = markAllReadChildren.length; l < len1; l++) {
+            key = markAllReadChildren[l];
             if (!(input = inputs[key])) {
               continue;
             }
@@ -16744,6 +16776,22 @@ Settings = (function() {
           return results;
         };
         $.on(parent, 'change', updateFooterChildren);
+      }
+      if ((parent = inputs['Show Mark All Read Icon'])) {
+        updateMarkAllChildren = function() {
+          var j, key, len, results;
+          results = [];
+          for (j = 0, len = markAllReadChildren.length; j < len; j++) {
+            key = markAllReadChildren[j];
+            if (!(input = inputs[key])) {
+              continue;
+            }
+            input.disabled = !parent.checked;
+            results.push($.toggleClass(input.parentNode.parentNode, 'disabled', !parent.checked));
+          }
+          return results;
+        };
+        $.on(parent, 'change', updateMarkAllChildren);
       }
     },
     general: function(section) {
@@ -30139,9 +30187,22 @@ ThreadWatcher = (function() {
         entries.push({
           text: 'Thumbnail size',
           open: function() {
-            var input;
-            this.el.innerHTML = "Thumb size <input type='number' value='" + (ThreadWatcher.thumbnailSize()) + "' min='16' max='160' class='field' style='width:4.5em'>";
-            input = $('input', this.el);
+            var checkbox, checkedAttr, input;
+            checkedAttr = Conf['Show OP Thumbnails'] ? ' checked' : '';
+            this.el.innerHTML = "<input type='checkbox'" + checkedAttr + ">Thumbnails <input type='number' value='" + (ThreadWatcher.thumbnailSize()) + "' min='16' max='160' class='field' style='width:4.5em'>";
+            checkbox = $("input[type='checkbox']", this.el);
+            input = $("input[type='number']", this.el);
+            $.on(checkbox, 'click', function(e) {
+              return e.stopPropagation();
+            });
+            $.on(checkbox, 'change', function() {
+              $.set('Show OP Thumbnails', this.checked);
+              Conf['Show OP Thumbnails'] = this.checked;
+              ThreadWatcher.refresh();
+              if (this.checked) {
+                return ThreadWatcher.fetchAllStatus();
+              }
+            });
             $.on(input, 'click', function(e) {
               return e.stopPropagation();
             });
@@ -30181,17 +30242,18 @@ ThreadWatcher = (function() {
         ref1 = Config.threadWatcher;
         for (name in ref1) {
           conf = ref1[name];
-          if (indexOf.call(footerDetailToggles, name) >= 0) {
+          if (indexOf.call(footerDetailToggles, name) >= 0 || name === 'Show OP Thumbnails') {
             continue;
           }
           this.addCheckbox(name, conf[1]);
         }
       },
       addCheckbox: function(name, desc) {
-        var entry, input;
+        var entry, input, label;
+        label = name === 'Show Mark Thread Read Icons' ? 'Show Thread Read Icon' : name.replace(' Thread Watcher', '');
         entry = {
           type: 'thread watcher',
-          el: UI.checkbox(name, name.replace(' Thread Watcher', ''))
+          el: UI.checkbox(name, label)
         };
         entry.el.title = desc;
         input = entry.el.firstElementChild;
@@ -30208,13 +30270,6 @@ ThreadWatcher = (function() {
         });
         if (name === 'Show Page' || name === 'Show Unread Count' || name === 'Auto Update Thread Watcher') {
           $.on(input, 'change', ThreadWatcher.fetchAuto);
-        }
-        if (name === 'Show OP Thumbnails') {
-          $.on(input, 'change', function() {
-            if (this.checked) {
-              return ThreadWatcher.fetchAllStatus();
-            }
-          });
         }
         return this.menu.addEntry(entry);
       }
@@ -35663,7 +35718,7 @@ QR = (function() {
       post._imageTaskID = (post._imageTaskID || 0) + 1;
       taskID = post._imageTaskID;
       post.cancelImageProcessing(null, true);
-      if (!(Conf['Auto-process Images'] && QRImagePatch.isImageFile(file))) {
+      if (!(Conf['Auto-process Images'] && Conf['Canvas Process Uploads'] && QRImagePatch.isImageFile(file))) {
         return origSetFile.call(post, file);
       }
       post.filename = file.name;

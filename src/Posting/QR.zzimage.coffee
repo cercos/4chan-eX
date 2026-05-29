@@ -166,7 +166,7 @@ do ->
     taskID = post._imageTaskID
     post.cancelImageProcessing(null, true)
 
-    unless Conf['Auto-process Images'] and QRImagePatch.isImageFile(file)
+    unless Conf['Auto-process Images'] and Conf['Canvas Process Uploads'] and QRImagePatch.isImageFile(file)
       return origSetFile.call(post, file)
 
     post.filename = file.name
