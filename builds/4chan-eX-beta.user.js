@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan-eX beta
-// @version      1.1.5
+// @version      1.1.6
 // @minGMVer     1.14
 // @minFFVer     26
 // @namespace    4chan-eX
@@ -234,7 +234,7 @@ docSet = function() {
 };
 
 g = {
-  VERSION:   '1.1.5',
+  VERSION:   '1.1.6',
   NAMESPACE: '4chan-eX.',
   sites:     Object.create(null),
   boards:    Object.create(null)
@@ -399,6 +399,7 @@ Config = (function() {
         'Show New Thread Option in Threads': [true, 'Show the option to post a new / different thread from inside a thread.', 1],
         'Randomize Filename': [false, 'Set the filename to a random timestamp within the past year. Disabled on /f/.', 1],
         'Auto-process Images': [true, 'Automatically convert unsupported image formats and resize oversized image uploads in Quick Reply.', 1],
+        'Quick Reply File Thumbnails': [true, 'Show file thumbnails in Quick Reply attachments. Disable to avoid thumbnail rendering (including canvas-based previews).', 1],
         'Show Upload Progress': [true, 'Track progress of file uploads as percentage in submit button.', 1],
         'Strip Video Audio': [true, 'Remove audio from MP4 and WebM uploads in Quick Reply on boards that do not allow audio.', 1],
         'Strip All Media Metadata': [false, 'Strip metadata from all uploaded media in Quick Reply, regardless of type.', 1],
@@ -4998,6 +4999,47 @@ input[type=\"checkbox\"]:checked ~ .checkbox-letter {\n\
 }\n\
 .qr-preview > span {\n\
   color: #fff;\n\
+}\n\
+#qr.no-file-thumbnails #dump-list {\n\
+  white-space: normal;\n\
+  max-height: 180px;\n\
+  min-height: 0;\n\
+  display: block;\n\
+}\n\
+#qr.no-file-thumbnails .qr-preview {\n\
+  counter-increment: none;\n\
+  cursor: default;\n\
+  display: flex;\n\
+  align-items: center;\n\
+  gap: 6px;\n\
+  height: auto;\n\
+  min-height: 28px;\n\
+  width: 100%;\n\
+  opacity: .85;\n\
+  padding: 4px 6px;\n\
+  text-shadow: none;\n\
+  background-image: none !important;\n\
+  background-size: auto;\n\
+}\n\
+#qr.no-file-thumbnails .qr-preview::before {\n\
+  content: none;\n\
+}\n\
+#qr.no-file-thumbnails .qr-preview > span {\n\
+  color: inherit;\n\
+  flex: 1;\n\
+  overflow: hidden;\n\
+  text-overflow: ellipsis;\n\
+  white-space: nowrap;\n\
+}\n\
+#qr.no-file-thumbnails .qr-preview > label {\n\
+  position: static;\n\
+  background: transparent;\n\
+  color: inherit;\n\
+  margin-left: auto;\n\
+}\n\
+#qr.no-file-thumbnails .qr-preview > .remove {\n\
+  position: static;\n\
+  order: 2;\n\
 }\n\
 .remove {\n\
   background: none;\n\
@@ -16391,7 +16433,7 @@ Settings = (function() {
           continue;
         }
         if (keyFS === 'Posting and Captchas') {
-          ref2 = [['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Comment Preview', 'Pass Link'], 0], ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio', 'Strip All Media Metadata', 'Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'], 1], ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]];
+          ref2 = [['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Comment Preview', 'Pass Link'], 0], ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Quick Reply File Thumbnails', 'Show Upload Progress', 'Strip Video Audio', 'Strip All Media Metadata', 'Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'], 1], ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]];
           for (q = 0, len3 = ref2.length; q < len3; q++) {
             ref3 = ref2[q], legendTitle = ref3[0], keys = ref3[1], baseLevel = ref3[2];
             fs = $.el('details', {
@@ -17312,7 +17354,8 @@ Settings = (function() {
           filtered[key] = val;
         }
       }
-      selected = $.extend($.dict(), data);
+      selected = $.dict();
+      $.extend(selected, data);
       selected.Conf = filtered;
       if (selected.version && selected.version !== g.VERSION) {
         isLoadletter = selected.version.split('.')[0] === '2' && "Disable 4chan's extension" in filtered;
@@ -31377,10 +31420,13 @@ Captcha = {};
           }
         };
         restoreRegular = function() {
-          var root, slider;
+          var ref, root, slider;
           root = document.querySelector('#qr');
           if (root != null) {
             root.classList.remove('fourchanx-stacked-captcha');
+          }
+          if ((root != null ? (ref = root.dataset) != null ? ref.fourchanxCaptchaPending : void 0 : void 0) != null) {
+            delete root.dataset.fourchanxCaptchaPending;
           }
           window.TCaptcha.__fourchanXStackedEnabled = false;
           cachedButtons = [];
@@ -32177,6 +32223,23 @@ QR = (function() {
       }) || QR.posts.length > 1);
       return QR.nodes.el.classList.toggle('show-preview-strip', hasPreviews);
     },
+    applyThumbnailMode: function(enabled) {
+      var j, len, post, ref, ref1, results;
+      if (enabled == null) {
+        enabled = Conf['Quick Reply File Thumbnails'];
+      }
+      if (!((ref = QR.nodes) != null ? ref.el : void 0)) {
+        return;
+      }
+      QR.nodes.el.classList.toggle('no-file-thumbnails', !enabled);
+      ref1 = QR.posts || [];
+      results = [];
+      for (j = 0, len = ref1.length; j < len; j++) {
+        post = ref1[j];
+        results.push(typeof post.updatePreviewLabel === "function" ? post.updatePreviewLabel() : void 0);
+      }
+      return results;
+    },
     hide: function() {
       QR.blur();
       $.addClass(QR.nodes.el, 'autohide');
@@ -32885,6 +32948,7 @@ QR = (function() {
       classList.toggle('has-math', !!config.math_tags);
       classList.toggle('sjis-preview', !!config.sjis_tags && Conf['sjisPreview']);
       classList.toggle('show-new-thread-option', Conf['Show New Thread Option in Threads']);
+      classList.toggle('no-file-thumbnails', !Conf['Quick Reply File Thumbnails']);
       QR.nodes.livePreview.hidden = true;
       QR.livePreviewApplyMode();
       if (parseInt(Conf['customCooldown'], 10) > 0) {
@@ -32936,6 +33000,7 @@ QR = (function() {
       $.on(nodes.livePreviewBtn, 'click', QR.livePreviewClick);
       $.sync('Comment Preview', QR.livePreviewToggleAvailable);
       $.sync('Comment Preview Position', QR.livePreviewSetPosition);
+      $.sync('Quick Reply File Thumbnails', QR.applyThumbnailMode);
       window.addEventListener('focus', QR.focus, true);
       window.addEventListener('blur', QR.focus, true);
       $.on(d, 'click', QR.focus);
@@ -33262,7 +33327,7 @@ QR = (function() {
       if (g.BOARD.ID === 'r9k' && !((ref = post.com) != null ? ref.match(/[a-z-]/i) : void 0)) {
         err || (err = 'Original comment required.');
       }
-      if (!err && QR.captcha === Captcha.t && QR.nodes.el.dataset.fourchanxCaptchaPending === '1') {
+      if (!err && QR.captcha === Captcha.t && $.hasClass(QR.nodes.el, 'fourchanx-stacked-captcha') && QR.nodes.el.dataset.fourchanxCaptchaPending === '1') {
         QR.captcha.getOne();
         if (QR.nodes.el.dataset.fourchanxCaptchaPending === '1') {
           err = 'Finish captcha before submitting.';
@@ -34342,7 +34407,7 @@ QR = (function() {
       if (this === QR.selected) {
         QR.characterCount();
       }
-      this.nodes.span.textContent = this.com;
+      this.updatePreviewLabel();
       QR.captcha.moreNeeded();
       if (QR.captcha === Captcha.v2) {
         return Captcha.cache.prerequest();
@@ -34570,6 +34635,9 @@ QR = (function() {
 
     _Class.prototype.setThumbnail = function(el) {
       var cleanup, createThumb, done, fallback, isVideo, s, seekFailed, seekStarted, targetTime, timer, tries, tryRender;
+      if (!Conf['Quick Reply File Thumbnails']) {
+        return;
+      }
       isVideo = el.tagName === 'VIDEO';
       s = 90 * 2 * window.devicePixelRatio;
       if (this.file.type === 'image/gif') {
@@ -34754,10 +34822,21 @@ QR = (function() {
       var long;
       long = this.filename + " (" + this.filesize + ")";
       this.nodes.el.title = long;
+      this.updatePreviewLabel();
       if (this !== QR.selected) {
         return;
       }
       return QR.nodes.filename.title = long;
+    };
+
+    _Class.prototype.updatePreviewLabel = function() {
+      if (Conf['Quick Reply File Thumbnails']) {
+        return this.nodes.span.textContent = this.com;
+      } else if (this.file) {
+        return this.nodes.span.textContent = this.filename + " (" + this.filesize + ")";
+      } else {
+        return this.nodes.span.textContent = this.com;
+      }
     };
 
     _Class.prototype.showFileData = function() {

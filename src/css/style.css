@@ -3624,6 +3624,47 @@ input[type="checkbox"]:checked ~ .checkbox-letter {
 .qr-preview > span {
   color: #fff;
 }
+#qr.no-file-thumbnails #dump-list {
+  white-space: normal;
+  max-height: 180px;
+  min-height: 0;
+  display: block;
+}
+#qr.no-file-thumbnails .qr-preview {
+  counter-increment: none;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: auto;
+  min-height: 28px;
+  width: 100%;
+  opacity: .85;
+  padding: 4px 6px;
+  text-shadow: none;
+  background-image: none !important;
+  background-size: auto;
+}
+#qr.no-file-thumbnails .qr-preview::before {
+  content: none;
+}
+#qr.no-file-thumbnails .qr-preview > span {
+  color: inherit;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#qr.no-file-thumbnails .qr-preview > label {
+  position: static;
+  background: transparent;
+  color: inherit;
+  margin-left: auto;
+}
+#qr.no-file-thumbnails .qr-preview > .remove {
+  position: static;
+  order: 2;
+}
 .remove {
   background: none;
   color: #e00;

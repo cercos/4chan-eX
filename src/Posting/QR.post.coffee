@@ -171,7 +171,7 @@ QR.post = class
   updateComment: ->
     if @ is QR.selected
       QR.characterCount()
-    @nodes.span.textContent = @com
+    @updatePreviewLabel()
     QR.captcha.moreNeeded()
     if QR.captcha is Captcha.v2
       Captcha.cache.prerequest()
@@ -320,6 +320,8 @@ QR.post = class
         @fileError 'Audio not allowed'
 
   setThumbnail: (el) ->
+    return unless Conf['Quick Reply File Thumbnails']
+
     # Create a redimensioned thumbnail.
     isVideo = el.tagName is 'VIDEO'
 
@@ -461,8 +463,17 @@ QR.post = class
   updateFilename: ->
     long = "#{@filename} (#{@filesize})"
     @nodes.el.title = long
+    @updatePreviewLabel()
     return unless @ is QR.selected
     QR.nodes.filename.title = long
+
+  updatePreviewLabel: ->
+    if Conf['Quick Reply File Thumbnails']
+      @nodes.span.textContent = @com
+    else if @file
+      @nodes.span.textContent = "#{@filename} (#{@filesize})"
+    else
+      @nodes.span.textContent = @com
 
   showFileData: ->
     if @file

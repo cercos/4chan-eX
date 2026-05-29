@@ -508,6 +508,11 @@ Config =
         'Automatically convert unsupported image formats and resize oversized image uploads in Quick Reply.'
         1
       ]
+      'Quick Reply File Thumbnails': [
+        true
+        'Show file thumbnails in Quick Reply attachments. Disable to avoid thumbnail rendering (including canvas-based previews).'
+        1
+      ]
       'Show Upload Progress': [
         true
         'Track progress of file uploads as percentage in submit button.'

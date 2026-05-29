@@ -859,7 +859,7 @@ Settings =
       if keyFS is 'Posting and Captchas'
         for [legendTitle, keys, baseLevel] in [
           ['Workflow', ['Quick Reply', 'Persistent QR', 'Auto Hide QR', 'Remember QR Size', 'Remember Spoiler', 'Show New Thread Option in Threads', 'Open Post in New Tab', 'Cooldown', 'Comment Preview', 'Pass Link'], 0]
-          ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Show Upload Progress', 'Strip Video Audio', 'Strip All Media Metadata', 'Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'], 1]
+          ['Files and Submission', ['Randomize Filename', 'Auto-process Images', 'Quick Reply File Thumbnails', 'Show Upload Progress', 'Strip Video Audio', 'Strip All Media Metadata', 'Image Metadata', 'Video Metadata', 'Audio Metadata', 'Other Metadata'], 1]
           ['Captcha', ['Auto-load captcha', 'Post on Captcha Completion', 'Force Noscript Captcha', 'Stacked TCaptcha'], 1]
         ]
           fs = $.el 'details',
@@ -1631,7 +1631,8 @@ Settings =
     for key, val of data.Conf
       name = Settings.groupForKey key, keysByGroup
       filtered[key] = val if checkedGroups[name]
-    selected = $.extend $.dict(), data
+    selected = $.dict()
+    $.extend selected, data
     selected.Conf = filtered
     # Run version upgrade on the filtered subset only.
     if selected.version and selected.version isnt g.VERSION

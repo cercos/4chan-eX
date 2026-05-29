@@ -211,6 +211,12 @@ QR =
     hasPreviews = !!(QR.posts.some((post) -> post?.file) or QR.posts.length > 1)
     QR.nodes.el.classList.toggle 'show-preview-strip', hasPreviews
 
+  applyThumbnailMode: (enabled = Conf['Quick Reply File Thumbnails']) ->
+    return unless QR.nodes?.el
+    QR.nodes.el.classList.toggle 'no-file-thumbnails', !enabled
+    for post in QR.posts or []
+      post.updatePreviewLabel?()
+
   hide: ->
     QR.blur()
     $.addClass QR.nodes.el, 'autohide'
@@ -754,6 +760,7 @@ QR =
     classList.toggle 'has-math',     !!config.math_tags
     classList.toggle 'sjis-preview', !!config.sjis_tags and Conf['sjisPreview']
     classList.toggle 'show-new-thread-option', Conf['Show New Thread Option in Threads']
+    classList.toggle 'no-file-thumbnails', !Conf['Quick Reply File Thumbnails']
     QR.nodes.livePreview.hidden = true
     QR.livePreviewApplyMode()
 
@@ -790,6 +797,7 @@ QR =
     $.on nodes.livePreviewBtn, 'click',     QR.livePreviewClick
     $.sync 'Comment Preview', QR.livePreviewToggleAvailable
     $.sync 'Comment Preview Position', QR.livePreviewSetPosition
+    $.sync 'Quick Reply File Thumbnails', QR.applyThumbnailMode
 
     window.addEventListener 'focus', QR.focus, true
     window.addEventListener 'blur',  QR.focus, true
