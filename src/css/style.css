@@ -4095,7 +4095,7 @@ a:only-of-type > .remove {
 
 /* Mod Contact Links */
 .contact-links {
-  margin-left: 2px;
+  margin-left: 3px;
 }
 .move-note > a {
   text-decoration: underline;
